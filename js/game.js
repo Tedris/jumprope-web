@@ -91,14 +91,19 @@ export function startGame(canvas) {
 
   canvas.addEventListener('pointerdown', press);
   canvas.addEventListener('pointerup', release);
-  window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); press(); } });
+  window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); } });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
 
   function step() {
+    if (run.status !== 'running') return;
     const out = tickRun(run, rope, player, STEP);
     run = out.run;
     rope = out.rope;
     player = out.player;
+    if (out.tripped) {
+      best = Math.max(best, run.score);
+      saveBest(localStorage, best);
+    }
   }
 
   function draw() {
