@@ -59,7 +59,7 @@ export function startGame(canvas) {
   canvas.width = W;
   canvas.height = H;
 
-  let rope = createRope(1.05);
+  let rope = createRope(1.15);
   let player = createPlayer();
   let run = createRun();
   let holdFrom = null;
@@ -83,7 +83,7 @@ export function startGame(canvas) {
     } else if (run.status === 'over') {
       best = Math.max(best, run.score);
       saveBest(localStorage, best);
-      rope = createRope(1.05);
+      rope = createRope(1.15);
       player = createPlayer();
       run = createRun();
     }
@@ -170,12 +170,12 @@ export function startGame(canvas) {
     ctx.lineTo(rx + 6, handY + 9);
     ctx.stroke();
 
-    const bow = Math.sin(theta) * 34;
+    const bow = Math.sin(theta) * 42;
     ctx.strokeStyle = '#7a5c3e';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(lx - 6, handY + 9);
-    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 185, rx + 6, handY + 9);
+    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 200, rx + 6, handY + 9);
     ctx.stroke();
     ctx.lineWidth = 1;
 
