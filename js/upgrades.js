@@ -2,7 +2,7 @@ export const UPGRADES = [
   { id: 'float', name: 'Cloud Shoes', desc: '+15% hang time',
     apply: s => ({ ...s, floatMul: s.floatMul * 1.15 }) },
   { id: 'slowrope', name: 'Heavy Rope', desc: 'Rope swings slower',
-    apply: s => ({ ...s, ropeMul: s.ropeMul * 1.1 }) },
+    apply: s => ({ ...s, ropeMul: s.ropeMul * 0.9 }) },
   { id: 'multi', name: 'Golden Handle', desc: '+1 skip score',
     apply: s => ({ ...s, scoreMul: s.scoreMul + 1 }) },
   { id: 'window', name: 'Wide Stance', desc: '+10% clearance forgiveness',

@@ -59,19 +59,23 @@ export function startGame(canvas) {
   canvas.width = W;
   canvas.height = H;
 
-  let rope = createRope(1.15);
-  let player = createPlayer();
-  let run = createRun();
+    let rope = createRope(1.3);
+    let player = createPlayer();
+    let run = { ...createRun(), status: 'idle' };
   let holdFrom = null;
   let best = loadBest(localStorage);
   let acc = 0;
   let last = performance.now();
 
-  function press() {
-    if (run.status === 'running') {
-      holdFrom = performance.now();
+    function press() {
+      if (run.status === 'running') {
+        holdFrom = performance.now();
+      } else if (run.status === 'idle') {
+        rope = { phase: 0.33, period: 1.3 };
+        player = jump(player, 0.1);
+        run = { ...run, status: 'running' };
+      }
     }
-  }
 
   function release() {
     if (run.status === 'running' && holdFrom !== null) {
@@ -83,8 +87,8 @@ export function startGame(canvas) {
     } else if (run.status === 'over') {
       best = Math.max(best, run.score);
       saveBest(localStorage, best);
-      rope = createRope(1.15);
-      player = createPlayer();
+      rope = { phase: 0.33, period: 1.3 };
+      player = jump(createPlayer(), 0.1);
       run = createRun();
     }
   }
@@ -199,10 +203,12 @@ export function startGame(canvas) {
       ctx.font = '28px sans-serif';
       ctx.fillText('Tripped! Score ' + run.score, cx, 300);
     }
-    if (run.status === 'running' && run.skips === 0) {
+    if (run.status === 'idle' || (run.status === 'running' && run.skips === 0)) {
       ctx.fillStyle = '#555';
       ctx.font = '18px sans-serif';
-      ctx.fillText('press space / tap when the rope comes', cx, 140);
+      ctx.fillText(
+        run.status === 'idle' ? 'press space / tap to start' : 'press space / tap when the rope comes',
+        cx, 140);
     }
   }
 
