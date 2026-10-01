@@ -119,32 +119,43 @@ export function startGame(canvas) {
     const cx = W / 2;
     const feet = H - 80;
     const sq = player.squash;
-    const bodyH = 70 * (2 - sq);
+    const legLen = 34;
+    const torsoH = 58 * (2 - sq);
     const bodyW = 46 * sq;
     const yBase = feet - player.y;
+    const hipY = yBase - legLen;
+    const torsoTop = hipY - torsoH;
     const theta = rope.phase * Math.PI * 2;
     const bob = Math.sin(theta) * 2;
+    ctx.lineCap = 'round';
+
+    ctx.strokeStyle = '#8a3d57';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(cx - bodyW / 4, hipY);
+    ctx.lineTo(cx - bodyW / 4, yBase);
+    ctx.moveTo(cx + bodyW / 4, hipY);
+    ctx.lineTo(cx + bodyW / 4, yBase);
+    ctx.stroke();
 
     ctx.fillStyle = '#c94f6d';
-    ctx.fillRect(cx - bodyW / 2, yBase - bodyH, bodyW, bodyH);
+    ctx.fillRect(cx - bodyW / 2, torsoTop, bodyW, torsoH);
     ctx.beginPath();
-    ctx.arc(cx, yBase - bodyH - 16 + bob, 18 * Math.sqrt(sq), 0, Math.PI * 2);
+    ctx.arc(cx, torsoTop - 16 + bob, 18 * Math.sqrt(sq), 0, Math.PI * 2);
     ctx.fill();
 
     const sway = Math.sin(theta) * 5;
-    const handY = yBase - bodyH - 6;
-    const lx = cx - bodyW / 2 - 4 + sway;
-    const rx = cx + bodyW / 2 + 4 + sway;
-    ctx.lineCap = 'round';
-
+    const handY = torsoTop + 10;
+    const lx = cx - bodyW / 2 - 6 + sway;
+    const rx = cx + bodyW / 2 + 6 + sway;
     ctx.strokeStyle = '#a84b66';
     ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.moveTo(cx - bodyW / 2, yBase - bodyH + 6);
+    ctx.moveTo(cx - bodyW / 2, torsoTop + 6);
     ctx.lineTo(lx, handY);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(cx + bodyW / 2, yBase - bodyH + 6);
+    ctx.moveTo(cx + bodyW / 2, torsoTop + 6);
     ctx.lineTo(rx, handY);
     ctx.stroke();
 
@@ -159,12 +170,12 @@ export function startGame(canvas) {
     ctx.lineTo(rx + 6, handY + 9);
     ctx.stroke();
 
-    const bow = Math.sin(theta) * 12;
+    const bow = Math.sin(theta) * 26;
     ctx.strokeStyle = '#7a5c3e';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(lx - 6, handY + 9);
-    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 130, rx + 6, handY + 9);
+    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 160, rx + 6, handY + 9);
     ctx.stroke();
     ctx.lineWidth = 1;
 
