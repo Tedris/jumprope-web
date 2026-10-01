@@ -1,4 +1,4 @@
-import { createRope, updateRope, atFeet } from './rope.js';
+import { createRope, updateRope, atFeet, obstacleX } from './rope.js';
 import { createPlayer, jump, updatePlayer, clearsRope } from './player.js';
 import { UPGRADES, freshEffects, pickTwo, shouldOfferUpgrade } from './upgrades.js';
 
@@ -120,6 +120,16 @@ export function startGame(canvas) {
     ctx.lineTo(W, H - 80);
     ctx.stroke();
 
+    const scroll = rope.phase * 48;
+    ctx.strokeStyle = '#c9bfa8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let x = -scroll; x < W + 48; x += 48) {
+      ctx.moveTo(x, H - 40);
+      ctx.lineTo(x + 24, H - 40);
+    }
+    ctx.stroke();
+
     const cx = W / 2;
     const feet = H - 80;
     const sq = player.squash;
@@ -174,14 +184,13 @@ export function startGame(canvas) {
     ctx.lineTo(rx + 6, handY + 9);
     ctx.stroke();
 
-    const bow = Math.sin(theta) * 42;
-    ctx.strokeStyle = '#7a5c3e';
-    ctx.lineWidth = 3;
+    const ox = obstacleX(rope.phase, W);
+    ctx.fillStyle = '#7a5c3e';
+    ctx.fillRect(ox - 12, feet - 26, 24, 26);
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
     ctx.beginPath();
-    ctx.moveTo(lx - 6, handY + 9);
-    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 200, rx + 6, handY + 9);
-    ctx.stroke();
-    ctx.lineWidth = 1;
+    ctx.ellipse(ox, feet + 2, 16, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.fillStyle = '#222';
     ctx.font = '32px sans-serif';
@@ -201,13 +210,13 @@ export function startGame(canvas) {
     if (run.status === 'over') {
       ctx.fillStyle = '#222';
       ctx.font = '28px sans-serif';
-      ctx.fillText('Tripped! Score ' + run.score, cx, 300);
+      ctx.fillText('Missed! Score ' + run.score, cx, 300);
     }
     if (run.status === 'idle' || (run.status === 'running' && run.skips === 0)) {
       ctx.fillStyle = '#555';
       ctx.font = '18px sans-serif';
       ctx.fillText(
-        run.status === 'idle' ? 'press space / tap to start' : 'press space / tap when the rope comes',
+        run.status === 'idle' ? 'press space / tap to start' : 'press space / tap when the box reaches you',
         cx, 140);
     }
   }

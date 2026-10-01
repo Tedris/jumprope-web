@@ -11,3 +11,7 @@ export function updateRope(rope, dt) {
 export function atFeet(rope) {
   return rope.phase >= 0.45 && rope.phase <= 0.55;
 }
+
+export function obstacleX(phase, width, cx = width / 2) {
+  return cx + (width - cx) * (1 - 2 * phase);
+}
