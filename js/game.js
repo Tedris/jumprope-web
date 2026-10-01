@@ -110,6 +110,7 @@ export function startGame(canvas) {
     ctx.fillStyle = '#f7f3e8';
     ctx.fillRect(0, 0, W, H);
     ctx.strokeStyle = '#3a3a55';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, H - 80);
     ctx.lineTo(W, H - 80);
@@ -121,17 +122,51 @@ export function startGame(canvas) {
     const bodyH = 70 * (2 - sq);
     const bodyW = 46 * sq;
     const yBase = feet - player.y;
+    const theta = rope.phase * Math.PI * 2;
+    const bob = Math.sin(theta) * 2;
+
     ctx.fillStyle = '#c94f6d';
     ctx.fillRect(cx - bodyW / 2, yBase - bodyH, bodyW, bodyH);
     ctx.beginPath();
-    ctx.arc(cx, yBase - bodyH - 16, 18 * Math.sqrt(sq), 0, Math.PI * 2);
+    ctx.arc(cx, yBase - bodyH - 16 + bob, 18 * Math.sqrt(sq), 0, Math.PI * 2);
     ctx.fill();
 
-    const angle = rope.phase * Math.PI * 2 - Math.PI / 2;
-    ctx.strokeStyle = '#7a5c3e';
+    const sway = Math.sin(theta) * 5;
+    const handY = yBase - bodyH - 6;
+    const lx = cx - bodyW / 2 - 4 + sway;
+    const rx = cx + bodyW / 2 + 4 + sway;
+    ctx.lineCap = 'round';
+
+    ctx.strokeStyle = '#a84b66';
+    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.arc(cx, yBase - bodyH - 16, 60, angle - Math.PI / 2, angle + Math.PI / 2);
+    ctx.moveTo(cx - bodyW / 2, yBase - bodyH + 6);
+    ctx.lineTo(lx, handY);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + bodyW / 2, yBase - bodyH + 6);
+    ctx.lineTo(rx, handY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#5f4327';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(lx, handY);
+    ctx.lineTo(lx - 6, handY + 9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(rx, handY);
+    ctx.lineTo(rx + 6, handY + 9);
+    ctx.stroke();
+
+    const bow = Math.sin(theta) * 12;
+    ctx.strokeStyle = '#7a5c3e';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(lx - 6, handY + 9);
+    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 58, rx + 6, handY + 9);
+    ctx.stroke();
+    ctx.lineWidth = 1;
 
     ctx.fillStyle = '#222';
     ctx.font = '32px sans-serif';
