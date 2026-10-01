@@ -164,7 +164,7 @@ export function startGame(canvas) {
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(lx - 6, handY + 9);
-    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 58, rx + 6, handY + 9);
+    ctx.quadraticCurveTo(cx + bow, handY - Math.cos(theta) * 130, rx + 6, handY + 9);
     ctx.stroke();
     ctx.lineWidth = 1;
 
