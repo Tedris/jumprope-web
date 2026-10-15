@@ -15,8 +15,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Architecture (ARCH)
 
-- [ ] **ARCH-01**: Simulation core stays pure, framework-free, and Node-testable while the 3D shell owns the only `three` import
-- [ ] **ARCH-02**: Run state resets through a single code path and randomness is injected — the two known debt smells (dual `phase: 0.33` init, inline `Math.random` in `tickRun`) are gone
+- [x] **ARCH-01**: Simulation core stays pure, framework-free, and Node-testable while the 3D shell owns the only `three` import
+- [x] **ARCH-02**: Run state resets through a single code path and randomness is injected — the two known debt smells (dual `phase: 0.33` init, inline `Math.random` in `tickRun`) are gone
 
 ### Cards (CARD)
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ARCH-01 | Phase 1 | Pending |
-| ARCH-02 | Phase 1 | Pending |
+| ARCH-01 | Phase 1 | Complete |
+| ARCH-02 | Phase 1 | Complete |
 | PRES-01 | Phase 2 | Pending |
 | PRES-02 | Phase 2 | Pending |
 | PRES-03 | Phase 2 | Pending |
