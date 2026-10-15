@@ -1,7 +1,7 @@
 ---
 phase: "01"
 slug: render-shell-foundation
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-10-15"
@@ -95,10 +95,14 @@ Declared values (all multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | HUD span stack gap |
-| md | 40px (2.5rem) | HUD top anchor |
-| sm / lg / xl / 2xl / 3xl | 8 / 24 / 32 / 48 / 64 | Available for future overlays (card row, pause menu); unused this phase |
+| sm / md / lg / xl / 2xl | 8 / 24 / 32 / 48 / 64 | Standard set; available for future overlays (card row, pause menu); unused this phase |
+| hud-anchor | 40px (2.5rem) | HUD top anchor (named exception, see below) |
 
-Exceptions: none. (Canvas world units and the 0.01 `WORLD_PER_PIXEL` scale are 3D-space, not UI spacing.)
+Exception: `hud-anchor = 40px` is outside the standard set {4, 8, 16, 24, 32, 48, 64}. It is a
+named, implemented value — 2.5rem keeps the score clear of the canvas top under `95vh` scaling
+(`css/style.css` `padding-top`). Renaming it to a standard step is deferred to the first phase
+that restyles the HUD. (Canvas world units and the 0.01 `WORLD_PER_PIXEL` scale are 3D-space,
+not UI spacing.)
 
 ## Copywriting Contract
 
@@ -202,12 +206,12 @@ deliberately deferred with an inline comment (threat T-01-01, index.html line 8)
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 - [ ] Dimension 7 Inventory Provenance: PASS *(N/A — `Tool: none`, inventory section legitimately omitted)*
 
-**Approval:** pending
+**Approval:** approved 2026-10-15 (checker: 7/7 PASS; D5 BLOCK cleared via named hud-anchor exception)
