@@ -460,16 +460,20 @@ rope = { phase: 0.33, period: 1.3 };
 | A4 | 0.33-phase / 0.1-hold-jump start semantics preserved verbatim in `startRun()` is the desired gameplay (no test pins it) | Pattern 5 | Gameplay feel shift — one-line constant change if so |
 | A5 | DOM-overlay HUD is acceptable as "not a second render path" under CONTEXT.md's wording | Pattern 4 | If rejected, switch to CanvasTexture-sprite HUD (4b) — contained in shell, no sim impact |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does Phase 1 need ANY scene lighting beyond flat boxes?**
+Both questions resolved at planning time; recommendations adopted verbatim in plan `01-01-PLAN.md` Task 1.
+
+1. **Does Phase 1 need ANY scene lighting beyond flat boxes?** — RESOLVED: unlit, per recommendation.
    - What we know: placeholder flat-box scene explicitly acceptable; `MeshBasicMaterial` needs no lights (three.js convention).
    - What's unclear: whether a directional light + `MeshLambertMaterial` is worth it already for silhouette readability.
    - Recommendation: start unlit `MeshBasicMaterial` (zero lighting code); add one light only if the flat scene is unreadable during smoke test.
-2. **Idle-state rope: frozen (current behavior) or gently animated?**
+   - Resolution: adopted unlit `MeshBasicMaterial`, zero lights — see `01-01-PLAN.md` Task 1 `<action>` (js/render3d.js scene: "unlit MeshBasicMaterial (flat placeholder, zero lights, no three/addons)") and its `<done>` criteria. Escalation route (add one light) stays open as a smoke-test judgment, no code planned.
+2. **Idle-state rope: frozen (current behavior) or gently animated?** — RESOLVED: frozen, per recommendation.
    - What we know: `step()` early-returns unless running [VERIFIED: js/game.js:101-102]; today's idle rope is static.
    - What's unclear: whether a static rope reads as "broken WebGL" in UAT.
    - Recommendation: keep frozen (zero code); the HUD "press space / tap to start" carries the idle affordance (mirror existing copy from `js/game.js:215-221`).
+   - Resolution: adopted frozen — see `01-01-PLAN.md` Task 1 `<action>` (shell.js delta (c): non-running states set prevPhase = rope.phase so the render is static; delta (e)/HUD copy mirrors the "press space / tap to start" idle prompt from js/game.js:215-221). Readability flagged for the Task 1 human-check smoke (end-of-phase UAT).
 
 ## Environment Availability
 
