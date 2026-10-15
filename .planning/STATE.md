@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Render-Shell Foundation
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-10-15T19:50:29.118Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-10-15T20:23:20.800Z"
 last_activity: 2026-10-15
-last_activity_desc: Roadmap created (5 phases, 22/22 requirements mapped)
-state_head: 3926b0e86d4eda75b9e754e535a034ac7fe532b3
+last_activity_desc: Phase 01 execution started
+state_head: a91a6e6c5d3a8c3a92ceeb4b91fb95e18054f34d
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-15)
 
 **Core value:** One button, one rope, one perfect rhythm loop — the jump-timing feel must be joyful before anything else works.
-**Current focus:** Phase 1 — Render-Shell Foundation
+**Current focus:** Phase 01 — Render-Shell Foundation
 
 ## Current Position
 
-Phase: 01 (Render-Shell Foundation) — READY TO EXECUTE
-Plan: 0 of TBD in current phase
+Phase: 01 (Render-Shell Foundation) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-10-15 — Roadmap created (5 phases, 22/22 requirements mapped)
+Last activity: 2026-10-15 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -42,6 +42,11 @@ Progress: [░░░░░░░░░░] 0%
 - Total execution time: 0.0 hours
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 15min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -54,6 +59,10 @@ Recent decisions affecting current work:
 - (init): Three.js r186 via pinned importmap is the one sanctioned dependency — render shell only
 - (init): Audio follows gameplay; rope phase is the canonical clock, no beat-lock
 - (research): Pure-core boundary must be secured first — `node --test` green with zero `three` imports in the sim graph
+- [Phase 01]: startRun() preserves the 0.33-phase / 0.1-hold-jump lead-in verbatim (~0.43 s to feet window; RESEARCH A4 — no test pins either)
+- [Phase 01]: rng injected as tickRun optional 5th default param (rng = Math.random); shell always overrides — flagged assumption A1 stands
+- [Phase 01]: three pinned to exact jsdelivr URL (0.186.1) with deliberate SRI deferral recorded inline (T-01-01); package.json stays dependency-free
+- [Phase 01]: TDD RED carried by new tests/startrun.test.js — four frozen test files stay byte-identical; plan 01-02 must not duplicate the determinism pin
 
 ### Pending Todos
 
@@ -73,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-15T17:30:19.066Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-render-shell-foundation/01-CONTEXT.md
+Last session: 2026-10-15T20:23:02.212Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
