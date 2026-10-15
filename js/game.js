@@ -1,12 +1,23 @@
 import { updateRope, atFeet } from './rope.js';
-import { jump, updatePlayer, clearsRope } from './player.js';
+import { jump, createPlayer, updatePlayer, clearsRope } from './player.js';
 import { UPGRADES, freshEffects, pickTwo, shouldOfferUpgrade } from './upgrades.js';
+
+export const START_PHASE = 0.33;
+export const ROPE_PERIOD = 1.3;
+
+export function startRun() {
+  return {
+    rope: { phase: START_PHASE, period: ROPE_PERIOD },
+    player: jump(createPlayer(), 0.1),
+    run: { ...createRun(), status: 'running' },
+  };
+}
 
 export function createRun() {
   return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null };
 }
 
-export function tickRun(run, rope, player, dt) {
+export function tickRun(run, rope, player, dt, rng = Math.random) {
   const nextRope = updateRope(rope, dt * run.effects.ropeMul);
   const nextPlayer = updatePlayer(player, dt, 1800 / run.effects.floatMul);
   let { score, skips, status, offer } = run;
@@ -20,7 +31,7 @@ export function tickRun(run, rope, player, dt) {
       skips += 1;
       if (shouldOfferUpgrade(skips)) {
         status = 'choose';
-        offer = pickTwo(UPGRADES, Math.random);
+        offer = pickTwo(UPGRADES, rng);
       }
     } else {
       status = 'over';

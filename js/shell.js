@@ -1,4 +1,4 @@
-import { createRun, tickRun, applyUpgrade, loadBest, saveBest } from './game.js';
+import { createRun, tickRun, applyUpgrade, loadBest, saveBest, startRun, ROPE_PERIOD } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
@@ -11,11 +11,12 @@ export function startGame(canvas) {
   canvas.width = W;
   canvas.height = H;
   const scene = createScene(canvas);
+  const rng = Math.random;
   const hudScore = document.getElementById('hud-score');
   const hudBest = document.getElementById('hud-best');
   const hudPrompt = document.getElementById('hud-prompt');
 
-  let rope = createRope(1.3);
+  let rope = createRope(ROPE_PERIOD);
   let player = createPlayer();
   let run = { ...createRun(), status: 'idle' };
   let prevPhase = rope.phase;
@@ -44,9 +45,7 @@ export function startGame(canvas) {
       if (run.status === 'running') {
         holdFrom = pressIntent;
       } else if (run.status === 'idle') {
-        rope = { phase: 0.33, period: 1.3 };
-        player = jump(player, 0.1);
-        run = { ...run, status: 'running' };
+        ({ rope, player, run } = startRun());
       }
       pressIntent = null;
     }
@@ -59,9 +58,7 @@ export function startGame(canvas) {
       } else if (run.status === 'over') {
         best = Math.max(best, run.score);
         saveBest(localStorage, best);
-        rope = { phase: 0.33, period: 1.3 };
-        player = jump(createPlayer(), 0.1);
-        run = createRun();
+        ({ rope, player, run } = startRun());
       }
       releaseIntent = false;
     }
@@ -91,7 +88,7 @@ export function startGame(canvas) {
       consumeIntents();
       if (run.status === 'running') {
         prevPhase = rope.phase;
-        const out = tickRun(run, rope, player, STEP);
+        const out = tickRun(run, rope, player, STEP, rng);
         ({ run, rope, player } = out);
         if (out.tripped) {
           best = Math.max(best, run.score);
