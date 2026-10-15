@@ -3,8 +3,8 @@ phase: "1"
 slug: "render-shell-foundation"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
-nyquist_compliant: false
+status: validated
+nyquist_compliant: true
 wave_0_complete: false
 created: "2026-10-15"
 ---
@@ -40,10 +40,10 @@ created: "2026-10-15"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 01-01-T1 | 01 | 1 | ARCH-01, ARCH-02 | T-01-01/02/04 | WebGL page loads via pinned importmap; sole-three-importer + no-2D-context + browser-IO-ownership (shell.js-only) greps | unit + hygiene greps | `node --test tests/` | ✅ (existing 4 files) | ⬜ pending |
-| 01-01-T2 | 01 | 1 | ARCH-02 | T-01-05 | Single startRun path; rng injection (literal-count + paren-free-aware Math.random-reference grep, determinism probe) | unit + greps | `node --test tests/` + plan-specified git-grep gates | ✅ | ⬜ pending |
-| 01-02-T1 | 02 | 2 | ARCH-01, ARCH-02 | T-01-04/05 | Import-graph walk fails red on a three injection (adversarial tooth-check included) | unit (static graph walk) | `node --test tests/boundary.test.js` | ❌ new file (plan 01-02) | ⬜ pending |
-| 01-02-T2 | 02 | 2 | ARCH-01 (SC-4 math) | — | Wrap-aware lerpPhase pinned against backwards-sweep regression | unit | `node --test tests/interpolate.test.js` | ❌ new file (plan 01-02) | ⬜ pending |
+| 01-01-T1 | 01 | 1 | ARCH-01, ARCH-02 | T-01-01/02/04 | WebGL page loads via pinned importmap; sole-three-importer + no-2D-context + browser-IO-ownership (shell.js-only) greps | unit + hygiene greps | `node --test tests/` | ✅ (existing + new) | ✅ green |
+| 01-01-T2 | 01 | 1 | ARCH-02 | T-01-07 | Single startRun path; rng injection (literal-count + paren-free-aware Math.random-reference grep, determinism probe) | unit + greps | `node --test tests/` + plan-specified git-grep gates | ✅ | ✅ green |
+| 01-02-T1 | 02 | 2 | ARCH-01, ARCH-02 | T-01-06/07 | Import-graph walk fails red on a three injection (adversarial tooth-check included) | unit (static graph walk) | `node --test tests/boundary.test.js` | ✅ | ✅ green |
+| 01-02-T2 | 02 | 2 | ARCH-01 (SC-4 math) | — | Wrap-aware lerpPhase pinned against backwards-sweep regression | unit | `node --test tests/interpolate.test.js` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -78,4 +78,12 @@ No MISSING-sentinel gaps remain: every task's `<verify>` carries a runnable `<au
 - [ ] Feedback latency < 10s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated 2026-10-15 (all automated commands green: 36/36)
+
+## Validation Audit 2026-10-15
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
