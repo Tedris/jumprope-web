@@ -5,9 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Jump Rope Roguelike</title>
   <link rel="stylesheet" href="css/style.css">
+  <!-- SRI deliberately deferred: exact-version-pinned immutable jsdelivr URL is the mitigation (see phase 01 threat model T-01-01) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js"
+      }
+    }
+  </script>
 </head>
 <body>
   <canvas id="game"></canvas>
-  <script type="module" src="js/game.js"></script>
+  <div id="hud" aria-hidden="true">
+    <span id="hud-score"></span>
+    <span id="hud-best"></span>
+    <span id="hud-prompt"></span>
+  </div>
+  <script type="module" src="js/shell.js"></script>
 </body>
 </html>

@@ -8,3 +8,18 @@ canvas {
   width: auto;
   height: auto;
 }
+#hud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 2.5rem;
+  color: #222;
+  font: 16px sans-serif;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+#hud-score { font-size: 32px; }
