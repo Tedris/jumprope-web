@@ -30,7 +30,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `node --test tests/` passes with test files unchanged, and no module in the sim/test import graph touches `three` (a grep-boundary test enforces it)
   3. Starting or resetting a run goes through one single code path, and all sim randomness flows through an injected `rng` — the dual `phase: 0.33` init and inline `Math.random` in `tickRun` are gone
   4. The drawn rope derives from the canonical `rope.phase` clock (one time source, prev/curr interpolation) — visuals never drift from scoring under load
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 01-01-PLAN.md — Walking Skeleton: three-file split, importmap-pinned WebGL shell, single startRun path + injected rng
+- [ ] 01-02-PLAN.md — Mechanical fences: import-graph boundary test, ARCH-02 debt greps, lerpPhase unit pinning
 **UI hint**: yes
 
 ### Phase 2: PS1 Presentation & Scene
