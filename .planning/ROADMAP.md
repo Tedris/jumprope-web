@@ -21,6 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Render-Shell Foundation
+
 **Goal**: The game plays end-to-end through a WebGL shell while the simulation core stays pure, single-clocked, and Node-testable — the boundary every later phase depends on
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
@@ -30,12 +31,18 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `node --test tests/` passes with test files unchanged, and no module in the sim/test import graph touches `three` (a grep-boundary test enforces it)
   3. Starting or resetting a run goes through one single code path, and all sim randomness flows through an injected `rng` — the dual `phase: 0.33` init and inline `Math.random` in `tickRun` are gone
   4. The drawn rope derives from the canonical `rope.phase` clock (one time source, prev/curr interpolation) — visuals never drift from scoring under load
+
 **Plans**: 2 plans
+**Wave 1**
 - [ ] 01-01-PLAN.md — Walking Skeleton: three-file split, importmap-pinned WebGL shell, single startRun path + injected rng
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-02-PLAN.md — Mechanical fences: import-graph boundary test, ARCH-02 debt greps, lerpPhase unit pinning
+
 **UI hint**: yes
 
 ### Phase 2: PS1 Presentation & Scene
+
 **Goal**: The milestone headline — the game looks authentically PS1 and an original character's rope arrival is readable purely from the frame
 **Mode:** mvp
 **Depends on**: Phase 1
@@ -45,10 +52,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Player sees an original low-poly skipping character with personality, animated from the rope-phase clock — not a Scarlet Skips lookalike
   3. Player can judge rope arrival purely from the frame: fixed camera, blob-shadow depth cue, rope readable against the floor through the whole arc
   4. The scene renders correctly at the browser's full window size without first-frame shader freeze (precompile during idle)
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 3: Card Catalogue Realness
+
 **Goal**: The pick-two moment becomes a real decision — an expanded, balanced original catalogue where every offer is meaningful and every choice lands
 **Mode:** mvp
 **Depends on**: Phases 1 and 2
@@ -59,10 +68,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Cards stack up to visible per-card caps, and offers are filtered so a dead pick can never appear
   4. Player sees their owned cards as an icon strip during the run
   5. The catalogue holds 6–10+ original cards spanning margin/volume/risk/foundation/pace roles, passes a 1000-tick headless scripted-card simulation (no NaN, rope phase stays in safe wrap bounds, one score event per cycle)
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 4: Feel & Audio
+
 **Goal**: The core-value loop feels joyful and sounds alive — presses are forgiven, moments get juice, and audio just works from the first tap
 **Mode:** mvp
 **Depends on**: Phase 3
@@ -73,9 +84,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Player hears distinct SFX for jump, skip, near-miss, trip, and card-pick over a looping vibe track — and the rope never locks to the music
   4. Audio "just works": cold load, the first press produces sound (Chrome, Firefox, iOS Safari), no silent broken state
   5. Player can mute and set volume; settings persist across sessions
+
 **Plans**: TBD
 
 ### Phase 5: Accessibility & Polish
+
 **Goal**: The game respects system preferences and survives real-world browser behavior without breaking judgment or legibility
 **Mode:** mvp
 **Depends on**: Phases 1, 2, 3, and 4
@@ -85,6 +98,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `prefers-reduced-motion` dampens wobble and shake automatically, without disabling gameplay readability
   3. The low-res UI stays legible at any window size (resize/letterbox handling)
   4. No stuck-hold state after blur or `pointercancel` — input reducer hardening ported into the new shell
+
 **Plans**: TBD
 **UI hint**: yes
 
