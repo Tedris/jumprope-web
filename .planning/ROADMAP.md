@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Starting or resetting a run goes through one single code path, and all sim randomness flows through an injected `rng` — the dual `phase: 0.33` init and inline `Math.random` in `tickRun` are gone
   4. The drawn rope derives from the canonical `rope.phase` clock (one time source, prev/curr interpolation) — visuals never drift from scoring under load
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 **Wave 1**
 - [x] 01-01-PLAN.md — Walking Skeleton: three-file split, importmap-pinned WebGL shell, single startRun path + injected rng
 
@@ -40,7 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 01-02-PLAN.md — Mechanical fences: import-graph boundary test, ARCH-02 debt greps, lerpPhase unit pinning
 
 **Wave 3** *(gap closure G-01-1, blocked on Waves 1–2 completion)*
-- [ ] 01-03-PLAN.md — Fix createScene return contract (scene.render TypeError froze rAF loop), Node contract pin, render-throw isolation
+- [x] 01-03-PLAN.md — Fix createScene return contract (scene.render TypeError froze rAF loop), Node contract pin, render-throw isolation
 
 **UI hint**: yes
 
@@ -112,7 +112,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Render-Shell Foundation | 2/2 | In Progress | - |
+| 1. Render-Shell Foundation | 3/3 | In Progress | - |
 | 2. PS1 Presentation & Scene | 0/? | Not started | - |
 | 3. Card Catalogue Realness | 0/? | Not started | - |
 | 4. Feel & Audio | 0/? | Not started | - |

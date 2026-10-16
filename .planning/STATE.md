@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Render-Shell Foundation
-status: verifying
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-10-15T20:36:49.951Z"
+status: executing
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-10-16T01:50:50.439Z"
 last_activity: 2026-10-15
 last_activity_desc: Phase 01 execution started
-state_head: 53ff65d968197e5cc538b3f5be577d7b8817675c
+state_head: a5ca11bab7ce57e80551ba39e49a58c40670d469
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 0
 ---
 
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 ## Current Position
 
 Phase: 01 (Render-Shell Foundation) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-10-15 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 15min | 2 tasks | 7 files |
 | Phase 01 P02 | 10min | 2 tasks | 3 files |
+| Phase 01 P03 | 4 min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 01]: js/game.js reached via await import() in boundary test 4 so adversarial 'three' taints surface via the walk offender list, not a loader crash
 - [Phase 01]: set git.allow_default_branch_commits=true: branching_strategy is none and all history is on master (#3819 guard override)
 - [Phase 01]: plan-mandated startRun/determinism pins kept in boundary.test.js despite startrun.test.js overlap — fence self-containment wins
+- [Phase 01]: createScene fixed on the render3d side (returns { render }) rather than the shell call site — create*-factory convention wins; pinned by WebGL-free data: URL stub-import test
+- [Phase 01]: shell frame() wraps only scene.render in try/catch; rAF re-arms unconditionally so a renderer throw can no longer freeze input (T-01-08)
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-15T20:36:49.938Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-10-16T01:50:50.410Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
