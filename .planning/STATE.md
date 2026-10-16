@@ -74,7 +74,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- [2026-10-16] [ui] Bring back a proper 3D jump rope to the WebGL scene — [todo file](.planning/todos/pending/2026-10-16-bring-back-a-proper-3d-jump-rope-to-the-webgl-scene.md)
 
 ### Blockers/Concerns
 
