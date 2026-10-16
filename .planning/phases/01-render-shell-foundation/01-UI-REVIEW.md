@@ -124,3 +124,41 @@ Not applicable — no `components.json`, no shadcn, no third-party UI registries
 - `js/shell.js`, `js/render3d.js`
 - `js/game.js` (catch-block spot check), phase `01-01-SUMMARY.md`, `01-02-SUMMARY.md`
 - Repo-wide greps: hex colors, user-facing strings, generic labels, innerHTML, aria/position, loading/error/empty state patterns, animation-clock usage
+
+---
+
+## Gap-closure increment (01-03) — 2026-10-15 addendum
+
+**Scope:** commits `ce8cb6c..7bd7e18` — `js/render3d.js` createScene return shape (G-01-1 GREEN), `js/shell.js` frame() try/catch belt, `tests/render3d.test.js` + `tests/shell.test.js`. No HTML, CSS, design tokens, copy strings, or scene geometry changed in the increment (`git diff --stat` confirms: only the two js/ files + `.planning/` docs). Baseline scores above stand unchanged; this section audits only regression surface.
+
+**Verdict: UI-neutral-to-positive. No pillar regresses; Experience Design gains resilience margin. All six scores and the 19/24 total are reaffirmed.**
+
+### Change-by-change assessment
+
+| Change | User-visible surface | Verdict |
+|---|---|---|
+| `createScene` returns `{ render }` instead of the bare closure (render3d.js:42–49) | None at the pixel level — shell's call site `scene.render({...})` (shell.js:104) is shape-compatible with both; the fix *removes* the first-frame TypeError that froze the game permanently at the idle prompt `press space / tap to start` (G-01-1 / debug log) | ✅ Strict improvement — the increment deleted the phase's most severe user-facing failure mode (core loop uncompletable); no contract string or visual changed |
+| try/catch + `console.error('render failed:', err)` around `scene.render` in `frame()` (shell.js:103–107) | `console.error` is developer-visible only; zero on-page copy added. `updateHud()` runs before the render call (shell.js:102), so under a persistent renderer throw the HUD, simulation, and input stay live while the canvas holds the last drawn frame — a "silent degraded" state replacing the previous total freeze (listeners bound but `consumeIntents` never running) | ✅ No UI-SPEC contract row changes; spec error-state copy (`Missed! Score {N}`, UI-SPEC:118) and all 7 copy strings byte-unchanged (verified via `git diff`) |
+| New Node-only tests (render3d.test.js, shell.test.js) | None — never shipped to browser | ✅ n/a |
+
+### Pillar regression check
+
+- **Pillars 1–5: zero delta.** No string, color literal, font, spacing, or scene-graph edit in the increment (grep inventory identical to baseline: same 7 hexes, 2 sizes, 1 weight; `updateHud` untouched).
+- **Pillar 6 (Experience Design): reaffirmed 2/4, floor raised.** The frame loop now survives renderer exceptions (automated in `tests/shell.test.js`: rAF re-arms across 3 consecutive throw-frames; a space keydown still transitions idle → running during a failure storm). The 2/4 score is still held down by the *unchanged* CDN-load-failure silent brick (spec row UI-SPEC:195, ⚠ unresolved) — the belt protects post-boot throws but cannot fire pre-boot, when `three` itself never loads.
+
+### Increment-sourced observations (minor, not scored)
+
+1. **`console.error` is unthrottled** — a persistent per-frame renderer throw logs at up to display refresh rate (~60/s), spamming DevTools (Chrome coalesces repeats, so practical harm is low). Recommend a once/latched flag (`let renderFailed = false`) logging only the first throw, in a later pass.
+2. **Persistent-render-failure degradation is user-silent** — stale canvas + live HUD is confusing if it ever occurs. This is the same failure-feedback gap as baseline priority fix 1; when the load-failure watchdog/`vendor/three` fallback lands, extend it to surface a "graphics hiccup — reload" message on latched render failure too. Post-boot throws are a remote path (three@0.186.1 stable surface), so this stays a forward note, not a warning.
+
+### Registry safety (increment)
+
+No change — no `components.json`, no shadcn, no third-party registries. Sole external dependency remains the importmap-pinned `three@0.186.1` (index.html, unchanged in the increment).
+
+### Files audited (increment)
+
+- `git diff ce8cb6c..7bd7e18` (full), `js/shell.js` (current), `js/render3d.js` (current)
+- `01-03-PLAN.md`, `01-VALIDATION.md` (T-01-08 automation evidence), `01-UI-SPEC.md` rows 118/188–197
+- `node --test tests/` run: 42 pass / 0 fail
+
+**Screenshots:** not captured (no dev server on 3000/5173/8080) — increment has no renderable delta, so no visual backstop was forfeited.
