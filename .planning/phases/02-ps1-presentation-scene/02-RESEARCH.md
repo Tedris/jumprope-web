@@ -418,22 +418,22 @@ shadow.material.opacity = 0.45 / (1 + view.player.y * WORLD_PER_PIXEL * 0.8);
 | A5 | `renderer.compile` cost at `createScene` time is small enough to skip `compileAsync` | Pitfall 5 | Swap to verified `compileAsync` — same file, 1-line change |
 | A6 | PS1 dithering pattern belongs at framebuffer (internal) resolution, not canvas resolution | Pitfall 3 | Visual style only; spike confirms |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Where does the idle-state animation clock come from?**
+1. **Where does the idle-state animation clock come from?** — RESOLVED: adopted `view.now = now`, the rAF timestamp argument already in scope at `js/shell.js:83`; zero extra IO calls, render-side cosmetic use only. Implemented by plan 02-02 Task 2 (payload field) and read only for idle/trip cosmetics in plan 02-03 Task 3; the running-pose path never consults it.
    - What we know: `rope.phase` frozen in idle [VERIFIED: js/shell.js:87-99]; wall-clock forbidden in render3d.js by fence truth 9.
    - What's unclear: whether the planner prefers a new `view.now` field vs. a shell-side frame counter.
    - Recommendation: `view.now = now` (the rAF timestamp argument already exists at `js/shell.js:83` — zero extra IO calls); render-side cosmetic use only.
 
-2. **Does the precompile need to also cover the post-pass scene, and is one `compile()` call per scene enough?**
+2. **Does the precompile need to also cover the post-pass scene, and is one `compile()` call per scene enough?** — RESOLVED: two explicit `compile()` calls (scene + postScene) at the end of `createScene`, adopted verbatim in plans 02-01 Task 1 and 02-02 Task 1; the eyeball checks "no hitch at page load / first space-press" live in the spike checklist (02-01 Task 2 item f) and 02-02 Task 1's human-check.
    - What we know: `compile(scene, camera)` compiles materials of the traversed scene [VERIFIED signature/behavioral contract: three.module.js:17433]; the dither quad lives in a separate `postScene`.
    - Recommendation: two explicit `compile()` calls; add an eyeball check "no hitch at first space-press" to the spike checklist.
 
-3. **Is a tiny ambient fill allowed alongside D-05's "one directional light"?**
+3. **Is a tiny ambient fill allowed alongside D-05's "one directional light"?** — RESOLVED: settled at the spike sign-off, not by adding a light — plan 02-01 Task 2 step 3 directs raising directional intensity or flat vertex colors over adding `AmbientLight` to keep D-05 literal; the final answer (including whether any ambient fill was deemed necessary, with the D-05 note) is recorded in the spike's `## Look Decisions` section.
    - What we know: pure single-dir Lambert puts camera-facing faces near-black before dither — possibly the desired moody look (D-07), possibly unreadable at 240p.
    - Recommendation: settle in the spike; if needed, prefer raising directional intensity or flat vertex colors over adding `AmbientLight`, to keep D-05 literal.
 
-4. **Canvas buffer strategy for criterion 4** — window-sized buffer (shell sets `canvas.width/height = window`, CSS stops scaling) vs. current fixed 480×640 + CSS upscale [VERIFIED: js/shell.js:6-7,11-12; css/style.css aspect-ratio/`image-rendering: pixelated`].
+4. **Canvas buffer strategy for criterion 4** — RESOLVED: window-sized buffer adopted — plan 02-02 Task 2 sets `canvas.width/height` from `window.innerWidth/Height` (coerced) and switches CSS to 100vw/100vh; the internal RT keeps the PS1 pixel density. Letterbox polish stays Phase 5 (echoed in 02-02's Flagged Assumptions). [VERIFIED: js/shell.js:6-7,11-12; css/style.css aspect-ratio/`image-rendering: pixelated`].
    - Recommendation: window-sized buffer + internal RT is the cleanest reading of "renders correctly at the browser's full window size"; letterbox polish stays Phase 5.
 
 ## Environment Availability
