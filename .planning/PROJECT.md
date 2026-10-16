@@ -17,15 +17,15 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 - ✓ Fixed-timestep pure simulation core, testable in Node — existing (`js/game.js`, `tests/`)
 - ✓ Pick-two upgrade offers every 10 skips with effect multipliers — existing (`js/upgrades.js`)
 - ✓ Run state machine (idle → running → choose → over) with best-score persistence — existing (`js/game.js`)
+- ✓ Draw-layer replacement: Canvas 2D shell swapped for a WebGL shell that reads the same immutable simulation state each frame — Phase 1 (`js/shell.js`, `js/render3d.js`)
+- ✓ Simulation core preserved: pure functions, injectable randomness, Node-testable — no gameplay logic inside the render layer — Phase 1 (ARCH-01/02, boundary test in `tests/boundary.test.js`)
 
 ### Active
 
 - [ ] PS1-style 3D presentation: Three.js (via CDN) rendering the simulation state at low internal resolution with vertex snapping, flat shading, and dithering
 - [ ] Original low-poly character (skipping figure) and a small stylized stage — not a Scarlet lookalike
-- [ ] Draw-layer replacement: Canvas 2D shell swapped for a WebGL shell that reads the same immutable simulation state each frame
 - [ ] Card catalogue: expand the upgrade set from 4 effect multipliers into a real catalogue with rarity, stacking rules, and clearer card identity
 - [ ] SFX and a looping vibe track via WebAudio (no beat-lock; rope stays free-running)
-- [ ] Simulation core preserved: pure functions, injectable randomness, Node-testable — no gameplay logic inside the render layer
 
 ### Out of Scope
 
@@ -55,7 +55,7 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 |----------|-----------|---------|
 | Demake the *spirit*, not the letter | Own the design; avoid cloning card lists/story | — Pending |
 | Low-end 3D (PS1-style) over 2D | Player pull toward PS1 demake aesthetic; low-poly look is cheap to render | — Pending |
-| Three.js via CDN | Pragmatic WebGL; breaks zero-dep rule once, contained to the render shell | — Pending |
+| Three.js via CDN | Pragmatic WebGL; breaks zero-dep rule once, contained to the render shell | ✓ Working — importmap-pinned `three@0.186.1`, full run playable through WebGL shell (Phase 1) |
 | Deeper in-run cards, no meta progression | Roguelike depth without long-term balance burden this cycle | — Pending |
 | SFX + music without beat-lock | Keep rope phase as free canonical clock; audio follows gameplay | — Pending |
 | Original character/stage | Avoid Scarlet lookalike; demake of the idea, not the IP | — Pending |
@@ -78,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-15 after initialization*
+*Last updated: 2026-10-16 after Phase 1*

@@ -12,7 +12,7 @@ A brownfield evolution of a working vanilla-JS Canvas prototype into a PS1-style
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Render-Shell Foundation** - Split sim from shell, pin Three.js via importmap, render the playable game as placeholder 3D with one canonical clock
+- [x] **Phase 1: Render-Shell Foundation** - Split sim from shell, pin Three.js via importmap, render the playable game as placeholder 3D with one canonical clock (completed 2026-10-16)
 - [ ] **Phase 2: PS1 Presentation & Scene** - Low-res dithered wobble look, original low-poly character, readable fixed-camera rope judgment
 - [ ] **Phase 3: Card Catalogue Realness** - Real card choice, identity/rarity/stack caps/dead-pick filtering, 6–10+ card catalogue with owned-card HUD
 - [ ] **Phase 4: Feel & Audio** - Input forgiveness, significance-scaled juice, near-miss callouts, full WebAudio SFX + loop with persisted mute/volume
@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Starting or resetting a run goes through one single code path, and all sim randomness flows through an injected `rng` — the dual `phase: 0.33` init and inline `Math.random` in `tickRun` are gone
   4. The drawn rope derives from the canonical `rope.phase` clock (one time source, prev/curr interpolation) — visuals never drift from scoring under load
 
-**Plans**: 3/3 plans executed
+**Plans**: 3/3 plans complete
 **Wave 1**
 - [x] 01-01-PLAN.md — Walking Skeleton: three-file split, importmap-pinned WebGL shell, single startRun path + injected rng
 
@@ -112,7 +112,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Render-Shell Foundation | 3/3 | In Progress | - |
+| 1. Render-Shell Foundation | 3/3 | Complete    | 2026-10-16 |
 | 2. PS1 Presentation & Scene | 0/? | Not started | - |
 | 3. Card Catalogue Realness | 0/? | Not started | - |
 | 4. Feel & Audio | 0/? | Not started | - |
