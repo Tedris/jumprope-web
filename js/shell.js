@@ -100,7 +100,11 @@ export function startGame(canvas) {
       acc -= STEP;
     }
     updateHud();
-    scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best });
+    try {
+      scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best });
+    } catch (err) {
+      console.error('render failed:', err);
+    }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
