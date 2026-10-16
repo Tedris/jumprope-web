@@ -39,10 +39,12 @@ export function createScene(canvas) {
   obstacle.position.y = 0.2;
   scene.add(obstacle);
 
-  return function render(view) {
+  function render(view) {
     const phase = lerpPhase(view.prevPhase, view.rope.phase, view.alpha);
     obstacle.position.x = worldX(phase);
     playerBox.position.y = view.player.y * WORLD_PER_PIXEL;
     renderer.render(scene, camera);
-  };
+  }
+
+  return { render };
 }
