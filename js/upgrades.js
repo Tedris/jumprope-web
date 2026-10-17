@@ -11,6 +11,20 @@ export const CARDS = [
   { id: 'window', name: 'Wide Stance', desc: '+10% clearance forgiveness', icon: '◇',
     role: 'margin', color: 'mint', rarity: 'uncommon', cap: 3,
     apply: s => ({ ...s, windowMul: s.windowMul * 1.1 }) },
+  { id: 'feather', name: 'Featherweight', desc: '+5% hang time', icon: '✽',
+    role: 'foundation', color: 'sky', rarity: 'common', cap: 5,
+    apply: s => ({ ...s, floatMul: s.floatMul * 1.05 }) },
+  { id: 'tally', name: 'Lucky Tally', desc: '+15% skip score', icon: '♣',
+    role: 'volume', color: 'amber', rarity: 'uncommon', cap: 3,
+    apply: s => ({ ...s, scoreMul: s.scoreMul * 1.15 }) },
+  // Pitfall 1 policy: the ONLY ropeMul-up card — cap 2 holds stacked ropeMul
+  // to 1.12^2 ≈ 1.25, five-fold inside the ≈15.6 feet-window blackout bound.
+  { id: 'windup', name: 'Wind-Up Handle', desc: '+12% rope speed, +1 score', icon: '⚙',
+    role: 'risk', color: 'ember', rarity: 'rare', cap: 2,
+    apply: s => ({ ...s, ropeMul: s.ropeMul * 1.12, scoreMul: s.scoreMul + 1 }) },
+  { id: 'widebrim', name: 'Wide Brim', desc: '+20% forgiveness, −0.25 score', icon: '⌸',
+    role: 'margin', color: 'mint', rarity: 'uncommon', cap: 2,
+    apply: s => ({ ...s, windowMul: s.windowMul * 1.2, scoreMul: s.scoreMul - 0.25 }) },
 ];
 
 // Compat alias: tests/upgrades.test.js freezes the UPGRADES named export.

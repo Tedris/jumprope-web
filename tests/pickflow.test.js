@@ -140,12 +140,9 @@ function cursorIndex(env) {
 }
 
 // ~0.45 s of pumped frames ≈ the 0.1-hold lead-in jump still airborne.
-const EXPECT_EFFECT = {
-  float: ['floatMul', 1.15],
-  slowrope: ['ropeMul', 0.9],
-  multi: ['scoreMul', 2],
-  window: ['windowMul', 1.1]
-};
+// Effect expectations are derived from the picked record itself
+// (picked.apply(neutral)) so the check stays green as the roster grows.
+const NEUTRAL_EFFECTS = { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1 };
 
 test('choose renders one offer line per card: cursor, icon, name, cap readout', async () => {
   const env = await bootShell();
@@ -220,8 +217,10 @@ test('hold confirms once while held; release and lock never charge a jump (D-03/
     // Confirm fired WHILE STILL HELD, exactly once.
     assert.equal(done.run.status, 'running');
     assert.equal(done.run.owned[picked.id], 1, 'owned count landed before any later input');
-    const [field, want] = EXPECT_EFFECT[picked.id];
-    assert.ok(Math.abs(done.run.effects[field] - want) < 1e-9, 'the effect applied instantly');
+    const want = picked.apply({ ...NEUTRAL_EFFECTS });
+    for (const [field, value] of Object.entries(want)) {
+      assert.ok(Math.abs(done.run.effects[field] - value) < 1e-9, `the ${field} effect applied instantly`);
+    }
     // D-06: re-entry through the shared lead-in.
     assert.ok(done.rope.phase >= 0.33 && done.rope.phase < 0.5, 'rope back to the lead-in phase');
     assert.equal(done.player.grounded, false, 'lead-in jump airborne');
