@@ -14,8 +14,9 @@ const FLOOR = 0x3a4a42;        // D-07: dusty green floor
 const ROSE = 0xc94f6d;         // D-07/D-13: prototype accent — the jumper pops against the moody stage
 const PROP = 0x1d2630;         // D-07/D-18: dark props — handles, cap, eyes (later: silhouettes)
 const PALE = 0xf4f0d8;         // D-09: rope pale — unlit and fog-exempt so it stays max-bright
-const ROPE_RADIUS = 1.0;       // D-10: arc radius ≈ player height (chibi rig tops out ≈ 1.3)
-const HANDLE_HEIGHT = 1.05;    // D-08: rope pivot at handle height
+const ROPE_RADIUS = 0.75;      // D-10: rope reach clears head (≈1.35) and floor from the hip-high hands axis
+const HANDLE_HEIGHT = 0.7;     // D-08: hands axis at hip height — the rope sweeps about this X axis
+const HANDLE_SPAN = 0.5;       // hands' |x|: rope ends converge here; shoulders can reach it
 // Live look-tuning during UAT: append ?light=&fogNear=&fogFar= to override.
 // Browser-only read; Node/test import path always takes the shipped defaults.
 const LOOK_KNOBS = (() => {
@@ -186,12 +187,14 @@ export function createScene(canvas) {
 
   const armL = new THREE.Group();
   armL.position.set(-0.24, 0.27, 0);                    // shoulders ≈ 0.62 world
+  armL.rotation.z = -1.88;                              // hands out at the handles (hip-high rope axis)
   torsoGroup.add(armL);
   const armLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.1), limbMat);
   armLMesh.position.set(0, -0.16, 0);
   armL.add(armLMesh);
   const armR = new THREE.Group();
   armR.position.set(0.24, 0.27, 0);
+  armR.rotation.z = 1.88;
   torsoGroup.add(armR);
   const armRMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.1), limbMat);
   armRMesh.position.set(0, -0.16, 0);
@@ -210,18 +213,21 @@ export function createScene(canvas) {
   legRMesh.position.set(0, -0.175, 0);
   legR.add(legRMesh);
 
-  // Rope (D-08/D-10): sag-baked circle sampled into a CatmullRomCurve3 and a
-  // TubeGeometry, both constructed ONCE (T-02-10 — no per-frame geometry).
-  // The bottom quadrant (curve-local +Y, world-down when theta = PI) bulges
-  // slightly outward so the sagged low point is visually unmistakable.
+  // Rope (D-08/D-10): sag-baked HAND-TO-HAND ARC (curve-local semicircle
+  // through the two handles at (±ROPE_RADIUS, 0, 0)) sampled into a
+  // CatmullRomCurve3 and a TubeGeometry, both constructed ONCE (T-02-10 —
+  // no per-frame geometry). The mid-rope point (curve-local +Y) bulges
+  // slightly outward so the sagged low point is visually unmistakable when
+  // it sweeps to world-down at theta = PI. Sweeping the pivot about X (the
+  // hands axis) foreshortens the arc at the camera like a real rope; the
+  // old in-screen Z-spin showed a static circle silhouette.
   const ropePts = [];
-  for (let k = 0; k < 16; k++) {
-    const a = (k / 16) * Math.PI * 2;
-    const dip = Math.max(0, Math.sin(a));
-    const sag = dip * dip * 0.1;
+  for (let k = 0; k < 9; k++) {
+    const a = (k / 8) * Math.PI;                       // handle -> over the head -> handle
+    const sag = Math.sin(a) * Math.sin(a) * 0.06;      // mid-rope outward bulge
     ropePts.push(new THREE.Vector3(
-      ROPE_RADIUS * Math.cos(a) * (1 - sag * 0.4),
-      ROPE_RADIUS * Math.sin(a) + sag,
+      Math.cos(a) * (HANDLE_SPAN + (ROPE_RADIUS - HANDLE_SPAN) * Math.sin(a)),
+      ROPE_RADIUS * Math.sin(a) + sag,                 // widest aloft, converging at the hands
       0
     ));
   }
@@ -238,10 +244,10 @@ export function createScene(canvas) {
 
   const handleGeo = new THREE.BoxGeometry(0.08, 0.18, 0.08);   // D-12: handles turn with the arc
   const handleL = new THREE.Mesh(handleGeo, propMat);
-  handleL.position.set(-ROPE_RADIUS, 0, 0);
+  handleL.position.set(-HANDLE_SPAN, 0, 0);
   ropePivot.add(handleL);
   const handleR = new THREE.Mesh(handleGeo, propMat);
-  handleR.position.set(ROPE_RADIUS, 0, 0);
+  handleR.position.set(HANDLE_SPAN, 0, 0);
   ropePivot.add(handleR);
 
   const sun = new THREE.DirectionalLight(0xffffff, LIGHT_INTENSITY);   // D-05: the one light
@@ -326,7 +332,8 @@ export function createScene(canvas) {
       // deliberately slower than any gameplay sweep so the states never mix.
       const now = view.now ?? 0;
       rig.position.y = Math.sin(now / 400) * 0.05;      // small breath bob
-      ropePivot.rotation.z = now / 1400;                // slow rope twirl
+      ropePivot.rotation.x = -now / 1400;               // slow rope twirl about the hands axis
+      ropePivot.rotation.z = 0;
       beat = now / 1400;
       armL.rotation.x = Math.sin(beat);
       armR.rotation.x = -Math.sin(beat);
@@ -337,8 +344,9 @@ export function createScene(canvas) {
       // short damped shake — closed-form in view.now deltas, no RNG and no
       // accumulator (T-02-09); bigger juice stays Phase 4.
       rig.position.y = 0;
-      ropePivot.rotation.z = -Math.PI +
+      ropePivot.rotation.x = -Math.PI +
         Math.sin(((view.now ?? 0) - tripAt) * 42) * Math.exp(-((view.now ?? 0) - tripAt) / 200);
+      ropePivot.rotation.z = 0;
       armL.rotation.x = 0;
       armR.rotation.x = 0;
       legL.rotation.x = 0;
@@ -346,12 +354,14 @@ export function createScene(canvas) {
     } else {
       rig.position.y = playerY * WORLD_PER_PIXEL;
       // Convention (PRES-03): theta = PI places the tube's sagged low point
-      // at the feet — the curve's bulge lives at local +Y, which rotates to
-      // world-down at rotation.z = -PI, matching atFeet's 0.45–0.55 phase
-      // window (js/rope.js:11-13) where the score tick fires.
-      ropePivot.rotation.z = -theta;
-      armL.rotation.x = Math.sin(theta);                // arms track the rope, antiphase pair
-      armR.rotation.x = -Math.sin(theta);
+      // at the feet — the curve's bulge lives at local +Y, which sweeps to
+      // world-down at rotation.x = -PI about the hands axis (R_x(-PI) maps
+      // +Y -> -Y), matching atFeet's 0.45–0.55 phase window (js/rope.js:11-13)
+      // where the score tick fires.
+      ropePivot.rotation.x = -theta;
+      ropePivot.rotation.z = 0;
+      armL.rotation.x = Math.sin(theta) * 0.25;         // light antiphase sway; hands stay near the handles
+      armR.rotation.x = -Math.sin(theta) * 0.25;
       const airborne = playerY > 0;                     // tuck keyed off sim height, never its own timer
       legL.rotation.x = airborne ? -0.7 : 0;
       legR.rotation.x = airborne ? 0.4 : 0;
