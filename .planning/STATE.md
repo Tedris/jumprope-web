@@ -6,7 +6,7 @@ status: executing
 stopped_at: Completed 03-03-PLAN.md
 last_updated: "2026-10-17T16:52:21.691Z"
 last_activity: 2026-10-17
-last_activity_desc: Completed plan 03-02 (catalogue expansion + unit suite)
+last_activity_desc: Completed plan 03-03 (headless-sim criterion-5 gate)
 state_head: ece6ec6c01222ca57b4cdfcc5fa8588e0f58f2ea
 progress:
   total_phases: 5
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-10-16)
 
 ## Current Position
 
-Phase: 03 (Card Catalogue Realness) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute 03-03 (final plan: headless-sim gate)
-Last activity: 2026-10-17 — Phase 03 execution started
+Phase: 03 (Card Catalogue Realness) — plans complete (3/3), awaiting phase verification / end-of-phase UAT
+Plan: 3 of 3 complete
+Status: All Phase 03 plans executed; automated gate green (66 tests, fail 0)
+Last activity: 2026-10-17 — Completed 03-03 (criterion-5 headless-sim gate)
 
 Progress: [████░░░░░░] 40%
 
@@ -100,7 +100,7 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - Phase 2: mandatory ½-day look-spike — `onBeforeCompile` chunk names unverified against `three@0.186.1` (fallback: `RetroPassNode` or plain flat-shaded low-res)
-- Phase 3: "extra ropes" multi-window scoring — spike-or-defer decision inside the phase; rope-wrap fix must precede any ropeMul-stacking card
+- Phase 3: RESOLVED (03-02/03-03) — extra-ropes deferred as v2 (CARD-08); rope-wrap blocker closed by construction: cap-policy bound test + per-cycle score assertion in tests/headless-sim.test.js, rope.js byte-identical
 
 ## Deferred Items
 
