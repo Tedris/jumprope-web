@@ -17,15 +17,29 @@ const testsDir = dirname(fileURLToPath(import.meta.url));
 const render3dPath = resolve(testsDir, '..', 'js', 'render3d.js');
 const interpolateHref = pathToFileURL(resolve(testsDir, '..', 'js', 'interpolate.js')).href;
 
+// The stub surface covers the whole Phase-2 scene build (RESEARCH Pitfall 6):
+// the 02-02 pipeline symbols plus Plan 03's rope/character/stage symbols, so
+// later scene work needs no further stub edits.
 const THREE_STUB_HREF = 'data:text/javascript,' + encodeURIComponent([
+  'export const NearestFilter = 1003;',
   'export class Vec3 {',
   '  constructor() { this.x = 0; this.y = 0; this.z = 0; }',
   '  set(x, y, z) { this.x = x; this.y = y; this.z = z; }',
+  '  setScalar(v) { this.x = v; this.y = v; this.z = v; }',
   '}',
   'export class Node {',
-  '  constructor() { this.position = new Vec3(); this.rotation = new Vec3(); }',
+  '  constructor() {',
+  '    this.position = new Vec3();',
+  '    this.rotation = new Vec3();',
+  '    this.scale = new Vec3();',
+  '    this.scale.setScalar(1);',
+  '  }',
   '  add() {}',
   '  setSize() {}',
+  '  setRenderTarget() {}',
+  '  setPixelRatio() {}',
+  '  compile() {}',
+  '  updateProjectionMatrix() {}',
   '  lookAt() {}',
   '  translate() {}',
   '  set() {}',
@@ -34,10 +48,31 @@ const THREE_STUB_HREF = 'data:text/javascript,' + encodeURIComponent([
   'export class WebGLRenderer extends Node {}',
   'export class Scene extends Node {}',
   'export class Color { constructor() {} }',
+  'export class Vector2 {',
+  '  constructor(x = 0, y = 0) { this.x = x; this.y = y; }',
+  '  set(x, y) { this.x = x; this.y = y; }',
+  '}',
+  'export class WebGLRenderTarget {',
+  '  constructor() { this.texture = {}; }',
+  '  setSize() {}',
+  '}',
   'export class PerspectiveCamera extends Node {}',
+  'export class OrthographicCamera extends Node {}',
+  'export class Group extends Node {}',
   'export class PlaneGeometry extends Node {}',
   'export class BoxGeometry extends Node {}',
+  'export class TubeGeometry extends Node {}',
+  'export class CatmullRomCurve3 extends Node {}',
+  'export class CylinderGeometry extends Node {}',
+  'export class SphereGeometry extends Node {}',
+  'export class CircleGeometry extends Node {}',
   'export class MeshBasicMaterial extends Node {}',
+  'export class MeshLambertMaterial extends Node {}',
+  'export class ShaderMaterial extends Node {',
+  '  constructor(options = {}) { super(); this.uniforms = options.uniforms; }',
+  '}',
+  'export class DirectionalLight extends Node {}',
+  'export class Fog { constructor() {} }',
   'export class Mesh extends Node {}'
 ].join('\n'));
 
@@ -75,6 +110,7 @@ test('scene.render runs against the stubbed renderer without throwing', async ()
     player: { y: 0 },
     prevPhase: 0.4,
     alpha: 0.5,
-    best: 0
+    best: 0,
+    now: 0
   });
 });
