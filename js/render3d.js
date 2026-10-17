@@ -16,9 +16,9 @@ const PROP = 0x1d2630;         // D-07/D-18: dark props — handles, cap, eyes (
 const PALE = 0xf4f0d8;         // D-09: rope pale — unlit and fog-exempt so it stays max-bright
 const ROPE_RADIUS = 1.0;       // D-10: arc radius ≈ player height (chibi rig tops out ≈ 1.3)
 const HANDLE_HEIGHT = 1.05;    // D-08: rope pivot at handle height
-const FOG_NEAR = 7;
-const FOG_FAR = 22;
-const LIGHT_INTENSITY = 2.4;   // D-05: the one light — brightness lives here, no ambient fill
+const FOG_NEAR = 10;           // 2026-10-17 UAT revision: subject outside the fog ramp
+const FOG_FAR = 24;            // horizon still fully fogged (D-06/D-18 cues intact)
+const LIGHT_INTENSITY = 4.5;   // D-05: the one light — raised from 2.4 per live-UAT: Lambert /PI at 2.4 rendered the floor near-black
 
 // The ONE post pass (D-02): sRGB-encode first (the render target holds
 // LINEAR values), then Bayer 4×4 offset + 31-level floor quantize (~15-bit),
@@ -94,7 +94,7 @@ export function createScene(canvas) {
   // Shared world materials (rose accent on torso/head/scarf only, per the
   // UI-SPEC color contract; neutral limbs; dark props — D-13).
   const roseMat = worldMaterial(ROSE);
-  const limbMat = worldMaterial(FLOOR);
+  const limbMat = roseMat;     // 2026-10-17 UAT revision: limbs read against the floor ("rose = character" contract)
   const propMat = worldMaterial(PROP);
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), worldMaterial(FLOOR));
@@ -241,7 +241,7 @@ export function createScene(canvas) {
   // Fixed side-on-with-slight-angle camera (D-16, UI-SPEC framing): near the
   // +Z axis so the XY-plane arc reads cleanly, small +X offset for depth.
   // Never touched again in render() — zero camera motion, ever.
-  const camera = new THREE.PerspectiveCamera(40, canvas.width / canvas.height, 0.1, 80);
+  const camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 80);   // 40 -> 45: bigger subject, D-16 vantage unchanged
   camera.position.set(2.6, 2.2, 8.6);
   camera.lookAt(0, 1, 0);
 
