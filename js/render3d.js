@@ -280,6 +280,11 @@ export function createScene(canvas) {
   let lastWidth = canvas.width;
   let lastHeight = canvas.height;
 
+  // Cosmetic status bookkeeping (D-11/D-15): view.now is consulted ONLY on
+  // the idle/trip branches below — the running pose never reads it (T-02-08).
+  let lastStatus = 'idle';
+  let tripAt = 0;
+
   function render(view) {
     // Passive resize poll: the canvas element is a constructor arg, so a
     // property read is the boundary-fence-legal size channel.
@@ -296,21 +301,55 @@ export function createScene(canvas) {
     const theta = phase * Math.PI * 2;
     const playerY = view.player.y ?? 0;                 // sim pixels — one mapping, three consumers
 
-    rig.position.y = playerY * WORLD_PER_PIXEL;
-    rig.scale.set(1 / (view.player.squash ?? 1), view.player.squash ?? 1, 1 / (view.player.squash ?? 1));
+    const squash = view.player.squash ?? 1;
+    rig.scale.set(1 / squash, squash, 1 / squash);
 
-    // Convention (PRES-03): theta = PI places the tube's sagged low point at
-    // the feet — the curve's bulge lives at local +Y, which rotates to
-    // world-down at rotation.z = -PI, matching atFeet's 0.45–0.55 phase
-    // window (js/rope.js:11-13) where the score tick fires.
-    ropePivot.rotation.z = -theta;
+    const status = view.run.status ?? 'idle';
+    if (status !== lastStatus) {
+      if (status === 'over') tripAt = view.now ?? 0;    // capture the settle start (D-11)
+      lastStatus = status;
+    }
 
-    armL.rotation.x = Math.sin(theta);                  // arms track the rope, antiphase pair
-    armR.rotation.x = -Math.sin(theta);
+    let beat = theta;                                   // clock driving arms + scarf secondary motion
+    if (status === 'idle') {
+      // Idle life (D-15): cosmetic clock reads only here; the twirl is
+      // deliberately slower than any gameplay sweep so the states never mix.
+      const now = view.now ?? 0;
+      rig.position.y = Math.sin(now / 400) * 0.05;      // small breath bob
+      ropePivot.rotation.z = now / 1400;                // slow rope twirl
+      beat = now / 1400;
+      armL.rotation.x = Math.sin(beat);
+      armR.rotation.x = -Math.sin(beat);
+      legL.rotation.x = 0;
+      legR.rotation.x = 0;
+    } else if (status === 'over') {
+      // Trip settle (D-11): rope frozen at the feet-at-rest angle with a
+      // short damped shake — closed-form in view.now deltas, no RNG and no
+      // accumulator (T-02-09); bigger juice stays Phase 4.
+      rig.position.y = 0;
+      ropePivot.rotation.z = -Math.PI +
+        Math.sin(((view.now ?? 0) - tripAt) * 42) * Math.exp(-((view.now ?? 0) - tripAt) / 200);
+      armL.rotation.x = 0;
+      armR.rotation.x = 0;
+      legL.rotation.x = 0;
+      legR.rotation.x = 0;
+    } else {
+      rig.position.y = playerY * WORLD_PER_PIXEL;
+      // Convention (PRES-03): theta = PI places the tube's sagged low point
+      // at the feet — the curve's bulge lives at local +Y, which rotates to
+      // world-down at rotation.z = -PI, matching atFeet's 0.45–0.55 phase
+      // window (js/rope.js:11-13) where the score tick fires.
+      ropePivot.rotation.z = -theta;
+      armL.rotation.x = Math.sin(theta);                // arms track the rope, antiphase pair
+      armR.rotation.x = -Math.sin(theta);
+      const airborne = playerY > 0;                     // tuck keyed off sim height, never its own timer
+      legL.rotation.x = airborne ? -0.7 : 0;
+      legR.rotation.x = airborne ? 0.4 : 0;
+    }
 
-    const airborne = playerY > 0;                       // tuck keyed off sim height, never its own timer
-    legL.rotation.x = airborne ? -0.7 : 0;
-    legR.rotation.x = airborne ? 0.4 : 0;
+    for (let k = 0; k < scarf.length; k++) {
+      scarf[k].rotation.x = Math.sin(beat - k * 0.4) * 0.5;   // scarf trails a beat behind (D-15)
+    }
 
     // Blob shadow (D-17, RESEARCH Pattern 6): continuous shrink + fade with jump height.
     shadow.scale.setScalar(1 / (1 + playerY * WORLD_PER_PIXEL * 0.8));
