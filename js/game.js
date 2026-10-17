@@ -1,20 +1,34 @@
 import { updateRope, atFeet } from './rope.js';
 import { jump, createPlayer, updatePlayer, clearsRope } from './player.js';
-import { UPGRADES, freshEffects, pickTwo, shouldOfferUpgrade } from './upgrades.js';
+import { CARDS, freshEffects, pickOffers, shouldOfferUpgrade } from './upgrades.js';
+
+// Shell-side HUD reads the catalogue through game.js: tests/shell.test.js's
+// frozen bootShell harness only rewrites the game/rope/player/render3d
+// specifiers, so shell.js must not gain a direct './upgrades.js' import.
+export { CARDS } from './upgrades.js';
 
 export const START_PHASE = 0.33;
 export const ROPE_PERIOD = 1.3;
 
-export function startRun() {
+// The one canonical lead-in (ARCH-02): both cold start and post-pick resume
+// compose this exact pair — never duplicate the constants.
+export function leadIn() {
   return {
     rope: { phase: START_PHASE, period: ROPE_PERIOD },
     player: jump(createPlayer(), 0.1),
-    run: { ...createRun(), status: 'running' },
   };
 }
 
+export function startRun() {
+  return { ...leadIn(), run: { ...createRun(), status: 'running' } };
+}
+
+export function resumeRun(run) {
+  return { ...leadIn(), run: { ...run, status: 'running', offer: null } };
+}
+
 export function createRun() {
-  return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null };
+  return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null, owned: {} };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random) {
@@ -30,8 +44,12 @@ export function tickRun(run, rope, player, dt, rng = Math.random) {
       score += run.effects.scoreMul;
       skips += 1;
       if (shouldOfferUpgrade(skips)) {
-        status = 'choose';
-        offer = pickTwo(UPGRADES, rng);
+        const offers = pickOffers(CARDS, run.owned ?? {}, 2, rng);
+        // Pitfall 6: an exhausted pool must never freeze the run in choose.
+        if (offers.length > 0) {
+          status = 'choose';
+          offer = offers;
+        }
       }
     } else {
       status = 'over';
@@ -43,6 +61,16 @@ export function tickRun(run, rope, player, dt, rng = Math.random) {
 
 export function applyUpgrade(run, upgrade) {
   return { ...run, effects: upgrade.apply(run.effects), offer: null, status: 'running' };
+}
+
+// status stays untouched — resumeRun owns the running transition (D-06).
+export function applyCard(run, card) {
+  return {
+    ...run,
+    effects: card.apply(run.effects),
+    owned: { ...run.owned, [card.id]: (run.owned[card.id] ?? 0) + 1 },
+    offer: null,
+  };
 }
 
 export function loadBest(storage) {

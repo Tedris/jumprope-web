@@ -1,9 +1,12 @@
-import { createRun, tickRun, applyUpgrade, loadBest, saveBest, startRun, ROPE_PERIOD } from './game.js';
+import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
 
 const STEP = 1 / 120;
+const PICK_HOLD_MS = 800;
+const LEAD_IN_MS = 450;
+const FLASH_MS = 150;
 
 // The buffer tracks the window (coerced so Node-side stub environments
 // without innerWidth fall back to the old default and stay green);
@@ -19,6 +22,7 @@ export function startGame(canvas) {
   const hudScore = document.getElementById('hud-score');
   const hudBest = document.getElementById('hud-best');
   const hudPrompt = document.getElementById('hud-prompt');
+  const hudOwned = document.getElementById('hud-owned');
 
   let rope = createRope(ROPE_PERIOD);
   let player = createPlayer();
@@ -27,6 +31,15 @@ export function startGame(canvas) {
   let holdFrom = null;
   let pressIntent = null;
   let releaseIntent = false;
+  let pickIdx = 0;
+  let pickPressedAt = null;
+  let pickDone = false;
+  let pickFill = 0;
+  // Start disarmed: a press inside the first LEAD_IN_MS of process life must
+  // not be swallowed by the D-07 lock (performance.now() ≈ 0 under node:test).
+  let reentryAt = -LEAD_IN_MS;
+  let flashUntil = 0;
+  let flashName = '';
   let best = loadBest(localStorage);
   let acc = 0;
   let last = performance.now();
@@ -48,18 +61,34 @@ export function startGame(canvas) {
   function consumeIntents() {
     if (pressIntent !== null) {
       if (run.status === 'running') {
-        holdFrom = pressIntent;
+        // D-07: a press inside the post-pick lead-in window is discarded —
+        // it must never start a jump charge.
+        if (performance.now() - reentryAt >= LEAD_IN_MS) {
+          holdFrom = pressIntent;
+        }
       } else if (run.status === 'idle') {
         ({ rope, player, run } = startRun());
+      } else if (run.status === 'choose' && run.offer) {
+        // D-01/D-02: press = cycle the cursor (wraps), and (re)arm the hold timer.
+        pickIdx = (pickIdx + 1) % run.offer.length;
+        pickPressedAt = performance.now();
+        pickDone = false;
       }
       pressIntent = null;
     }
     if (releaseIntent) {
-      if (run.status === 'running' && holdFrom !== null) {
-        player = jump(player, (performance.now() - holdFrom) / 1000);
-        holdFrom = null;
-      } else if (run.status === 'choose' && run.offer) {
-        run = applyUpgrade(run, run.offer[0]);
+      if (run.status === 'running') {
+        if (performance.now() - reentryAt >= LEAD_IN_MS && holdFrom !== null) {
+          player = jump(player, (performance.now() - holdFrom) / 1000);
+          holdFrom = null;
+        }
+      } else if (run.status === 'choose') {
+        if (pickDone) {
+          pickDone = false; // swallow the confirm-release (Pitfall 4)
+        } else {
+          pickPressedAt = null; // early release = cancel; the cursor stays
+          pickFill = 0;
+        }
       } else if (run.status === 'over') {
         best = Math.max(best, run.score);
         saveBest(localStorage, best);
@@ -67,18 +96,61 @@ export function startGame(canvas) {
       }
       releaseIntent = false;
     }
+    tickPick();
+  }
+
+  // Fill cue + hold-confirm: driven from wall-clock every STEP regardless of
+  // status — tickRun never runs in 'choose' (Pitfall 9).
+  function tickPick() {
+    if (run.status === 'choose' && run.offer && pickPressedAt !== null) {
+      pickFill = Math.min(1, (performance.now() - pickPressedAt) / PICK_HOLD_MS);
+      if (pickFill >= 1 && !pickDone) {
+        const picked = run.offer[pickIdx];
+        flashName = picked.name;
+        flashUntil = performance.now() + FLASH_MS;
+        run = applyCard(run, picked);
+        ({ rope, player, run } = resumeRun(run));
+        reentryAt = performance.now();
+        holdFrom = null;
+        pickIdx = 0;
+        pickPressedAt = null;
+        pickFill = 0;
+        pickDone = true;
+      }
+    }
+  }
+
+  // CARD-04: the stack ceiling reads on every offer line, not only on the
+  // pick rule. A metadata-less record (non-finite cap) falls back to ' ×N'.
+  function offerLine(card, active) {
+    const owned = (run.owned ?? {})[card.id] ?? 0;
+    const cap = card.cap ?? Number.POSITIVE_INFINITY;
+    const readout = Number.isFinite(cap) ? ' ×' + owned + '/' + cap : ' ×' + owned;
+    let line = (active ? '> ' : '  ') + card.icon + ' ' + card.name + readout;
+    if (active && pickPressedAt !== null) {
+      const filled = Math.round(pickFill * 5);
+      line += ' [' + '#'.repeat(filled) + '-'.repeat(5 - filled) + ']';
+    }
+    return line;
   }
 
   function updateHud() {
     hudScore.textContent = String(run.score);
     hudBest.textContent = 'best ' + Math.max(best, run.score);
+    const owned = run.owned ?? {};
+    hudOwned.textContent = CARDS
+      .filter(c => (owned[c.id] ?? 0) > 0)
+      .map(c => c.icon.repeat(owned[c.id]))
+      .join(' ');
     let prompt = '';
     if (run.status === 'choose' && run.offer) {
-      prompt = run.offer[0].name + ' — ' + run.offer[0].desc + ' — tap / space to pick';
+      prompt = run.offer.map((card, i) => offerLine(card, i === pickIdx)).join('\n');
     } else if (run.status === 'over') {
       prompt = 'Missed! Score ' + run.score;
     } else if (run.status === 'idle') {
       prompt = 'press space / tap to start';
+    } else if (run.status === 'running' && performance.now() < flashUntil) {
+      prompt = flashName.toUpperCase();
     } else if (run.status === 'running' && run.skips === 0) {
       prompt = 'press space / tap when the rope reaches your feet';
     }

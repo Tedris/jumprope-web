@@ -33,7 +33,8 @@ async function bootShell({ renderThrows }) {
   const hud = {
     'hud-score': { textContent: '' },
     'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' }
+    'hud-prompt': { textContent: '' },
+    'hud-owned': { textContent: '' }
   };
   const canvas = {
     width: 0,

@@ -22,3 +22,5 @@ canvas {
   user-select: none;
 }
 #hud-score { font-size: 32px; }
+#hud-prompt { white-space: pre-line; }
+#hud-owned { font-size: 20px; }
