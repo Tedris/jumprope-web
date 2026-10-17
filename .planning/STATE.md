@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Card Catalogue Realness
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-10-17T16:38:00.000Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-10-17T16:52:21.691Z"
 last_activity: 2026-10-17
 last_activity_desc: Completed plan 03-02 (catalogue expansion + unit suite)
-state_head: 349986d1463fd2ab37320529c0a90b36901b69de
+state_head: ece6ec6c01222ca57b4cdfcc5fa8588e0f58f2ea
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 40
 ---
 
@@ -54,6 +54,7 @@ Progress: [████░░░░░░] 40%
 | Phase 02 P03 | 7min | 3 tasks | 3 files |
 | Phase 03 P01 | 12min | 2 tasks | 7 files |
 | Phase 03 P02 | 6 min | 2 tasks | 4 files |
+| Phase 03 P03 | 9min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 03]: offerCount(skips) = 3 beyond skip 30, else 2 — tenth-skip offers stay exactly 2, both frozen length-2 pins honored (Open-Q2 resolution shipped)
 - [Phase 03]: windup is the ONLY ropeMul-up card, cap 2 bounds stacked ropeMul to ~1.25 (Pitfall 1 cap policy); CARD-08 extra-ropes deferred without spiking
 - [Phase 03]: roster-wide test expectations must derive from card records (picked.apply(neutral)) — the 4-key EXPECT_EFFECT table flaked the moment the pool grew (1d9dcd2)
+- [Phase 03]: criterion-5 headless sim closes the STATE.md rope-wrap blocker by construction — cap-policy bound derived from the real apply closures, js/rope.js never touched
+- [Phase 03]: headless-sim jump policy tuned to phase window [0.20, 0.35] @ 0.5s hold — probe-trip-free for neutral and all 8 cap stacks; cadence freeze reached via skips-seed 9 (startrun idiom), 1000-tick budget kept literal
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-10-17T16:36:54Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-10-17T16:52:21.640Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
