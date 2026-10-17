@@ -76,7 +76,10 @@ const THREE_STUB_HREF = 'data:text/javascript,' + encodeURIComponent([
   '}',
   'export class DirectionalLight extends Node {}',
   'export class Fog { constructor() {} }',
-  'export class Mesh extends Node {}'
+  // Plan 03 Task 2: render() writes shadow.material.opacity — Mesh must keep its material.
+  'export class Mesh extends Node {',
+  '  constructor(geometry, material) { super(); this.material = material; }',
+  '}'
 ].join('\n'));
 
 async function loadStubbedCreateScene() {

@@ -91,15 +91,41 @@ export function createScene(canvas) {
   scene.background = new THREE.Color(SKY);
   scene.fog = new THREE.Fog(SKY, FOG_NEAR, FOG_FAR);   // D-06: fog matched to the sky, hides the world edge
 
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), worldMaterial(FLOOR));
-  floor.rotation.x = -Math.PI / 2;                     // one sparse quad keeps the snap calm (Pitfall 7)
-  scene.add(floor);
-
   // Shared world materials (rose accent on torso/head/scarf only, per the
   // UI-SPEC color contract; neutral limbs; dark props — D-13).
   const roseMat = worldMaterial(ROSE);
   const limbMat = worldMaterial(FLOOR);
   const propMat = worldMaterial(PROP);
+
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), worldMaterial(FLOOR));
+  floor.rotation.x = -Math.PI / 2;                     // one sparse quad keeps the snap calm (Pitfall 7)
+  scene.add(floor);
+
+  // Horizon silhouettes (D-18): static dark slabs far off-axis and behind
+  // the floor edge, deep inside the fog falloff; nothing tall within 6
+  // world units of x = 0 keeps the judgment zone clean.
+  const SILHOUETTES = [
+    { x: -14, w: 2.5, h: 2.2 },
+    { x: -9, w: 1.8, h: 1.4 },
+    { x: 7.5, w: 2.0, h: 1.0 },
+    { x: 11, w: 3.0, h: 2.8 },
+    { x: 14, w: 2.2, h: 1.8 }
+  ];
+  for (const s of SILHOUETTES) {
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(s.w, s.h, 1.4), propMat);
+    slab.position.set(s.x, s.h / 2, -8);
+    scene.add(slab);
+  }
+
+  // Blob shadow (D-17): a stable, snap-EXEMPT disc under the crawling
+  // geometry — the depth reference that makes jump height legible.
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.55, 8),
+    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 })
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.set(0, 0.02, 0);                     // clears the wobbling floor (no z-fight)
+  scene.add(shadow);
 
   // Character rig (D-13): chibi primitive assembly, built ONCE here; every
   // animated quantity is written in render() from the canonical clock (D-14).
@@ -268,9 +294,9 @@ export function createScene(canvas) {
     // second timing system (D-14 / T-02-08).
     const phase = lerpPhase(view.prevPhase, view.rope.phase, view.alpha ?? 0);
     const theta = phase * Math.PI * 2;
-    const playerY = (view.player.y ?? 0) * WORLD_PER_PIXEL;
+    const playerY = view.player.y ?? 0;                 // sim pixels — one mapping, three consumers
 
-    rig.position.y = playerY;
+    rig.position.y = playerY * WORLD_PER_PIXEL;
     rig.scale.set(1 / (view.player.squash ?? 1), view.player.squash ?? 1, 1 / (view.player.squash ?? 1));
 
     // Convention (PRES-03): theta = PI places the tube's sagged low point at
@@ -282,9 +308,13 @@ export function createScene(canvas) {
     armL.rotation.x = Math.sin(theta);                  // arms track the rope, antiphase pair
     armR.rotation.x = -Math.sin(theta);
 
-    const airborne = (view.player.y ?? 0) > 0;          // tuck keyed off sim height, never its own timer
+    const airborne = playerY > 0;                       // tuck keyed off sim height, never its own timer
     legL.rotation.x = airborne ? -0.7 : 0;
     legR.rotation.x = airborne ? 0.4 : 0;
+
+    // Blob shadow (D-17, RESEARCH Pattern 6): continuous shrink + fade with jump height.
+    shadow.scale.setScalar(1 / (1 + playerY * WORLD_PER_PIXEL * 0.8));
+    shadow.material.opacity = 0.45 / (1 + playerY * WORLD_PER_PIXEL * 0.8);
 
     renderer.setRenderTarget(rt);
     renderer.render(scene, camera);                 // -> 240-row LINEAR target
