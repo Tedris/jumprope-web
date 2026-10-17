@@ -82,7 +82,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Player sees their owned cards as an icon strip during the run
   5. The catalogue holds 6–10+ original cards spanning margin/volume/risk/foundation/pace roles, passes a 1000-tick headless scripted-card simulation (no NaN, rope phase stays in safe wrap bounds, one score event per cycle)
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+**Wave 1**
+- [ ] 03-01-PLAN.md — Tracer: real one-button pick flow — catalogue metadata, pickOffers/caps/owned in sim, cycling-cursor + hold-confirm reducer in shell, lead-in re-entry, HUD offers + icon strip
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 03-02-PLAN.md — Catalogue expansion to 8 cards across five roles, rarity/cap/escalation unit suite (offer size 2→3 at skip 31)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 03-03-PLAN.md — 1000-tick headless scripted-card simulation gate (criterion 5) + ropeMul cap-policy bound
+
 **UI hint**: yes
 
 ### Phase 4: Feel & Audio
