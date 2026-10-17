@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Card Catalogue Realness
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-10-17T06:55:18.105Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-10-17T16:38:00.000Z"
 last_activity: 2026-10-17
-last_activity_desc: Phase 03 execution started
+last_activity_desc: Completed plan 03-02 (catalogue expansion + unit suite)
 state_head: 349986d1463fd2ab37320529c0a90b36901b69de
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 40
 ---
 
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-10-16)
 ## Current Position
 
 Phase: 03 (Card Catalogue Realness) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Plan: 3 of 3
+Status: Ready to execute 03-03 (final plan: headless-sim gate)
 Last activity: 2026-10-17 — Phase 03 execution started
 
 Progress: [████░░░░░░] 40%
@@ -53,6 +53,7 @@ Progress: [████░░░░░░] 40%
 | Phase 02 P02 | 7min | 2 tasks | 4 files |
 | Phase 02 P03 | 7min | 3 tasks | 3 files |
 | Phase 03 P01 | 12min | 2 tasks | 7 files |
+| Phase 03 P02 | 6 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 03]: pickOffers promoted canonical, pickTwo kept as add-alongside shim (frozen distinct-pair pin)
 - [Phase 03]: shell.js reads CARDS via game.js re-export — frozen bootShell harness rewrites only game/rope/player/render3d specifiers
 - [Phase 03]: D-07 lock init as reentryAt=-LEAD_IN_MS (expired); confirm clears holdFrom — cold-start press safety + no stale charge across freeze
+- [Phase 03]: offerCount(skips) = 3 beyond skip 30, else 2 — tenth-skip offers stay exactly 2, both frozen length-2 pins honored (Open-Q2 resolution shipped)
+- [Phase 03]: windup is the ONLY ropeMul-up card, cap 2 bounds stacked ropeMul to ~1.25 (Pitfall 1 cap policy); CARD-08 extra-ropes deferred without spiking
+- [Phase 03]: roster-wide test expectations must derive from card records (picked.apply(neutral)) — the 4-key EXPECT_EFFECT table flaked the moment the pool grew (1d9dcd2)
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-10-17T06:55:18.058Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-10-17T16:36:54Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

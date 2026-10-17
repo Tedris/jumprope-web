@@ -88,7 +88,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 03-01-PLAN.md — Tracer: real one-button pick flow — catalogue metadata, pickOffers/caps/owned in sim, cycling-cursor + hold-confirm reducer in shell, lead-in re-entry, HUD offers + icon strip
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 03-02-PLAN.md — Catalogue expansion to 8 cards across five roles, rarity/cap/escalation unit suite (offer size 2→3 at skip 31)
+- [x] 03-02-PLAN.md — Catalogue expansion to 8 cards across five roles, rarity/cap/escalation unit suite (offer size 2→3 at skip 31)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 03-03-PLAN.md — 1000-tick headless scripted-card simulation gate (criterion 5) + ropeMul cap-policy bound

@@ -22,11 +22,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **CARD-01**: Player chooses 1 of 2–3 offered cards at cadence pauses, applied instantly to the run
 - [x] **CARD-02**: Cards have at-a-glance identity: name, icon, role color
-- [ ] **CARD-03**: Cards have rarity (common/uncommon/rare) affecting drop odds
+- [x] **CARD-03**: Cards have rarity (common/uncommon/rare) affecting drop odds
 - [x] **CARD-04**: Cards stack with visible per-card stack caps
 - [x] **CARD-05**: Offers never contain dead picks (availability filtering)
 - [x] **CARD-06**: Player can see owned cards as an icon strip during a run
-- [ ] **CARD-07**: Catalogue holds 6–10+ original cards across roles (margin / volume / risk / foundation / pace)
+- [x] **CARD-07**: Catalogue holds 6–10+ original cards across roles (margin / volume / risk / foundation / pace)
 
 ### Feel (FEEL)
 
@@ -86,11 +86,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRES-03 | Phase 2 | Complete |
 | CARD-01 | Phase 3 | Complete |
 | CARD-02 | Phase 3 | Complete |
-| CARD-03 | Phase 3 | Pending |
+| CARD-03 | Phase 3 | Complete |
 | CARD-04 | Phase 3 | Complete |
 | CARD-05 | Phase 3 | Complete |
 | CARD-06 | Phase 3 | Complete |
-| CARD-07 | Phase 3 | Pending |
+| CARD-07 | Phase 3 | Complete |
 | FEEL-01 | Phase 4 | Pending |
 | FEEL-02 | Phase 4 | Pending |
 | FEEL-03 | Phase 4 | Pending |
