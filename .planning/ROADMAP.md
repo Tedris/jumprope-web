@@ -56,7 +56,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Player can judge rope arrival purely from the frame: fixed camera, blob-shadow depth cue, rope readable against the floor through the whole arc
   4. The scene renders correctly at the browser's full window size without first-frame shader freeze (precompile during idle)
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 
 **Wave 1**
 - [x] 02-01-PLAN.md — Look-spike: PS1 pipeline proven on pinned three@0.186.1 + human look sign-off (## Look Decisions)
@@ -65,7 +65,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 02-02-PLAN.md — Port pipeline into render3d.js (RT/Bayer/snap/precompile) + window-sized shell buffer + view.now
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 02-03-PLAN.md — Character rig, rotating rope arc, camera/stage/blob shadow, personality + idle + trip animation
+- [x] 02-03-PLAN.md — Character rig, rotating rope arc, camera/stage/blob shadow, personality + idle + trip animation
 
 **UI hint**: yes
 
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Render-Shell Foundation | 3/3 | Complete    | 2026-10-16 |
-| 2. PS1 Presentation & Scene | 2/3 | In Progress | - |
+| 2. PS1 Presentation & Scene | 3/3 | In Progress | - |
 | 3. Card Catalogue Realness | 0/? | Not started | - |
 | 4. Feel & Audio | 0/? | Not started | - |
 | 5. Accessibility & Polish | 0/? | Not started | - |

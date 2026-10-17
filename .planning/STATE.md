@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: PS1 Presentation & Scene
-status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-10-17T02:28:04.030Z"
+status: verifying
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-10-17T02:48:51.600Z"
 last_activity: 2026-10-16
 last_activity_desc: Phase 02 execution started
-state_head: b786bab6cb571b1f64df515be41a40eb6310269b
+state_head: 9994cf81c881fd04b248f8ebffa497c098f06948
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 20
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-16)
 
 Phase: 02 (PS1 Presentation & Scene) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-16 — Phase 02 execution started
 
 Progress: [██░░░░░░░░] 20%
@@ -51,6 +51,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 01 P03 | 4 min | 3 tasks | 3 files |
 | Phase 02 P01 | 15min | 2 tasks | 1 files |
 | Phase 02 P02 | 7min | 2 tasks | 4 files |
+| Phase 02 P03 | 7min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 02]: onBeforeCompile vertex-snap injection proven on pinned three@0.186.1 — addons/RetroPassNode migration not needed (T-02-02 closed); no ambient fill, D-05 literal
 - [Phase 02]: PS1 pipeline shipped: spike recipe ported verbatim into createScene (RT+snap+Bayer single pass, dual compile); spike camera framing ported so fog-near doesn't darken the signed-off frame
 - [Phase 02]: shell view payload gains render-only view.now (rAF timestamp); canvas buffer window-sized via coerced windowSize(); resize stays one-way through render3d's passive poll
+- [Phase 02]: theta convention pinned: bulge at curve-local +Y, ropePivot.rotation.z = -theta, theta = PI puts the sagged low point at the feet (atFeet 0.45-0.55)
+- [Phase 02]: D-16 camera at (2.6, 2.2, 8.6)/lookAt(0,1,0) with fov 50->40 so the jumper keeps the spike's frame size at the farther vantage
+- [Phase 02]: Idle/trip cosmetics are the only view.now readers in render3d.js; trip shake is the verbatim closed-form sin(d*42)*exp(-d/200) — zero RNG/accumulators (T-02-08/09)
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-10-17T02:28:03.999Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-10-17T02:48:51.568Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None

@@ -10,8 +10,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Presentation (PRES)
 
 - [x] **PRES-01**: Player sees the game in a PS1-style 3D scene — low internal resolution, nearest-neighbor upscale, ordered dithering, vertex-snap wobble
-- [ ] **PRES-02**: Player sees an original low-poly skipping character with personality, animated from the rope phase clock
-- [ ] **PRES-03**: Player can read rope arrival purely from the frame — fixed readable camera, shadow depth cue, rope visible against floor throughout arc
+- [x] **PRES-02**: Player sees an original low-poly skipping character with personality, animated from the rope phase clock
+- [x] **PRES-03**: Player can read rope arrival purely from the frame — fixed readable camera, shadow depth cue, rope visible against floor throughout arc
 
 ### Architecture (ARCH)
 
@@ -82,8 +82,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-01 | Phase 1 | Complete |
 | ARCH-02 | Phase 1 | Complete |
 | PRES-01 | Phase 2 | Complete |
-| PRES-02 | Phase 2 | Pending |
-| PRES-03 | Phase 2 | Pending |
+| PRES-02 | Phase 2 | Complete |
+| PRES-03 | Phase 2 | Complete |
 | CARD-01 | Phase 3 | Pending |
 | CARD-02 | Phase 3 | Pending |
 | CARD-03 | Phase 3 | Pending |
