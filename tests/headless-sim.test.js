@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as game from '../js/game.js';
-import { CARDS, pickOffers } from '../js/upgrades.js';
+import { CARDS, freshEffects, pickOffers } from '../js/upgrades.js';
 import { jump } from '../js/player.js';
 
 // Criterion 5 gate: a deterministic 1000-tick headless simulation driving the
@@ -46,7 +46,7 @@ function scriptedRun({ rng, pickStrategy, preApply, seedSkips = 0 }) {
       if (stats.firstOffer === null) stats.firstOffer = run.offer;
       const card = pickStrategy(run.offer, stats.picks);
       run = game.applyCard(run, card);
-      ({ rope, player, run } = game.resumeRun(run)); // ARCH-06 lead-in, never startRun
+      ({ rope, player, run } = game.resumeRun(run)); // ARCH-02 lead-in, never startRun
       assert.equal(run.status, 'running', 'pick must exit choose via resumeRun');
       stats.picks += 1;
     }
@@ -112,4 +112,44 @@ test('scripted picks land through applyCard + resumeRun and never stall', () => 
   assert.deepEqual(stats.firstOffer.map(c => c.id),
     pickOffers(CARDS, {}, 2, () => 0.5).map(c => c.id),
     'freeze offer must equal the deterministic pickOffers draw');
+});
+
+// Test 3: per-card stacked-cap variants — the ropeMul range the catalogue can
+// actually reach (slowrope^3 ≈ 0.73 up to windup^2 ≈ 1.25) without inventing
+// unreachable stacks. Same invariants as the neutral run, at each card's cap.
+const stackedToCap = (card) => (run) => {
+  let stacked = run;
+  for (let i = 0; i < card.cap; i++) stacked = game.applyCard(stacked, card);
+  return stacked;
+};
+
+for (const card of CARDS) {
+  test(`stacked cap variant: ${card.id} at cap ${card.cap} runs clean for 1000 ticks`, () => {
+    const { stats } = scriptedRun({
+      rng: () => 0.5, pickStrategy: cursorPick, preApply: stackedToCap(card),
+    });
+    // slowrope^3 is the slowest reachable pace: still ≥ 4 full cycles in 1000 ticks.
+    assert.ok(stats.cycles >= 4, `expected at least 4 cycles, got ${stats.cycles}`);
+    assert.ok(stats.scoreEvents >= stats.cycles,
+      'every rope cycle produced at least one score event at cap');
+  });
+}
+
+// Test 4: the cap-policy bound — the STATE.md rope-wrap blocker closed by
+// construction. Everything is derived from the real apply closures, never a
+// hand-maintained table; if a future card breaks the band this fails before
+// the headless blackout (≈15.6 feet-window onset, RESEARCH Pitfall 1) can
+// ship. js/rope.js stays untouched.
+test('cap policy bound: every capped ropeMul in [0.6, 1.5], worst-case product in [0.6, 3]', () => {
+  let worstProduct = 1;
+  for (const card of CARDS) {
+    let capped = freshEffects();
+    for (let i = 0; i < card.cap; i++) capped = card.apply(capped);
+    assert.ok(Number.isFinite(capped.ropeMul), `${card.id}: finite capped ropeMul`);
+    assert.ok(capped.ropeMul >= 0.6 && capped.ropeMul <= 1.5,
+      `${card.id}: capped ropeMul ${capped.ropeMul} outside [0.6, 1.5]`);
+    if (capped.ropeMul !== 1) worstProduct *= capped.ropeMul;
+  }
+  assert.ok(worstProduct >= 0.6 && worstProduct <= 3,
+    `combined worst-case ropeMul ${worstProduct} outside [0.6, 3] — five-fold blackout margin broken`);
 });
