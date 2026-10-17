@@ -332,7 +332,7 @@ export function createScene(canvas) {
       // deliberately slower than any gameplay sweep so the states never mix.
       const now = view.now ?? 0;
       rig.position.y = Math.sin(now / 400) * 0.05;      // small breath bob
-      ropePivot.rotation.x = -now / 1400;               // slow rope twirl about the hands axis
+      ropePivot.rotation.x = now / 1400;                // slow rope twirl about the hands axis, same direction as gameplay
       ropePivot.rotation.z = 0;
       beat = now / 1400;
       armL.rotation.x = Math.sin(beat);
@@ -355,10 +355,11 @@ export function createScene(canvas) {
       rig.position.y = playerY * WORLD_PER_PIXEL;
       // Convention (PRES-03): theta = PI places the tube's sagged low point
       // at the feet — the curve's bulge lives at local +Y, which sweeps to
-      // world-down at rotation.x = -PI about the hands axis (R_x(-PI) maps
+      // world-down at rotation.x = PI about the hands axis (R_x(PI) maps
       // +Y -> -Y), matching atFeet's 0.45–0.55 phase window (js/rope.js:11-13)
-      // where the score tick fires.
-      ropePivot.rotation.x = -theta;
+      // where the score tick fires. +theta = forward skip: the rope's mid
+      // travels over-head->front->feet->back (camera at +Z).
+      ropePivot.rotation.x = theta;                     // forward sweep: rope top leads toward camera
       ropePivot.rotation.z = 0;
       armL.rotation.x = Math.sin(theta) * 0.25;         // light antiphase sway; hands stay near the handles
       armR.rotation.x = -Math.sin(theta) * 0.25;
