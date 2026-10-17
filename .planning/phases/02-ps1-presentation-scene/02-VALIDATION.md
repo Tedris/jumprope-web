@@ -2,10 +2,10 @@
 phase: "02"
 slug: "ps1-presentation-scene"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
-# audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+# audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: true) (#2117)
+status: validated
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: "2026-10-16"
 ---
 
@@ -40,15 +40,15 @@ created: "2026-10-16"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 02-01/T1 | 01 | 1 | PRES-01 | T-02-01, T-02-02 | Spike reuses only the pinned CDN URL; suite untouched | unit+grep | `bash -c 'U=$(grep -oE "https://cdn[^\"'\'']*three[^\"'\'']*" index.html \| head -1); grep -qF "$U" .planning/spikes/ps1-look.html && ! grep -E "https?://" .planning/spikes/ps1-look.html \| grep -vF "$U" \| grep -q "cdn\|unpkg\|esm\.sh\|githubusercontent"' && node --test tests/` | ✅ | ⬜ pending |
-| 02-01/T2 | 01 | 1 | PRES-01 | T-02-04 | Look sign-off + canonical values recorded | manual (browser) | `grep -q "## Look Decisions" .planning/spikes/ps1-look.html` | ✅ (new file) | ⬜ pending |
-| 02-02/T1 | 02 | 2 | PRES-01 | T-02-04, T-02-05, T-02-06, T-02-07 | Pipeline in renderer; no IO tokens or addons specifier in render3d.js; index.html untouched | unit | `node --test tests/render3d.test.js && node --test tests/boundary.test.js && node --test tests/` | ✅ | ⬜ pending |
-| 02-02/T2 | 02 | 2 | PRES-01 | T-02-07 | view.now on payload; resize wiring shell-side only | unit | `node --test tests/shell.test.js && node --test tests/boundary.test.js` | ✅ | ⬜ pending |
-| 02-03/T1 | 03 | 3 | PRES-02, PRES-03 | T-02-08, T-02-10 | Pose from canonical clock only; geometry built once | unit | `node --test tests/render3d.test.js && node --test tests/boundary.test.js && node --test tests/` | ✅ | ⬜ pending |
-| 02-03/T2 | 03 | 3 | PRES-03 | T-02-11 | Shadow math = pure function of view.player.y; no view mutation | unit | `node --test tests/` | ✅ | ⬜ pending |
-| 02-03/T3 | 03 | 3 | PRES-02 | T-02-08, T-02-09 | Cosmetic motion deterministic from view.now; no rng in render path | unit+grep | `node --test tests/ && node --test tests/boundary.test.js` | ✅ | ⬜ pending |
+| 02-01/T1 | 01 | 1 | PRES-01 | T-02-01, T-02-02 | Spike reuses only the pinned CDN URL; suite untouched | unit+grep | `bash -c 'U=$(grep -oE "https://cdn[^\"'\'']*three[^\"'\'']*" index.html \| head -1); grep -qF "$U" .planning/spikes/ps1-look.html && ! grep -E "https?://" .planning/spikes/ps1-look.html \| grep -vF "$U" \| grep -q "cdn\|unpkg\|esm\.sh\|githubusercontent"' && node --test tests/` | ✅ | ✅ green |
+| 02-01/T2 | 01 | 1 | PRES-01 | T-02-04 | Look sign-off + canonical values recorded | manual (browser) | `grep -q "## Look Decisions" .planning/spikes/ps1-look.html` | ✅ (new file) | ✅ green |
+| 02-02/T1 | 02 | 2 | PRES-01 | T-02-12, T-02-05, T-02-06, T-02-07 | Pipeline in renderer; no IO tokens or addons specifier in render3d.js; index.html untouched | unit | `node --test tests/render3d.test.js && node --test tests/boundary.test.js && node --test tests/` | ✅ | ✅ green |
+| 02-02/T2 | 02 | 2 | PRES-01 | T-02-07 | view.now on payload; resize wiring shell-side only | unit | `node --test tests/shell.test.js && node --test tests/boundary.test.js` | ✅ | ✅ green |
+| 02-03/T1 | 03 | 3 | PRES-02, PRES-03 | T-02-08, T-02-10 | Pose from canonical clock only; geometry built once | unit | `node --test tests/render3d.test.js && node --test tests/boundary.test.js && node --test tests/` | ✅ | ✅ green |
+| 02-03/T2 | 03 | 3 | PRES-03 | T-02-11 | Shadow math = pure function of view.player.y; no view mutation | unit | `node --test tests/` | ✅ | ✅ green |
+| 02-03/T3 | 03 | 3 | PRES-02 | T-02-08, T-02-09 | Cosmetic motion deterministic from view.now; no rng in render path | unit+grep | `node --test tests/ && node --test tests/boundary.test.js` | ✅ | ✅ green |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: ✅ green · ✅ green · ❌ red · ⚠️ flaky*
 
 ---
 
@@ -71,11 +71,11 @@ Note: `tests/render3d.test.js` uses a hand-written THREE stub that must be exten
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 10s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 10s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-10-17 — all 7 automated verifications green
