@@ -405,14 +405,11 @@ const a = pickOffers(CARDS, {}, 2, seeded());  // same seed twice → same offer
 | A5 | No rope.js change is required to satisfy the STATE.md wrap blocker | Pitfall 1 | If the 1000-tick sim later shows phase drift at extreme stacked caps, raise cap policy (still not a rope.js change) |
 | A6 | bootShell harness (tests/shell.test.js) can be extended with a new hud key and reused for pick-flow tests | Pitfall 7, Pattern 3 | If frozen-byte rule is read strictly for shell.test.js too, pick-flow tests need their own harness copy |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does "role color" (CARD-02) require an actual color on screen?**
-   - What we know: prompt channel is a single-color DOM span; per-card DOM elements rejected by D-04.
-   - What's unclear: whether glyph+name+role-word satisfies "at-a-glance identity" or a CSS class per prompt line is expected.
-   - Recommendation: default to glyph+name (+optional CSS class toggle on the prompt span = ≤3 lines of CSS); flag as checkpoint if the planner wants richer color.
-2. **Offer count policy** — fixed 2 this phase (simplest, fully pin-compatible) vs 2→3 escalation. Recommendation: escalation gated at skips ≥ 30, honoring the first-offer length pins.
-3. **Extra-ropes spike** (STATE.md spike-or-defer): CARD-08 is v2 and criterion 5's wrap safety is met by cap policy alone — recommendation: **defer without spiking**, note the decision.
+1. **Does "role color" (CARD-02) require an actual color on screen?** — RESOLVED (adopted recommendation): glyph + name plus a CSS class toggle (`role-<color>`) on the existing prompt span, keyed by the highlighted card's `color` field. Implemented by 03-01 Task 2; no checkpoint needed (D-04's no-new-DOM-elements constraint stays intact).
+2. **Offer count policy** — RESOLVED (adopted recommendation): 2→3 escalation via `offerCount(skips)`, size 3 beyond skip 30, honoring both frozen length-2 first-offer pins. Implemented by 03-02 Task 2.
+3. **Extra-ropes spike** (STATE.md spike-or-defer) — RESOLVED (adopted recommendation): **deferred without spiking**. CARD-08 is v2 per REQUIREMENTS.md, and criterion 5's wrap-bound safety is met by cap policy alone — windup cap 2 (03-02 Task 1) plus the machine-enforced capped-ropeMul bound test (03-03 Task 2). The deferral is recorded explicitly in 03-02's `flagged_assumptions`.
 
 ## Environment Availability
 
