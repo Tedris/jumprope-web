@@ -143,8 +143,11 @@ export function startGame(canvas) {
       .map(c => c.icon.repeat(owned[c.id]))
       .join(' ');
     let prompt = '';
+    let roleClass = '';
     if (run.status === 'choose' && run.offer) {
       prompt = run.offer.map((card, i) => offerLine(card, i === pickIdx)).join('\n');
+      const highlight = run.offer[pickIdx];
+      if (highlight && highlight.color) roleClass = 'role-' + highlight.color;
     } else if (run.status === 'over') {
       prompt = 'Missed! Score ' + run.score;
     } else if (run.status === 'idle') {
@@ -155,6 +158,7 @@ export function startGame(canvas) {
       prompt = 'press space / tap when the rope reaches your feet';
     }
     hudPrompt.textContent = prompt;
+    hudPrompt.className = roleClass;
   }
 
   function frame(now) {

@@ -24,3 +24,9 @@ canvas {
 #hud-score { font-size: 32px; }
 #hud-prompt { white-space: pre-line; }
 #hud-owned { font-size: 20px; }
+/* CARD-02 role color: class toggle on the prompt span, keyed by the
+   highlighted card's color field (RESEARCH Open-Q1 recommendation). */
+.role-sky { color: #8fd3ff; }
+.role-slate { color: #9aa7b4; }
+.role-amber { color: #ffcf6e; }
+.role-mint { color: #9fe8c0; }

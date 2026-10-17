@@ -173,6 +173,9 @@ test('press cycles the cursor and wraps past the last offer (D-02)', async () =>
   try {
     const { view: v, st } = driveToChoose(env);
     const n = v.run.offer.length;
+    const roleClass = i => 'role-' + v.run.offer[i].color;
+    assert.equal(env.hud['hud-prompt'].className, roleClass(0),
+      'the prompt carries the highlighted card role class before any press (CARD-02)');
     const visited = new Set([cursorIndex(env)]);
     press(env);
     tick(env, st);
@@ -180,6 +183,8 @@ test('press cycles the cursor and wraps past the last offer (D-02)', async () =>
     tick(env, st); // early release: cancels the hold, the cursor stays
     visited.add(cursorIndex(env));
     assert.equal(cursorIndex(env), 1 % n, 'one press-release advances the cursor');
+    assert.equal(env.hud['hud-prompt'].className, roleClass(1 % n),
+      'the role class follows the cursor');
     for (let k = 1; k < n; k++) {
       press(env);
       tick(env, st);
@@ -188,6 +193,7 @@ test('press cycles the cursor and wraps past the last offer (D-02)', async () =>
       visited.add(cursorIndex(env));
     }
     assert.equal(cursorIndex(env), 0, 'cycling offer.length presses wraps back to the first offer');
+    assert.equal(env.hud['hud-prompt'].className, roleClass(0), 'the role class wrapped with the cursor');
     assert.deepEqual([...visited].sort(), [...Array(n).keys()], 'every offer index was reachable (plural-selection invariant, length-2 leg)');
   } finally {
     env.restore();
@@ -234,6 +240,7 @@ test('hold confirms once while held; release and lock never charge a jump (D-03/
       assert.ok(vys[i] < vys[i - 1], 'vy keeps decaying under gravity — no release-charged jump (Pitfall 4)');
     }
     assert.ok(!env.hud['hud-prompt'].textContent.includes('> '), 'the prompt no longer lists offers');
+    assert.equal(env.hud['hud-prompt'].className, '', 'the role tint never leaks into running text');
     assert.equal(env.views.at(-1).run.owned[picked.id], 1, 'confirm fired exactly once');
     // CARD-06: the owned icon strip reflects run.owned during the run.
     assert.ok(env.hud['hud-owned'].textContent.includes(picked.icon), 'icon strip shows the picked card');
