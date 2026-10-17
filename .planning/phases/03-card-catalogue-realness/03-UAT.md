@@ -18,7 +18,9 @@ awaiting: user response
 
 ### 1. Browser pick-gesture feel (end-of-phase UAT)
 expected: Freeze → browse → hold → flash → lead-in re-entry reads as deliberate without a tutorial; held confirm-release never launches a jump; early release cancels cleanly with the cursor staying put.
-result: [pending]
+result: issue
+reported: "I don't see offers to browse through"
+severity: major
 
 ### 2. HUD readability at window size
 expected: During a freeze, every offer line is legible (cursor, icon, name, ×owned/cap readout, fill cue, role tint); the highlighted line's role color is obvious at a glance; the fill cue appears only on the active line; the owned-card icon strip tracks picks.
@@ -32,9 +34,20 @@ result: [pending]
 
 total: 3
 passed: 0
-issues: 0
-pending: 3
+issues: 1
+pending: 2
 skipped: 0
 blocked: 0
 
 ## Gaps
+
+```yaml
+- gap_id: G-03-1
+  truth: "Freeze → browse → hold → flash → lead-in re-entry reads as deliberate without a tutorial; held confirm-release never launches a jump; early release cancels cleanly with the cursor staying put."
+  status: failed
+  reason: "User reported: I don't see offers to browse through"
+  severity: major
+  test: 1
+  artifacts: []
+  missing: []
+```
