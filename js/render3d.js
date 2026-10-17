@@ -12,6 +12,10 @@ const SNAP_S = 2;              // D-03: vertex-snap block size in internal pixel
 const SKY = 0x2a3440;          // D-07: dim dusty blue sky — fog color matched (D-06)
 const FLOOR = 0x3a4a42;        // D-07: dusty green floor
 const ROSE = 0xc94f6d;         // D-07/D-13: prototype accent — the jumper pops against the moody stage
+const PROP = 0x1d2630;         // D-07/D-18: dark props — handles, cap, eyes (later: silhouettes)
+const PALE = 0xf4f0d8;         // D-09: rope pale — unlit and fog-exempt so it stays max-bright
+const ROPE_RADIUS = 1.0;       // D-10: arc radius ≈ player height (chibi rig tops out ≈ 1.3)
+const HANDLE_HEIGHT = 1.05;    // D-08: rope pivot at handle height
 const FOG_NEAR = 7;
 const FOG_FAR = 22;
 const LIGHT_INTENSITY = 2.4;   // D-05: the one light — brightness lives here, no ambient fill
@@ -91,18 +95,129 @@ export function createScene(canvas) {
   floor.rotation.x = -Math.PI / 2;                     // one sparse quad keeps the snap calm (Pitfall 7)
   scene.add(floor);
 
-  const playerGeometry = new THREE.BoxGeometry(0.6, 1.1, 0.4);
-  playerGeometry.translate(0, 0.55, 0);
-  const playerBox = new THREE.Mesh(playerGeometry, worldMaterial(ROSE));
-  scene.add(playerBox);
+  // Shared world materials (rose accent on torso/head/scarf only, per the
+  // UI-SPEC color contract; neutral limbs; dark props — D-13).
+  const roseMat = worldMaterial(ROSE);
+  const limbMat = worldMaterial(FLOOR);
+  const propMat = worldMaterial(PROP);
+
+  // Character rig (D-13): chibi primitive assembly, built ONCE here; every
+  // animated quantity is written in render() from the canonical clock (D-14).
+  // root -> torso group -> head (+ cap/eyes/scarf chain); legs on the root.
+  const rig = new THREE.Group();
+  scene.add(rig);
+
+  const torsoGroup = new THREE.Group();
+  torsoGroup.position.set(0, 0.35, 0);
+  rig.add(torsoGroup);
+
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.4, 0.24), roseMat);
+  torso.position.set(0, 0.2, 0);                        // center at ≈ 0.55 world
+  torsoGroup.add(torso);
+
+  const headGroup = new THREE.Group();
+  headGroup.position.set(0, 0.4, 0);                    // neck at ≈ 0.75 world
+  torsoGroup.add(headGroup);
+
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.55), roseMat);   // big head (D-15)
+  head.position.set(0, 0.275, 0);                       // top ≈ 1.3 world
+  headGroup.add(head);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.12, 0.58), propMat);    // dark cap over the rose head
+  cap.position.set(0, 0.58, 0);
+  headGroup.add(cap);
+  const eyeGeo = new THREE.BoxGeometry(0.07, 0.07, 0.03);                           // dot-block eyes (D-15)
+  const eyeL = new THREE.Mesh(eyeGeo, propMat);
+  eyeL.position.set(-0.12, 0.3, 0.28);
+  headGroup.add(eyeL);
+  const eyeR = new THREE.Mesh(eyeGeo, propMat);
+  eyeR.position.set(0.12, 0.3, 0.28);
+  headGroup.add(eyeR);
+
+  // Scarf chain (D-15): 3 rose segments behind the neck, parented end to end;
+  // posed in render() with per-segment phase lag (Task 3 wires the pose).
+  const scarf = [];
+  let scarfParent = headGroup;
+  for (let k = 0; k < 3; k++) {
+    const seg = new THREE.Group();
+    seg.position.set(0, k === 0 ? 0.4 : -0.12, k === 0 ? -0.3 : -0.06);
+    const segMesh = new THREE.Mesh(new THREE.BoxGeometry(0.24 - 0.05 * k, 0.09, 0.05), roseMat);
+    segMesh.position.set(0, -0.05, 0);
+    seg.add(segMesh);
+    scarfParent.add(seg);
+    scarf.push(seg);
+    scarfParent = seg;
+  }
+
+  const armL = new THREE.Group();
+  armL.position.set(-0.24, 0.27, 0);                    // shoulders ≈ 0.62 world
+  torsoGroup.add(armL);
+  const armLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.1), limbMat);
+  armLMesh.position.set(0, -0.16, 0);
+  armL.add(armLMesh);
+  const armR = new THREE.Group();
+  armR.position.set(0.24, 0.27, 0);
+  torsoGroup.add(armR);
+  const armRMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.1), limbMat);
+  armRMesh.position.set(0, -0.16, 0);
+  armR.add(armRMesh);
+
+  const legL = new THREE.Group();
+  legL.position.set(-0.1, 0.35, 0);                     // hips
+  rig.add(legL);
+  const legLMesh = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.35, 0.13), limbMat);
+  legLMesh.position.set(0, -0.175, 0);
+  legL.add(legLMesh);
+  const legR = new THREE.Group();
+  legR.position.set(0.1, 0.35, 0);
+  rig.add(legR);
+  const legRMesh = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.35, 0.13), limbMat);
+  legRMesh.position.set(0, -0.175, 0);
+  legR.add(legRMesh);
+
+  // Rope (D-08/D-10): sag-baked circle sampled into a CatmullRomCurve3 and a
+  // TubeGeometry, both constructed ONCE (T-02-10 — no per-frame geometry).
+  // The bottom quadrant (curve-local +Y, world-down when theta = PI) bulges
+  // slightly outward so the sagged low point is visually unmistakable.
+  const ropePts = [];
+  for (let k = 0; k < 16; k++) {
+    const a = (k / 16) * Math.PI * 2;
+    const dip = Math.max(0, Math.sin(a));
+    const sag = dip * dip * 0.1;
+    ropePts.push(new THREE.Vector3(
+      ROPE_RADIUS * Math.cos(a) * (1 - sag * 0.4),
+      ROPE_RADIUS * Math.sin(a) + sag,
+      0
+    ));
+  }
+  const ropeCurve = new THREE.CatmullRomCurve3(ropePts);
+  const ropePivot = new THREE.Group();
+  ropePivot.position.set(0, HANDLE_HEIGHT, 0);
+  scene.add(ropePivot);
+
+  const ropeTube = new THREE.Mesh(
+    new THREE.TubeGeometry(ropeCurve, 32, 0.05, 6, false),
+    new THREE.MeshBasicMaterial({ color: PALE, fog: false })   // D-09: unlit, fog-exempt, no snap
+  );
+  ropePivot.add(ropeTube);
+
+  const handleGeo = new THREE.BoxGeometry(0.08, 0.18, 0.08);   // D-12: handles turn with the arc
+  const handleL = new THREE.Mesh(handleGeo, propMat);
+  handleL.position.set(-ROPE_RADIUS, 0, 0);
+  ropePivot.add(handleL);
+  const handleR = new THREE.Mesh(handleGeo, propMat);
+  handleR.position.set(ROPE_RADIUS, 0, 0);
+  ropePivot.add(handleR);
 
   const sun = new THREE.DirectionalLight(0xffffff, LIGHT_INTENSITY);   // D-05: the one light
   sun.position.set(-4, 7, 3);
   scene.add(sun);
 
-  const camera = new THREE.PerspectiveCamera(50, canvas.width / canvas.height, 0.1, 80);
-  camera.position.set(0, 1.5, 6.5);
-  camera.lookAt(0, 1.2, 0);
+  // Fixed side-on-with-slight-angle camera (D-16, UI-SPEC framing): near the
+  // +Z axis so the XY-plane arc reads cleanly, small +X offset for depth.
+  // Never touched again in render() — zero camera motion, ever.
+  const camera = new THREE.PerspectiveCamera(40, canvas.width / canvas.height, 0.1, 80);
+  camera.position.set(2.6, 2.2, 8.6);
+  camera.lookAt(0, 1, 0);
 
   // Final pass: the one fullscreen quad (D-02) — no second pass, no composer.
   const postScene = new THREE.Scene();
@@ -149,10 +264,27 @@ export function createScene(canvas) {
     }
 
     // Single clock entry: canonical rope phase, interpolated prev -> curr.
-    // The bar model is gone (D-08); Plan 03's rope arc and character rig
-    // pose from this value.
+    // Every running-pose quantity below derives from it — no mixer, no
+    // second timing system (D-14 / T-02-08).
     const phase = lerpPhase(view.prevPhase, view.rope.phase, view.alpha ?? 0);
-    playerBox.position.y = (view.player.y ?? 0) * WORLD_PER_PIXEL;
+    const theta = phase * Math.PI * 2;
+    const playerY = (view.player.y ?? 0) * WORLD_PER_PIXEL;
+
+    rig.position.y = playerY;
+    rig.scale.set(1 / (view.player.squash ?? 1), view.player.squash ?? 1, 1 / (view.player.squash ?? 1));
+
+    // Convention (PRES-03): theta = PI places the tube's sagged low point at
+    // the feet — the curve's bulge lives at local +Y, which rotates to
+    // world-down at rotation.z = -PI, matching atFeet's 0.45–0.55 phase
+    // window (js/rope.js:11-13) where the score tick fires.
+    ropePivot.rotation.z = -theta;
+
+    armL.rotation.x = Math.sin(theta);                  // arms track the rope, antiphase pair
+    armR.rotation.x = -Math.sin(theta);
+
+    const airborne = (view.player.y ?? 0) > 0;          // tuck keyed off sim height, never its own timer
+    legL.rotation.x = airborne ? -0.7 : 0;
+    legR.rotation.x = airborne ? 0.4 : 0;
 
     renderer.setRenderTarget(rt);
     renderer.render(scene, camera);                 // -> 240-row LINEAR target

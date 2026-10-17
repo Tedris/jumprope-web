@@ -80,7 +80,7 @@ export function startGame(canvas) {
     } else if (run.status === 'idle') {
       prompt = 'press space / tap to start';
     } else if (run.status === 'running' && run.skips === 0) {
-      prompt = 'press space / tap when the box reaches you';
+      prompt = 'press space / tap when the rope reaches your feet';
     }
     hudPrompt.textContent = prompt;
   }
