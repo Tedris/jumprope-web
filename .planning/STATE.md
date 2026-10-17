@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 3
+current_phase: 03
 current_phase_name: Card Catalogue Realness
 status: executing
-stopped_at: Phase 3 context gathered
-last_updated: "2026-10-17T05:21:48.343Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-10-17T06:55:18.105Z"
 last_activity: 2026-10-17
-last_activity_desc: Phase 02 marked complete
-state_head: 7a37d26fd205ed5d5c58fb28c15fafc33de84553
+last_activity_desc: Phase 03 execution started
+state_head: 349986d1463fd2ab37320529c0a90b36901b69de
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 40
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-16)
 
 **Core value:** One button, one rope, one perfect rhythm loop — the jump-timing feel must be joyful before anything else works.
-**Current focus:** Phase 02 — PS1 Presentation & Scene
+**Current focus:** Phase 03 — Card Catalogue Realness
 
 ## Current Position
 
-Phase: 3 (Card Catalogue Realness) — READY TO EXECUTE
-Plan: 3 of 3
+Phase: 03 (Card Catalogue Realness) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-10-17 — Phase 02 marked complete
+Last activity: 2026-10-17 — Phase 03 execution started
 
 Progress: [████░░░░░░] 40%
 
@@ -52,6 +52,7 @@ Progress: [████░░░░░░] 40%
 | Phase 02 P01 | 15min | 2 tasks | 1 files |
 | Phase 02 P02 | 7min | 2 tasks | 4 files |
 | Phase 02 P03 | 7min | 3 tasks | 3 files |
+| Phase 03 P01 | 12min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 02]: theta convention pinned: bulge at curve-local +Y, ropePivot.rotation.z = -theta, theta = PI puts the sagged low point at the feet (atFeet 0.45-0.55)
 - [Phase 02]: D-16 camera at (2.6, 2.2, 8.6)/lookAt(0,1,0) with fov 50->40 so the jumper keeps the spike's frame size at the farther vantage
 - [Phase 02]: Idle/trip cosmetics are the only view.now readers in render3d.js; trip shake is the verbatim closed-form sin(d*42)*exp(-d/200) — zero RNG/accumulators (T-02-08/09)
+- [Phase 03]: pickOffers promoted canonical, pickTwo kept as add-alongside shim (frozen distinct-pair pin)
+- [Phase 03]: shell.js reads CARDS via game.js re-export — frozen bootShell harness rewrites only game/rope/player/render3d specifiers
+- [Phase 03]: D-07 lock init as reentryAt=-LEAD_IN_MS (expired); confirm clears holdFrom — cold-start press safety + no stale charge across freeze
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-10-17T04:24:53.777Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-card-catalogue-realness/03-CONTEXT.md
+Last session: 2026-10-17T06:55:18.058Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

@@ -82,10 +82,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Player sees their owned cards as an icon strip during the run
   5. The catalogue holds 6–10+ original cards spanning margin/volume/risk/foundation/pace roles, passes a 1000-tick headless scripted-card simulation (no NaN, rope phase stays in safe wrap bounds, one score event per cycle)
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 **Wave 1**
-- [ ] 03-01-PLAN.md — Tracer: real one-button pick flow — catalogue metadata, pickOffers/caps/owned in sim, cycling-cursor + hold-confirm reducer in shell, lead-in re-entry, HUD offers + icon strip
+- [x] 03-01-PLAN.md — Tracer: real one-button pick flow — catalogue metadata, pickOffers/caps/owned in sim, cycling-cursor + hold-confirm reducer in shell, lead-in re-entry, HUD offers + icon strip
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 03-02-PLAN.md — Catalogue expansion to 8 cards across five roles, rarity/cap/escalation unit suite (offer size 2→3 at skip 31)
@@ -134,6 +134,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Render-Shell Foundation | 3/3 | Complete    | 2026-10-16 |
 | 2. PS1 Presentation & Scene | 3/3 | Complete    | 2026-10-17 |
-| 3. Card Catalogue Realness | 0/? | Not started | - |
+| 3. Card Catalogue Realness | 1/3 | In Progress | - |
 | 4. Feel & Audio | 0/? | Not started | - |
 | 5. Accessibility & Polish | 0/? | Not started | - |
