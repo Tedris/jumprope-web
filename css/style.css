@@ -1,4 +1,4 @@
-html, body { margin: 0; height: 100%; background: #1a1a2e; }
+html, body { margin: 0; height: 100%; background: #2a3440; }
 body { display: grid; place-items: center; }
 canvas {
   display: block;
@@ -15,7 +15,7 @@ canvas {
   align-items: center;
   gap: 4px;
   padding-top: 2.5rem;
-  color: #222;
+  color: #f4f0d8;
   font: 16px sans-serif;
   text-align: center;
   pointer-events: none;
