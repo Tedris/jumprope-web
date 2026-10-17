@@ -3,13 +3,17 @@ import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
 
-const W = 480;
-const H = 640;
 const STEP = 1 / 120;
 
+// The buffer tracks the window (coerced so Node-side stub environments
+// without innerWidth fall back to the old default and stay green);
+// js/render3d.js discovers size changes through its passive poll.
+function windowSize() {
+  return [Number(window.innerWidth) || 480, Number(window.innerHeight) || 640];
+}
+
 export function startGame(canvas) {
-  canvas.width = W;
-  canvas.height = H;
+  [canvas.width, canvas.height] = windowSize();
   const scene = createScene(canvas);
   const rng = Math.random;
   const hudScore = document.getElementById('hud-score');
@@ -39,6 +43,7 @@ export function startGame(canvas) {
   canvas.addEventListener('pointerup', release);
   window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); } });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
+  window.addEventListener('resize', () => { [canvas.width, canvas.height] = windowSize(); });
 
   function consumeIntents() {
     if (pressIntent !== null) {
@@ -101,7 +106,7 @@ export function startGame(canvas) {
     }
     updateHud();
     try {
-      scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best });
+      scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best, now });
     } catch (err) {
       console.error('render failed:', err);
     }
