@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>probe A: direct render, no RT/post</title></head>
+<body style="margin:0;background:#000">
+<canvas id="c" width="960" height="600"></canvas>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+const mode = new URLSearchParams(location.search).get('mode') || 'A';
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+renderer.setPixelRatio(1);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x2a3440);
+if (mode.includes('fog')) scene.fog = new THREE.Fog(0x2a3440, 7, 22);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 12),
+  new THREE.MeshLambertMaterial({ color: 0x3a4a42, flatShading: true }));
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+const block = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.4),
+  new THREE.MeshLambertMaterial({ color: 0xc94f6d, flatShading: true }));
+block.position.set(0, 0.55, 0);
+scene.add(block);
+const pale = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.5, 0.15),
+  new THREE.MeshBasicMaterial({ color: 0xf4f0d8, fog: false }));
+pale.position.set(1.2, 0.6, 0);
+scene.add(pale);
+const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+sun.position.set(-4, 7, 3);
+scene.add(sun);
+const camera = new THREE.PerspectiveCamera(40, 960 / 600, 0.1, 80);
+camera.position.set(2.6, 2.2, 8.6);
+camera.lookAt(0, 1, 0);
+if (mode === 'A') {
+  renderer.render(scene, camera);            // direct to canvas
+} else {
+  const rt = new THREE.WebGLRenderTarget(960, 600, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false });
+  renderer.setRenderTarget(rt);
+  renderer.render(scene, camera);
+  renderer.setRenderTarget(null);
+  const cam2 = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const sc2 = new THREE.Scene();
+  const enc = mode === 'B' ? '' : `
+  vec3 toSRGB( vec3 c ) { return mix( c * 12.92, pow( ( c + 0.055 ) / 1.055, vec3( 2.4 ) ), step( vec3( 0.0031308 ), c ) ); }`;
+  const col = mode === 'B' ? 'texture2D( tDiffuse, vUv ).rgb' : 'toSRGB( texture2D( tDiffuse, vUv ).rgb )';
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: rt.texture } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;${enc}
+      void main(){ gl_FragColor = vec4(${col}, 1.0); }`,
+    depthTest: false, depthWrite: false,
+  });
+  sc2.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
+  renderer.render(sc2, cam2);
+}
+</script>
+</body></html>
