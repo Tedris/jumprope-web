@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PS1 Look Spike (throwaway — plan 02-01, D-04)</title>
+  <!-- Throwaway look-spike, NOT part of the shipping graph (D-04): never imported by js/ or tests/.
+       Proves the full PS1 recipe on the pinned three@0.186.1 before js/render3d.js is touched:
+       240-row NearestFilter render target -> screen-space vertex snap (onBeforeCompile)
+       -> single fullscreen sRGB-then-Bayer/15-bit-quantize pass. Probe scene only.
+       Code below is kept in createScene port order (renderer -> RT -> materials+snap -> post quad -> loop).
+       SRI deliberately deferred: exact-version-pinned immutable jsdelivr URL is the mitigation
+       (phase 01 threat model T-01-01); the importmap below is byte-identical to index.html:9-15 (T-02-01). -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js"
+      }
+    }
+  </script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #26323a; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="probe"></canvas>
+<script type="module">
+import * as THREE from 'three';
+
+// ---- tuning knobs (all final values are settled at the Task-2 look sign-off) ----
+const INTERNAL_H = 240;        // D-01: locked internal rows; width follows window aspect
+const SNAP_S = 2;              // D-03: vertex-snap block size in INTERNAL pixels ("authentic crawl")
+const SKY = 0x2a3440;          // D-07: dim dusty blue sky — fog color matched (D-06)
+const FLOOR = 0x3a4a42;        // D-07: dusty green floor
+const PROP = 0x1d2630;         // dark off-axis prop
+const ROSE = 0xc94f6d;         // Phase-1 stand-in block — keeps the D-07/D-13 contrast test honest
+const ROPE = 0xf4f0d8;         // pale probe stand-in (D-09 bright-accent readability test)
+const FOG_NEAR = 7;
+const FOG_FAR = 22;
+const LIGHT_INTENSITY = 2.4;   // open question 3: brighten via light, NOT an AmbientLight (D-05 literal)
+
+const canvas = document.getElementById('probe');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// ---- 1. renderer (D-01) ----
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+renderer.setPixelRatio(1);     // never multiply targets by devicePixelRatio
+renderer.setSize(canvas.width, canvas.height, false);
+
+// ---- 2. low-res render target (Pitfall 2: Nearest filters, mipmaps off) ----
+let internalW = Math.max(2, Math.round(INTERNAL_H * canvas.width / canvas.height));
+const rt = new THREE.WebGLRenderTarget(internalW, INTERNAL_H, {
+  minFilter: THREE.NearestFilter,
+  magFilter: THREE.NearestFilter,   // nearest upscale happens implicitly when the RT is sampled
+  generateMipmaps: false,
+});
+
+// ---- 3. probe scene: flat floor + rose block + pivot-carried prop + pale stand-in ----
+// World materials: flat-shaded vertex-lit Lambert (D-05) with the snap injection below.
+// Snap uniform shared by all world materials; value = internalRes / (2 * SNAP_S).
+const uSnapGrid = { value: new THREE.Vector2(internalW / (2 * SNAP_S), INTERNAL_H / (2 * SNAP_S)) };
+
+function applyVertexSnap(material) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uSnapGrid = uSnapGrid;
+    shader.vertexShader = 'uniform vec2 uSnapGrid;\n' + shader.vertexShader.replace(
+      '#include <project_vertex>',
+      `#include <project_vertex>
+      {
+        vec4 ndc = gl_Position / gl_Position.w;
+        ndc.xy = floor( ndc.xy * uSnapGrid + 0.5 ) / uSnapGrid;  // snap to internal-pixel grid
+        gl_Position.xy = ndc.xy * gl_Position.w;                 // preserve w — no second divide
+      }`
+    );
+    material.userData.shader = shader;
+  };
+  material.customProgramCacheKey = () => 'ps1-snap';   // Pitfall 4: keep snapped variants distinct in the cache
+}
+
+function worldMaterial(color) {
+  const material = new THREE.MeshLambertMaterial({ color, flatShading: true });
+  applyVertexSnap(material);
+  return material;
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(SKY);
+scene.fog = new THREE.Fog(SKY, FOG_NEAR, FOG_FAR);   // D-06: fog matched to the sky, hides the world edge
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), worldMaterial(FLOOR));
+floor.rotation.x = -Math.PI / 2;   // flat, one quad only — snap stays calm on sparse geometry (Pitfall 7)
+scene.add(floor);
+
+const block = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.4), worldMaterial(ROSE));
+block.position.set(0, 0.55, 0);
+scene.add(block);
+
+const sun = new THREE.DirectionalLight(0xffffff, LIGHT_INTENSITY);   // D-05: the one light
+sun.position.set(-4, 7, 3);
+scene.add(sun);
+
+// Pivot carried in a circle: the dark prop (snapped world geometry) and the pale
+// rope stand-in (unlit MeshBasicMaterial, deliberately NOT snap-injected — the
+// world-only-snap test; HUD-class overlays are DOM, so the snap never touches them).
+const pivot = new THREE.Group();
+pivot.position.set(0, 1.7, 0);
+scene.add(pivot);
+
+const prop = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), worldMaterial(PROP));
+prop.position.set(1.6, 0, 0);
+pivot.add(prop);
+
+const ropeStandIn = new THREE.Mesh(
+  new THREE.BoxGeometry(0.16, 0.16, 1.2),
+  new THREE.MeshBasicMaterial({ color: ROPE })   // no applyVertexSnap: bright + stable by construction
+);
+ropeStandIn.position.set(-1.6, 0, 0);
+pivot.add(ropeStandIn);
+
+// Side-on fixed probe camera so the orbit sweeps across frame and the wobble lands on moving edges.
+const camera = new THREE.PerspectiveCamera(50, canvas.width / canvas.height, 0.1, 80);
+camera.position.set(0, 1.5, 6.5);
+camera.lookAt(0, 1.2, 0);
+
+// ---- 4. final pass: the ONE post pass (D-02) — sRGB encode FIRST, then Bayer + 15-bit floor ----
+const BAYER_FRAG = `
+  uniform sampler2D tDiffuse;
+  uniform vec2 uInternalRes;
+  varying vec2 vUv;
+
+  vec3 toSRGB( vec3 c ) {              // RT contents are LINEAR (Pitfall 1) — encode before quantize
+    return mix( c * 12.92, pow( ( c + 0.055 ) / 1.055, vec3( 2.4 ) ), step( vec3( 0.0031308 ), c ) );
+  }
+  float bayer4( vec2 p ) {             // standard 4x4 ordered matrix (Assumption A1 — confirm at sign-off)
+    const mat4 m = mat4( vec4( 0.0, 12.0, 3.0, 15.0 ), vec4( 8.0, 4.0, 11.0, 7.0 ),
+                         vec4( 2.0, 14.0, 1.0, 13.0 ), vec4( 10.0, 6.0, 9.0, 5.0 ) );
+    int x = int( mod( p.x, 4.0 ) ); int y = int( mod( p.y, 4.0 ) );
+    return m[y][x] / 16.0;             // threshold in [0,1)
+  }
+  void main() {
+    vec3 c = toSRGB( texture2D( tDiffuse, vUv ).rgb );
+    vec2 cell = floor( vUv * uInternalRes );               // pattern at INTERNAL pixels — NOT gl_FragCoord (Pitfall 3)
+    vec3 q = floor( c * 31.0 + bayer4( cell ) ) / 31.0;    // ~15-bit (5 b/ch) ordered-dither floor
+    gl_FragColor = vec4( q, 1.0 );
+  }`;
+
+const postScene = new THREE.Scene();
+const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const ditherMat = new THREE.ShaderMaterial({
+  uniforms: {
+    tDiffuse: { value: null },
+    uInternalRes: { value: new THREE.Vector2(internalW, INTERNAL_H) },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() { vUv = uv; gl_Position = vec4( position.xy, 0.0, 1.0 ); }`,
+  fragmentShader: BAYER_FRAG,
+  depthTest: false,
+  depthWrite: false,
+});
+postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), ditherMat));
+
+// ---- 5. resize (spike-local: this page is outside the boundary fence, so a listener here is fine) ----
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  internalW = Math.max(2, Math.round(INTERNAL_H * canvas.width / canvas.height));
+  rt.setSize(internalW, INTERNAL_H);
+  ditherMat.uniforms.uInternalRes.value.set(internalW, INTERNAL_H);
+  uSnapGrid.value.set(internalW / (2 * SNAP_S), INTERNAL_H / (2 * SNAP_S));   // uniform value — no recompile (Pitfall 4)
+  camera.aspect = canvas.width / canvas.height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(canvas.width, canvas.height, false);
+}
+window.addEventListener('resize', resize);
+
+// ---- 6. precompile both scenes so the probe measures the look, not a lazy-compile hitch (criterion 4) ----
+renderer.compile(scene, camera);
+renderer.compile(postScene, postCamera);
+
+// ---- 7. loop ----
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.25);
+  last = now;
+  pivot.rotation.z -= dt * 1.1;                       // continuous probe orbit
+  renderer.setRenderTarget(rt);
+  renderer.render(scene, camera);                     // -> 240-row LINEAR target
+  renderer.setRenderTarget(null);
+  ditherMat.uniforms.tDiffuse.value = rt.texture;
+  renderer.render(postScene, postCamera);             // -> sRGB + Bayer + quantize -> canvas
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
