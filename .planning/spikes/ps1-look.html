@@ -131,7 +131,7 @@ const BAYER_FRAG = `
   varying vec2 vUv;
 
   vec3 toSRGB( vec3 c ) {              // RT contents are LINEAR (Pitfall 1) — encode before quantize
-    return mix( c * 12.92, pow( ( c + 0.055 ) / 1.055, vec3( 2.4 ) ), step( vec3( 0.0031308 ), c ) );
+    return mix( c * 12.92, 1.055 * pow( c, vec3( 1.0 / 2.4 ) ) - 0.055, step( vec3( 0.0031308 ), c ) );  // 2026-10-17 FIX: was the inverse (decode) formula — crushed all pixels
   }
   float bayer4( vec2 p ) {             // standard 4x4 ordered matrix (Assumption A1 — confirm at sign-off)
     const mat4 m = mat4( vec4( 0.0, 12.0, 3.0, 15.0 ), vec4( 8.0, 4.0, 11.0, 7.0 ),

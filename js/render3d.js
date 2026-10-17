@@ -16,9 +16,19 @@ const PROP = 0x1d2630;         // D-07/D-18: dark props — handles, cap, eyes (
 const PALE = 0xf4f0d8;         // D-09: rope pale — unlit and fog-exempt so it stays max-bright
 const ROPE_RADIUS = 1.0;       // D-10: arc radius ≈ player height (chibi rig tops out ≈ 1.3)
 const HANDLE_HEIGHT = 1.05;    // D-08: rope pivot at handle height
-const FOG_NEAR = 10;           // 2026-10-17 UAT revision: subject outside the fog ramp
-const FOG_FAR = 24;            // horizon still fully fogged (D-06/D-18 cues intact)
-const LIGHT_INTENSITY = 4.5;   // D-05: the one light — raised from 2.4 per live-UAT: Lambert /PI at 2.4 rendered the floor near-black
+// Live look-tuning during UAT: append ?light=&fogNear=&fogFar= to override.
+// Browser-only read; Node/test import path always takes the shipped defaults.
+const LOOK_KNOBS = (() => {
+  const q = typeof location !== 'undefined' && location.search ? new URLSearchParams(location.search) : null;
+  const num = (key, fallback) => {
+    const raw = Number(q?.get(key));
+    return Number.isFinite(raw) && raw > 0 ? raw : fallback;
+  };
+  return { fogNear: num('fogNear', 7), fogFar: num('fogFar', 22), light: num('light', 2.4) };
+})();
+const FOG_NEAR = LOOK_KNOBS.fogNear;   // spike-approved 7/22; overridable for UAT tuning
+const FOG_FAR = LOOK_KNOBS.fogFar;
+const LIGHT_INTENSITY = LOOK_KNOBS.light;   // D-05: the one light — brightness lives here, no ambient fill
 
 // The ONE post pass (D-02): sRGB-encode first (the render target holds
 // LINEAR values), then Bayer 4×4 offset + 31-level floor quantize (~15-bit),
@@ -29,8 +39,8 @@ const BAYER_FRAG = `
   uniform vec2 uInternalRes;
   varying vec2 vUv;
 
-  vec3 toSRGB( vec3 c ) {
-    return mix( c * 12.92, pow( ( c + 0.055 ) / 1.055, vec3( 2.4 ) ), step( vec3( 0.0031308 ), c ) );
+  vec3 toSRGB( vec3 c ) {   // linear -> sRGB ENCODE: 1.055 * c^(1/2.4) - 0.055
+    return mix( c * 12.92, 1.055 * pow( c, vec3( 1.0 / 2.4 ) ) - 0.055, step( vec3( 0.0031308 ), c ) );
   }
   float bayer4( vec2 p ) {             // standard 4x4 ordered matrix (sign-off: A1 confirmed)
     const mat4 m = mat4( vec4( 0.0, 12.0, 3.0, 15.0 ), vec4( 8.0, 4.0, 11.0, 7.0 ),
@@ -94,7 +104,7 @@ export function createScene(canvas) {
   // Shared world materials (rose accent on torso/head/scarf only, per the
   // UI-SPEC color contract; neutral limbs; dark props — D-13).
   const roseMat = worldMaterial(ROSE);
-  const limbMat = roseMat;     // 2026-10-17 UAT revision: limbs read against the floor ("rose = character" contract)
+  const limbMat = worldMaterial(FLOOR);
   const propMat = worldMaterial(PROP);
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), worldMaterial(FLOOR));
@@ -241,7 +251,7 @@ export function createScene(canvas) {
   // Fixed side-on-with-slight-angle camera (D-16, UI-SPEC framing): near the
   // +Z axis so the XY-plane arc reads cleanly, small +X offset for depth.
   // Never touched again in render() — zero camera motion, ever.
-  const camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 80);   // 40 -> 45: bigger subject, D-16 vantage unchanged
+  const camera = new THREE.PerspectiveCamera(40, canvas.width / canvas.height, 0.1, 80);
   camera.position.set(2.6, 2.2, 8.6);
   camera.lookAt(0, 1, 0);
 
