@@ -220,3 +220,21 @@ No third-party registries declared; vetting gate not applicable.
 *Sources: 02-CONTEXT.md D-01–D-18; `.planning/spikes/ps1-look.html` ## Look Decisions
 (approved 2026-10-17); 02-01/02-02 SUMMARYs; shipped `js/render3d.js`, `js/shell.js`,
 `css/style.css`, `index.html` as of b786bab; 02-03-PLAN.md must_haves.*
+
+---
+
+## UAT Amendment (2026-10-17) — user sign-off on deployed build
+
+Live browser UAT rejected the first build (scene near-black; rope read as a
+spinning circle). Root causes fixed in `js/render3d.js`; user then approved
+the look on the GitHub Pages deployment. Amended contract values:
+
+| Item | Old (spike) | New (signed off) | Why |
+|------|-------------|------------------|-----|
+| Final-pass `toSRGB` | `pow((c+0.055)/1.055, 2.4)` | `1.055*pow(c,1/2.4)-0.055` | spike formula was the sRGB DECODE — crushed every pixel; the spike had never been seen by the user |
+| Rope sweep axis | `rotation.z = -theta` (screen-plane circle) | `rotation.x = +theta` (hands-axis forward sweep) | in-plane spin has a static silhouette ("circle going around") |
+| Rope geometry | full circle r=1.0, pivot y=1.05 | hand-to-hand arc, reach 0.75, pivot y=0.7, handles ±0.5, arms out to grips | D-08/D-10 reinterpreted for axis sweep: rope must read as rope in two hands |
+| Light / fog / fov / limbs | 2.4 / 7-22 / 40 / floor-green limbs | unchanged — misdiagnosis round reverted | |
+
+All four UAT checks (look parity, rope-feet beat coincidence, readability,
+personality + HUD legibility) passed on commit `bbf09f0`.
