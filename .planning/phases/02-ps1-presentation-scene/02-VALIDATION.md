@@ -79,3 +79,11 @@ Note: `tests/render3d.test.js` uses a hand-written THREE stub that must be exten
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** approved 2026-10-17 — all 7 automated verifications green
+
+## Validation Audit 2026-10-17
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
