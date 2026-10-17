@@ -195,5 +195,42 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 </script>
+
+<!--
+## Look Decisions
+
+Sign-off: approved by the developer at the Task-2 checkpoint (2026-10-17) —
+the look was accepted exactly as rendered; no knob changes were requested.
+Every value below is the committed value verbatim; "no changes" applies to
+every knob. Plan 02-02 copies this recipe and these numbers into
+js/render3d.js without opening a browser.
+
+| Knob                    | Canonical value                                                        | Notes |
+|-------------------------|------------------------------------------------------------------------|-------|
+| INTERNAL_H              | 240 rows; width = round(240 * canvas.width / canvas.height)            | D-01; NearestFilter min/mag, generateMipmaps: false; pixelRatio locked to 1 |
+| Vertex-snap block S     | 2 internal px — uSnapGrid = vec2(internalW / (2*S), INTERNAL_H / (2*S)) | D-03 "authentic crawl"; NDC snap after `#include <project_vertex>`, w preserved; world materials only; `customProgramCacheKey = () => 'ps1-snap'` |
+| Quantize levels         | 31 per channel (floor(c * 31.0 + bayer) / 31.0 ≈ 5 bit/ch, ~15-bit)    | D-02; sRGB transfer-encode applied FIRST (RT contents are linear — Pitfall 1) |
+| Bayer matrix            | standard 4×4 confirmed as-is (Assumption A1), threshold m[y][x] / 16.0  | cell indexed at floor(vUv * uInternalRes) — never gl_FragCoord (Pitfall 3) |
+| Sky hex                 | #2a3440                                                                | dim dusty blue (D-07); scene.background; fog color matched (D-06) |
+| Floor hex               | #3a4a42                                                                | dusty green (D-07); one sparse PlaneGeometry(40, 12) quad keeps the snap calm (Pitfall 7) |
+| Prop hex                | #1d2630                                                                | dark off-axis silhouette probe |
+| Character/rose hex      | #c94f6d                                                                | Phase-1 accent preserved for contrast (D-07, D-13) |
+| Rope/pale hex           | #f4f0d8                                                                | bright accent readability (D-09); MeshBasicMaterial, deliberately NOT snap-injected |
+| Fog near / far          | 7 / 22                                                                 | D-06; hides the world edge |
+| Directional light       | white 0xffffff, intensity 2.4, position (-4, 7, 3)                     | D-05: the one light |
+| Ambient fill            | none needed                                                            | RESEARCH open question 3 resolved by light intensity alone — D-05 kept literal |
+
+Checklist walk (all passed at sign-off): (a) chunky pixels hold on window
+resize — pattern indexes internal-pixel space, not canvas pixels; (b) Bayer
+texture visible without moiré; (c) vertices crawl with the signature PS1
+wobble, floor stays calm via geometry sparsity, not a weakened snap;
+(d) brightness correct — rose #c94f6d and pale #f4f0d8 read clearly, no
+dark linear-RT frame; (e) fog hides the world edge; (f) no hitch on load or
+resize — both scenes precompiled via renderer.compile.
+
+Architecture confirmation (step 5): the onBeforeCompile snap injection works
+correctly on the pinned three@0.186.1 — no addons / RetroPassNode migration
+needed; T-02-02 stays closed, core-only mandate holds.
+-->
 </body>
 </html>
