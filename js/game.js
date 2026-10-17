@@ -1,6 +1,6 @@
 import { updateRope, atFeet } from './rope.js';
 import { jump, createPlayer, updatePlayer, clearsRope } from './player.js';
-import { CARDS, freshEffects, pickOffers, shouldOfferUpgrade } from './upgrades.js';
+import { CARDS, freshEffects, pickOffers, shouldOfferUpgrade, offerCount } from './upgrades.js';
 
 // Shell-side HUD reads the catalogue through game.js: tests/shell.test.js's
 // frozen bootShell harness only rewrites the game/rope/player/render3d
@@ -44,7 +44,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random) {
       score += run.effects.scoreMul;
       skips += 1;
       if (shouldOfferUpgrade(skips)) {
-        const offers = pickOffers(CARDS, run.owned ?? {}, 2, rng);
+        const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng);
         // Pitfall 6: an exhausted pool must never freeze the run in choose.
         if (offers.length > 0) {
           status = 'choose';

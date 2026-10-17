@@ -70,3 +70,9 @@ export function pickTwo(pickList, rng) {
 export function shouldOfferUpgrade(skips) {
   return skips > 0 && skips % 10 === 0;
 }
+
+// Offer-size escalation (RESEARCH Open Q2): size 3 beyond skip 30, else 2.
+// First-offer pins stay green — the tenth-skip call lands on 2.
+export function offerCount(skips) {
+  return skips > 30 ? 3 : 2;
+}
