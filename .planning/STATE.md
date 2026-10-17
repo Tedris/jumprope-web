@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: PS1 Presentation & Scene
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-10-17T02:17:02.786Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-10-17T02:28:04.030Z"
 last_activity: 2026-10-16
 last_activity_desc: Phase 02 execution started
-state_head: 18c3feb8aa5a0dcdfe5b5fee27c28636874e2b26
+state_head: b786bab6cb571b1f64df515be41a40eb6310269b
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 20
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-16)
 ## Current Position
 
 Phase: 02 (PS1 Presentation & Scene) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-10-16 — Phase 02 execution started
 
@@ -50,6 +50,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 01 P02 | 10min | 2 tasks | 3 files |
 | Phase 01 P03 | 4 min | 3 tasks | 3 files |
 | Phase 02 P01 | 15min | 2 tasks | 1 files |
+| Phase 02 P02 | 7min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 01]: shell frame() wraps only scene.render in try/catch; rAF re-arms unconditionally so a renderer throw can no longer freeze input (T-01-08)
 - [Phase 02]: PS1 look signed off as-rendered: snap S=2, 31-level Bayer-4x4, fog 7-22, one light 2.4 — canonical values in spike ## Look Decisions (02-02 ports verbatim)
 - [Phase 02]: onBeforeCompile vertex-snap injection proven on pinned three@0.186.1 — addons/RetroPassNode migration not needed (T-02-02 closed); no ambient fill, D-05 literal
+- [Phase 02]: PS1 pipeline shipped: spike recipe ported verbatim into createScene (RT+snap+Bayer single pass, dual compile); spike camera framing ported so fog-near doesn't darken the signed-off frame
+- [Phase 02]: shell view payload gains render-only view.now (rAF timestamp); canvas buffer window-sized via coerced windowSize(); resize stays one-way through render3d's passive poll
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-10-17T02:17:02.768Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-10-17T02:28:03.999Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
