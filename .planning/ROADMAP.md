@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Render-Shell Foundation** - Split sim from shell, pin Three.js via importmap, render the playable game as placeholder 3D with one canonical clock (completed 2026-10-16)
 - [x] **Phase 2: PS1 Presentation & Scene** - Low-res dithered wobble look, original low-poly character, readable fixed-camera rope judgment
-- [ ] **Phase 3: Card Catalogue Realness** - Real card choice, identity/rarity/stack caps/dead-pick filtering, 6–10+ card catalogue with owned-card HUD
+- [x] **Phase 3: Card Catalogue Realness** - Real card choice, identity/rarity/stack caps/dead-pick filtering, 6–10+ card catalogue with owned-card HUD (completed 2026-10-17)
 - [ ] **Phase 4: Feel & Audio** - Input forgiveness, significance-scaled juice, near-miss callouts, full WebAudio SFX + loop with persisted mute/volume
 - [ ] **Phase 5: Accessibility & Polish** - Pause/hidden-tab handling, reduced motion, resize-legible low-res UI
 
@@ -82,7 +82,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Player sees their owned cards as an icon strip during the run
   5. The catalogue holds 6–10+ original cards spanning margin/volume/risk/foundation/pace roles, passes a 1000-tick headless scripted-card simulation (no NaN, rope phase stays in safe wrap bounds, one score event per cycle)
 
-**Plans**: 3/3 plans executed
+**Plans**: 3/3 plans complete
 
 **Wave 1**
 - [x] 03-01-PLAN.md — Tracer: real one-button pick flow — catalogue metadata, pickOffers/caps/owned in sim, cycling-cursor + hold-confirm reducer in shell, lead-in re-entry, HUD offers + icon strip
@@ -134,6 +134,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Render-Shell Foundation | 3/3 | Complete    | 2026-10-16 |
 | 2. PS1 Presentation & Scene | 3/3 | Complete    | 2026-10-17 |
-| 3. Card Catalogue Realness | 3/3 | In Progress | - |
+| 3. Card Catalogue Realness | 3/3 | Complete    | 2026-10-17 |
 | 4. Feel & Audio | 0/? | Not started | - |
 | 5. Accessibility & Polish | 0/? | Not started | - |

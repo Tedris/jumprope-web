@@ -19,12 +19,12 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 - ✓ Run state machine (idle → running → choose → over) with best-score persistence — existing (`js/game.js`)
 - ✓ Draw-layer replacement: Canvas 2D shell swapped for a WebGL shell that reads the same immutable simulation state each frame — Phase 1 (`js/shell.js`, `js/render3d.js`)
 - ✓ Simulation core preserved: pure functions, injectable randomness, Node-testable — no gameplay logic inside the render layer — Phase 1 (ARCH-01/02, boundary test in `tests/boundary.test.js`)
+- ✓ PS1-style 3D presentation: Three.js (via CDN) rendering the simulation state at low internal resolution with vertex snapping, flat shading, and dithering — Phase 2 (`js/render3d.js`)
+- ✓ Original low-poly character (skipping figure) and a small stylized stage — not a Scarlet lookalike — Phase 2 (`js/render3d.js`)
+- ✓ Card catalogue: expand the upgrade set from 4 effect multipliers into a real catalogue with rarity, stacking rules, and clearer card identity — Phase 3 (`js/upgrades.js`, 8 cards / 5 roles, caps + offer-count escalation, headless-sim balance gate)
 
 ### Active
 
-- [ ] PS1-style 3D presentation: Three.js (via CDN) rendering the simulation state at low internal resolution with vertex snapping, flat shading, and dithering
-- [ ] Original low-poly character (skipping figure) and a small stylized stage — not a Scarlet lookalike
-- [ ] Card catalogue: expand the upgrade set from 4 effect multipliers into a real catalogue with rarity, stacking rules, and clearer card identity
 - [ ] SFX and a looping vibe track via WebAudio (no beat-lock; rope stays free-running)
 
 ### Out of Scope
@@ -58,7 +58,10 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 | Three.js via CDN | Pragmatic WebGL; breaks zero-dep rule once, contained to the render shell | ✓ Working — importmap-pinned `three@0.186.1`, full run playable through WebGL shell (Phase 1) |
 | Deeper in-run cards, no meta progression | Roguelike depth without long-term balance burden this cycle | — Pending |
 | SFX + music without beat-lock | Keep rope phase as free canonical clock; audio follows gameplay | — Pending |
-| Original character/stage | Avoid Scarlet lookalike; demake of the idea, not the IP | — Pending |
+| Original character/stage | Avoid Scarlet lookalike; demake of the idea, not the IP | ✓ Working — low-poly skipper + stage shipped (Phase 2) |
+| `pickOffers` canonical; `pickTwo` shim | Keep frozen distinct-pair test green while the offer generator grows past pairs | ✓ Working (Phase 3) |
+| Offer size 3 beyond skip 30, 2 before | Escalating variety late-run without diluting the first offer's read | ✓ Working (Phase 3) |
+| ropeMul capped per-card, never per-frame | Stacked speed cards stay inside the ~15.6s rope-wrap blackout bound by construction; `js/rope.js` untouched | ✓ Verified by sim gate (Phase 3) |
 
 ## Evolution
 
@@ -78,4 +81,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-16 after Phase 1*
+*Last updated: 2026-10-17 after Phase 3*
