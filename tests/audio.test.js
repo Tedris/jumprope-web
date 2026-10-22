@@ -217,6 +217,21 @@ test('one bus: volume changes land on the SAME master gain the voices chain into
   assert.equal(audio.getVolume(), 0.5, 'mute does not eat the volume setting');
 });
 
+test('trip noise buffer stays within full scale [-1, 1) (CR-01)', () => {
+  const ctx = makeAudioContext();
+  const audio = createAudio({ storage: makeStorage() });
+  audio.gesture(ctx);
+  audio.handleEvent('trip');
+  const src = ctx.bufferSources.at(-1);
+  assert.ok(src && src.buffer, 'the trip voice reads from the pre-rendered noise buffer');
+  const data = src.buffer.getChannelData(0);
+  assert.ok(data.length > 0);
+  for (let i = 0; i < data.length; i++) {
+    assert.ok(data[i] >= -1 && data[i] < 1,
+      `sample ${i} = ${data[i]} must stay in [-1, 1) — full-scale, never clipping`);
+  }
+});
+
 // ---------- Part B: real-shell seam legs ----------
 
 let bootCount = 0;

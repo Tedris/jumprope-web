@@ -109,7 +109,7 @@ export function createAudio({ context, storage, fetchFn } = {}) {
     let seed = 0x9e3779b9;
     for (let i = 0; i < data.length; i++) {
       seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
-      data[i] = ((seed >>> 8) / 0x800000) * 2 - 1;
+      data[i] = ((seed >>> 8) / 0x1000000) * 2 - 1;   // >>> 8 leaves 24 bits; divide by 2^24 for [-1, 1)
     }
     return buf;
   }
