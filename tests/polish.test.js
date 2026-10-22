@@ -616,3 +616,190 @@ test('garbage window metrics (0 / undefined / 1×1) coerce — buffer dims stay 
     env.restore();
   }
 });
+
+// ---------- criterion 4 legs: input-loss hardening (D-11/D-12) ----------
+
+// D-11: the shared releaseEverything() handler is dispatched through the
+// harness handler map once bound. The optional-call form keeps the RED legs
+// failing on the BEHAVIOR assertion (no airborne player after a loss event)
+// rather than on a TypeError while the event is still unrouted.
+function blur(env) { env.handlers.window.blur?.(); }
+
+function pointercancel(env) { env.handlers.canvas.pointercancel?.(); }
+
+function waitGrounded(env, st) {
+  let guard = 0;
+  while (!env.views.at(-1).player.grounded && ++guard < 20) tick(env, st);
+  assert.ok(env.views.at(-1).player.grounded,
+    'the lead-in jump landed — the charge under test starts from the ground');
+}
+
+// pickflow's driveToChoose idiom continued on the caller's clock: hold-jump
+// (≈0 hold, vy ≈ 350) whenever grounded with rope.phase in [0.20, 0.28)
+// clears every cycle deterministically until the 10-skip offer freezes the
+// run into 'choose'.
+function runToChoose(env, st) {
+  let budget = 0;
+  while (env.views.at(-1).run.status !== 'choose') {
+    if (++budget > 1200) {
+      throw new Error('polish harness: "choose" never landed within the frame budget');
+    }
+    const view = env.views.at(-1);
+    assert.notEqual(view.run.status, 'over',
+      'polish harness: the scripted jumper tripped before the cadence freeze');
+    if (view.player.grounded && view.rope.phase >= 0.2 && view.rope.phase < 0.28) {
+      press(env);
+      tick(env, st);
+      release(env);
+      tick(env, st);
+    } else {
+      tick(env, st);
+    }
+  }
+}
+
+test('mid-charge blur fires the jump with the hold so far; stale keyup adds no second jump (D-11, Pitfall 6)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    waitGrounded(env, st);
+
+    press(env);        // charge starts: pressIntent armed
+    tick(env, st);     // consumeIntents converts it to holdFrom — still grounded
+    assert.ok(env.views.at(-1).player.grounded, 'mid-charge: hold accumulating on the ground');
+
+    blur(env);         // focus loss mid-charge = released at that instant
+    tick(env, st);
+    const fired = env.views.at(-1).player;
+    assert.ok(!fired.grounded && fired.vy > 200,
+      `blur must launch through consumeIntents with the partial hold, got grounded=${fired.grounded} vy=${fired.vy}`);
+
+    // The stale keyup that eventually reaches the unfocused window must not
+    // fire a second jump: vy only ever decays under gravity afterwards.
+    release(env);
+    const vys = [fired.vy];
+    for (let i = 0; i < 3; i++) {
+      tick(env, st);
+      vys.push(env.views.at(-1).player.vy);
+    }
+    assert.ok(vys.every((v, i) => i === 0 || v < vys[i - 1]),
+      `vy decays strictly after the blur-fired jump — no relaunch, got ${vys}`);
+  } finally {
+    env.restore();
+  }
+});
+
+test('mid-hold pointercancel launches and leaves no hold behind (D-11)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    waitGrounded(env, st);
+
+    env.handlers.canvas.pointerdown({ pointerId: 1 }); // touch press starts the hold
+    tick(env, st);
+    assert.ok(env.views.at(-1).player.grounded, 'mid-hold: touch hold accumulating on the ground');
+
+    pointercancel(env); // OS/app-switch cancellation = released at that instant
+    tick(env, st);
+    const fired = env.views.at(-1).player;
+    assert.ok(!fired.grounded && fired.vy > 200,
+      `pointercancel must launch with the hold-so-far, got grounded=${fired.grounded} vy=${fired.vy}`);
+
+    // No holdFrom survives the cancel: once the fired jump lands, later frames
+    // are grounded rest — never a re-launch from a stuck charge.
+    let guard = 0;
+    while (!env.views.at(-1).player.grounded && ++guard < 20) tick(env, st);
+    assert.ok(env.views.at(-1).player.grounded, 'the pointercancel-fired jump landed');
+    const vys = [];
+    for (let i = 0; i < 4; i++) {
+      tick(env, st);
+      vys.push(env.views.at(-1).player.vy);
+    }
+    assert.ok(vys.every(v => v === 0),
+      `no hold survived the cancel — grounded frames only, got ${vys}`);
+  } finally {
+    env.restore();
+  }
+});
+
+test('blur mid card-hold cancels cleanly — no pick, offer prompt still listed (D-11)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    runToChoose(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'choose', 'the 10-skip offer froze the run');
+
+    env.handlers.canvas.pointerdown({ pointerId: 1 }); // cycles cursor, re-arms the hold
+    tick(env, st);
+    assert.match(env.hud['hud-prompt'].textContent, /\[[-#]+\]/,
+      'the fill cue is live during the sub-confirm hold');
+
+    blur(env); // focus loss under the 800 ms confirm threshold = clean cancel
+    tick(env, st);
+    const prompt = env.hud['hud-prompt'].textContent;
+    assert.ok(!prompt.includes('['), 'the fill cue is gone — the hold was cancelled, not carried');
+    assert.match(prompt, /^> /m, 'the offer prompt still lists the offer');
+    for (let i = 0; i < 4; i++) tick(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'choose', 'nothing confirmed across the blur');
+    assert.ok(!env.log.voices.includes('pick'), 'the audio log shows no pick event');
+  } finally {
+    env.restore();
+  }
+});
+
+test('blur on the game-over screen restarts nothing — over never arms the release branch (T-05-07)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    let guard = 0; // never jump: the first grounded crossing trips the run
+    while (env.views.at(-1).run.status === 'running' && ++guard < 90) tick(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'over', 'the run tripped to game-over');
+    const phase0 = env.views.at(-1).rope.phase;
+
+    blur(env);
+    for (let i = 0; i < 3; i++) tick(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'over',
+      'focus loss on a dead run starts no new run (the release-restart branch stays unarmed)');
+    assert.strictEqual(env.views.at(-1).rope.phase, phase0, 'the game-over rope stays still');
+    assert.match(env.hud['hud-prompt'].textContent, /^Missed!/, 'the game-over prompt is untouched');
+  } finally {
+    env.restore();
+  }
+});
+
+test('hidden mid-hold pauses and stays cleared — the post-resume crossing trips (D-12 fire-superseded-by-clear)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    waitGrounded(env, st);
+    press(env);
+    tick(env, st); // holdFrom armed at the moment the tab hides
+
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange(); // hidden+running routes releaseEverything() then enterPause
+    const phase0 = env.views.at(-1).rope.phase;
+    tick(env, st);
+    tick(env, st);
+    assert.strictEqual(env.views.at(-1).rope.phase, phase0,
+      'hidden mid-hold: the run is frozen — enterPause supersedes the armed release');
+
+    env.document.hidden = false;
+    env.handlers.window.visibilitychange(); // tab-return auto-resume through the lead-in
+    env.frames.at(-1)(st.t); // zero-delta snapshot of the resume instant
+    assert.strictEqual(env.views.at(-1).rope.phase, START_PHASE, 'resumed into the lead-in');
+
+    // No armed release/hold leaked into the lead-in: with no further input the
+    // first grounded crossing trips — a phantom jump would have skipped it.
+    let guard = 0;
+    while (env.views.at(-1).run.status === 'running' && ++guard < 90) tick(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'over',
+      'the post-resume crossing trips — no armed state survived the pause');
+  } finally {
+    env.restore();
+  }
+});
