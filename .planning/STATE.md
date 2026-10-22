@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Accessibility & Polish
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-10-22T17:39:17.326Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-10-22T18:00:42.672Z"
 last_activity: 2026-10-22
 last_activity_desc: Phase 05 execution started
-state_head: f3e8f29d68fd8a3175bd25a4c241bc01999a4c76
+state_head: 59eb1c45177038c887906192cabec1bfdb0bc269
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 17
-  completed_plans: 14
+  completed_plans: 15
   percent: 80
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-17)
 ## Current Position
 
 Phase: 05 (Accessibility & Polish) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-10-22 — Phase 05 execution started
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 80%
 | Phase 03 P02 | 6 min | 2 tasks | 4 files |
 | Phase 03 P03 | 9min | 2 tasks | 1 files |
 | Phase 05 P01 | 13 min | 3 tasks | 4 files |
+| Phase 05 P02 | 11min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 03]: roster-wide test expectations must derive from card records (picked.apply(neutral)) — the 4-key EXPECT_EFFECT table flaked the moment the pool grew (1d9dcd2)
 - [Phase 03]: criterion-5 headless sim closes the STATE.md rope-wrap blocker by construction — cap-policy bound derived from the real apply closures, js/rope.js never touched
 - [Phase 03]: headless-sim jump policy tuned to phase window [0.20, 0.35] @ 0.5s hold — probe-trip-free for neutral and all 8 cap stacks; cadence freeze reached via skips-seed 9 (startrun idiom), 1000-tick budget kept literal
+- [Phase 05]: UI-02: SNAP_OFF=0.25 sub-pixel snap grid via ONE shared snapGridFor() helper — resize can never re-apply the wobble (Pitfall 12); never Infinity/0 (GLSL floor NaN)
+- [Phase 05]: UI-02: reduced-motion flag stored in render() BEFORE the passive size poll and consumed exactly like view.now — render3d gains no window/matchMedia reference (ARCH fence green)
+- [Phase 05]: UI-02: Open Q3 pinned — trip settle holds exactly -PI, idle bob/twirl at still endpoints, hitstop stays; Phase-3 deferred HUD flash dampening closed as no-op (D-05 protects the HUD channel, A6)
 
 ### Pending Todos
 
@@ -110,6 +114,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-10-22T17:39:17.241Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-10-22T18:00:42.576Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
