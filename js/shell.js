@@ -8,6 +8,16 @@ const PICK_HOLD_MS = 800;
 const LEAD_IN_MS = 450;
 const FLASH_MS = 150;
 
+// FEEL-02 (D-N06/D-N12): the single source of truth for juice magnitudes —
+// event tier (skip < nearMiss < trip) scaled by significance. Seeds are
+// PROVISIONAL; morning playtest re-tunes values as a data-only diff here and
+// nowhere else. 'jump' is intentionally absent: it gets no juice.
+export const JUICE_TIERS = {
+  skip: { hitstop: 8, shake: 0.5, particles: 4 },
+  nearMiss: { hitstop: 40, shake: 1.5, particles: 10 },
+  trip: { hitstop: 80, shake: 2, particles: 16 }
+};
+
 // The buffer tracks the window (coerced so Node-side stub environments
 // without innerWidth fall back to the old default and stay green);
 // js/render3d.js discovers size changes through its passive poll.
@@ -59,6 +69,9 @@ export function startGame(canvas) {
   let flashName = '';
   let best = loadBest(localStorage);
   let acc = 0;
+  let stopUntil = 0;
+  let juiceSig = null;
+  let pressFired = false;
   let last = performance.now();
 
   function press() {
@@ -125,6 +138,9 @@ export function startGame(canvas) {
           player = jump(player, (performance.now() - holdFrom) / 1000);
           audio?.handleEvent('jump');
           holdFrom = null;
+          // D-N01/D-N11: hand the press to the sim on this exact STEP's
+          // tickRun (the release's jump call stays the player's timing).
+          pressFired = true;
         }
       } else if (run.status === 'choose') {
         if (pickDone) {
@@ -212,16 +228,38 @@ export function startGame(canvas) {
     last = now;
     if (acc > 0.25) acc = 0.25;
     while (acc >= STEP) {
+      // D-N05: juice freeze gate — a pending event deadline halts the drain
+      // here, delaying (never dropping) the remaining steps of this drain;
+      // the held acc resumes under the unchanged 0.25 clamp above. With the
+      // gate removed the drain is byte-identical to the pre-Phase-4 loop.
+      if (now < stopUntil) break;
       consumeIntents();
       if (run.status === 'running') {
         prevPhase = rope.phase;
-        const out = tickRun(run, rope, player, STEP, rng);
+        const out = tickRun(run, rope, player, STEP, rng, pressFired ? true : null);
+        pressFired = false;
         ({ run, rope, player } = out);
         // D-N02 single-channel rule: sim events are audio's only feed.
         if (audio) for (const ev of out.events) audio.handleEvent(ev);
         if (out.tripped) {
           best = Math.max(best, run.score);
           saveBest(localStorage, best);
+        }
+        // D-N02: the events array is the ONLY juice trigger (the tripped
+        // fallback is a defensive shim for a channel-less sim build).
+        for (const e of (out.events ?? (out.tripped ? ['trip'] : []))) {
+          const tier = JUICE_TIERS[e];
+          if (tier) {
+            // Deadline, not a counter: hits never queue behind each other (T-4-03).
+            stopUntil = Math.max(stopUntil, now + tier.hitstop);
+            juiceSig = { at: now, shake: tier.shake, particles: tier.particles };
+          }
+          if (e === 'nearMiss') {
+            // D-N04: the CLOSE! callout rides the proven card-name flash
+            // channel — no new DOM, streak count straight from the sim.
+            flashName = 'CLOSE! \u00d7' + (run.streak ?? 1);
+            flashUntil = now + FLASH_MS;
+          }
         }
       } else {
         prevPhase = rope.phase;
@@ -230,7 +268,7 @@ export function startGame(canvas) {
     }
     updateHud();
     try {
-      scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best, now });
+      scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best, now, juice: juiceSig });
     } catch (err) {
       console.error('render failed:', err);
     }
