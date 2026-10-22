@@ -7,6 +7,14 @@
 const SETTINGS_KEY = 'jumprope-audio';
 const TRACK_URL = 'audio/track.ogg';
 
+// Valid volume is any finite number, clamped into [0,1]; 0 is a legitimate
+// setting, so the invalid-input fallback is an explicit finiteness check,
+// never a || coalesce (which would silently rewrite 0 to 1).
+const clampVolume = v => {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 1;
+};
+
 // D-N10: the injectable-storage seam of game.js's best-score helpers — one
 // key, shape-pinned read (T-4-06), silent degradation.
 export function loadSettings(storage) {
@@ -16,7 +24,7 @@ export function loadSettings(storage) {
     const s = JSON.parse(raw);
     return {
       muted: s.muted === true,
-      volume: Math.min(1, Math.max(0, Number(s.volume) || 1)),
+      volume: clampVolume(s.volume),
     };
   } catch {
     return { muted: false, volume: 1 };
@@ -27,7 +35,7 @@ export function saveSettings(storage, settings) {
   try {
     storage.setItem(SETTINGS_KEY, JSON.stringify({
       muted: !!settings.muted,
-      volume: Number(settings.volume) || 1,
+      volume: clampVolume(settings.volume),
     }));
   } catch {
     // storage unavailable; settings are session-only

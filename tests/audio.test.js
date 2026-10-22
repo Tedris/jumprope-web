@@ -199,6 +199,17 @@ test('settings: single-key round-trip, write-through, coercion, graceful degrada
   saveSettings(hostile, { muted: 'yes', volume: 'nope' });
   assert.deepEqual(JSON.parse(hostile.writes[0][1]), { muted: true, volume: 1 }, 'shape-pinned write');
   saveSettings({ setItem: () => { throw new Error('storage blocked'); } }, { muted: false, volume: 1 });
+
+  const zero = makeStorage();
+  saveSettings(zero, { muted: false, volume: 0 });
+  assert.deepEqual(JSON.parse(zero.writes[0][1]), { muted: false, volume: 0 }, 'volume 0 persists as 0, never rewritten to 1');
+  assert.deepEqual(
+    loadSettings(makeStorage([['jumprope-audio', zero.writes[0][1]]])),
+    { muted: false, volume: 0 },
+    'a persisted volume 0 reloads as 0');
+  const zeroBoot = makeAudioContext();
+  createAudio({ storage: makeStorage([['jumprope-audio', zero.writes[0][1]]]) }).gesture(zeroBoot);
+  assert.equal(zeroBoot.gainNodes[0].gain.value, 0, 'a reloaded volume 0 reads 0 straight onto the master gain');
 });
 
 test('one bus: volume changes land on the SAME master gain the voices chain into (D-N09)', () => {
