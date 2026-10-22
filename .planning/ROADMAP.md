@@ -126,7 +126,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The low-res UI stays legible at any window size (resize/letterbox handling)
   4. No stuck-hold state after blur or `pointercancel` — input reducer hardening ported into the new shell
 
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 05-01-PLAN.md — Tracer: manual + tab-hidden pause with audio suspend and resumeRun lead-in re-entry (UI-01)
+- [ ] 05-02-PLAN.md — Live prefers-reduced-motion: wobble/shake/particle/cosmetic dampening (UI-02)
+- [ ] 05-03-PLAN.md — Clamp-band resize + DOM letterbox, five-harness style stubs (UI-03)
+- [ ] 05-04-PLAN.md — release-everything input-loss hardening + phase integration gate (criterion 4)
 **UI hint**: yes
 
 ## Progress
