@@ -174,8 +174,10 @@ test('reduced motion pins uShake at zero; the same signal without it jitters the
     juice: { at: 1000, shake: 2, particles: 0 },
   }));
   env.scene.render(dampenView({ now: 1030, reducedMotion: true }));
-  assert.strictEqual(uShake.value.x, 0, 'reducedMotion zeroes the shake amplitude at the source');
-  assert.strictEqual(uShake.value.y, 0);
+  // + 0 normalizes -0 (zero amplitude through a negative sin term) — the
+  // uniform must read exactly the still vector, sign aside.
+  assert.strictEqual(uShake.value.x + 0, 0, 'reducedMotion zeroes the shake amplitude at the source');
+  assert.strictEqual(uShake.value.y + 0, 0);
 
   const fresh = await bootDampenScene();
   const uShakeRef = fresh.post.children[0].material.uniforms.uShake;

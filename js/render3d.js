@@ -9,6 +9,7 @@ const WORLD_PER_PIXEL = 0.01;
 // a fresh sign-off.
 const INTERNAL_H = 240;        // D-01: locked internal rows; width follows the buffer aspect
 const SNAP_S = 2;              // D-03: vertex-snap block size in internal pixels ("authentic crawl")
+const SNAP_OFF = 0.25;         // UI-02 (D-05): reduced-motion snap block — sub-pixel step, wobble gone; never Infinity/0 (GLSL floor NaN)
 const SKY = 0x2a3440;          // D-07: dim dusty blue sky — fog color matched (D-06)
 const FLOOR = 0x3a4a42;        // D-07: dusty green floor
 const ROSE = 0xc94f6d;         // D-07/D-13: prototype accent — the jumper pops against the moody stage
@@ -89,9 +90,18 @@ export function createScene(canvas) {
     generateMipmaps: false
   });
 
+  // UI-02 (D-05): ONE shared grid helper for both uSnapGrid write sites (init
+  // and applyBufferSize) so a resize can never re-apply the full wobble the
+  // reduced-motion flag removed (Pitfall 12). Grid = internal px / (2 * block).
+  let reducedMotion = false;                     // last-seen view.reducedMotion, stored in render()
+  function snapGridFor(reduced) {
+    const s = reduced ? SNAP_OFF : SNAP_S;       // 0.25 px = sub-pixel step: wobble off, floor stays finite
+    return [internalW / (2 * s), INTERNAL_H / (2 * s)];
+  }
+
   // One shared snap uniform for every world material (D-03: world geometry
   // only — anything that must stay register-stable opts out later).
-  const uSnapGrid = { value: new THREE.Vector2(internalW / (2 * SNAP_S), INTERNAL_H / (2 * SNAP_S)) };
+  const uSnapGrid = { value: new THREE.Vector2(...snapGridFor(false)) };
 
   function worldMaterial(color) {
     const material = new THREE.MeshLambertMaterial({ color, flatShading: true });   // D-05: vertex-lit flat facets
@@ -299,7 +309,7 @@ export function createScene(canvas) {
     internalW = Math.max(2, Math.round(INTERNAL_H * width / height));
     rt.setSize(internalW, INTERNAL_H);
     ditherMat.uniforms.uInternalRes.value.set(internalW, INTERNAL_H);
-    uSnapGrid.value.set(internalW / (2 * SNAP_S), INTERNAL_H / (2 * SNAP_S));   // uniform value only — no recompile
+    uSnapGrid.value.set(...snapGridFor(reducedMotion));   // uniform value only — no recompile; follows the stored flag (Pitfall 12)
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
@@ -331,6 +341,17 @@ export function createScene(canvas) {
   let particlesLive = false;
 
   function render(view) {
+    // UI-02 (D-06): view.reducedMotion is consumed exactly like view.now —
+    // one-way data, no listener and no window reference here (ARCH fence).
+    // Stored BEFORE the size poll so a same-frame resize re-derives through
+    // snapGridFor with the fresh flag (Pitfall 12); a bare flag change takes
+    // effect this very frame via the same shared helper (D-06 live-switch).
+    const reduced = !!view.reducedMotion;
+    if (reduced !== reducedMotion) {
+      reducedMotion = reduced;
+      uSnapGrid.value.set(...snapGridFor(reduced));
+    }
+
     // Passive resize poll: the canvas element is a constructor arg, so a
     // property read is the boundary-fence-legal size channel.
     if (canvas.width !== lastWidth || canvas.height !== lastHeight) {
@@ -360,8 +381,8 @@ export function createScene(canvas) {
       // Idle life (D-15): cosmetic clock reads only here; the twirl is
       // deliberately slower than any gameplay sweep so the states never mix.
       const now = view.now ?? 0;
-      rig.position.y = Math.sin(now / 400) * 0.05;      // small breath bob
-      ropePivot.rotation.x = now / 1400;                // slow rope twirl about the hands axis, same direction as gameplay
+      rig.position.y = reduced ? 0 : Math.sin(now / 400) * 0.05;   // D-05/Open Q3: breath bob → still endpoint under reduced motion
+      ropePivot.rotation.x = reduced ? 0 : now / 1400;            // D-05/Open Q3: idle twirl → frozen pose; rotation.z stays 0 either way
       ropePivot.rotation.z = 0;
       beat = now / 1400;
       armL.rotation.x = Math.sin(beat);
@@ -373,7 +394,9 @@ export function createScene(canvas) {
       // short damped shake — closed-form in view.now deltas, no RNG and no
       // accumulator (T-02-09); bigger juice stays Phase 4.
       rig.position.y = 0;
-      ropePivot.rotation.x = -Math.PI +
+      // D-05/Open Q3: under reduced motion the damped settle shake holds the
+      // still endpoint exactly — no pivot oscillation, same freeze posture.
+      ropePivot.rotation.x = reduced ? -Math.PI : -Math.PI +
         Math.sin(((view.now ?? 0) - tripAt) * 42) * Math.exp(-((view.now ?? 0) - tripAt) / 200);
       ropePivot.rotation.z = 0;
       armL.rotation.x = 0;
@@ -410,7 +433,7 @@ export function createScene(canvas) {
     // runs with zero per-frame allocation and zero Math.random.
     if (view.juice && view.juice.at !== lastJuiceAt) {
       juiceAt = view.juice.at;
-      juiceShake = Math.min(2, view.juice.shake ?? 0);   // D-N12: <= 2 post-pass px
+      juiceShake = reduced ? 0 : Math.min(2, view.juice.shake ?? 0);   // D-N12: <= 2 post-pass px; UI-02 (D-05): shake off at the single write site
       lastJuiceAt = view.juice.at;
       spawnAt = view.now ?? 0;
       spawnOriginY = rig.position.y + 0.5;
@@ -430,15 +453,19 @@ export function createScene(canvas) {
         particlesLive = false;
         for (let k = 0; k < PARTICLE_POOL; k++) particles[k].visible = false;
       } else if (pt > 0) {
-        for (let k = 0; k < PARTICLE_POOL; k++) {
-          if (!particles[k].visible) continue;
-          const angle = k * 2.399 + spawnBase;          // golden-angle spread
-          const speed = 1.6 + 0.05 * k;
-          particles[k].position.set(
-            Math.cos(angle) * speed * pt,
-            spawnOriginY + Math.sin(angle) * speed * pt - 0.5 * 3 * pt * pt,
-            0.1
-          );
+        // UI-02 (D-05 static/fade-only): the flight positions go; the spawn
+        // block, this frame's opacity ramp and the lifetime check above stay.
+        if (!reduced) {
+          for (let k = 0; k < PARTICLE_POOL; k++) {
+            if (!particles[k].visible) continue;
+            const angle = k * 2.399 + spawnBase;          // golden-angle spread
+            const speed = 1.6 + 0.05 * k;
+            particles[k].position.set(
+              Math.cos(angle) * speed * pt,
+              spawnOriginY + Math.sin(angle) * speed * pt - 0.5 * 3 * pt * pt,
+              0.1
+            );
+          }
         }
         particleMat.opacity = Math.max(0, 1 - pt / 0.45);
       }
