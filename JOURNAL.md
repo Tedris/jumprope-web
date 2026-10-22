@@ -1,0 +1,4 @@
+# JOURNAL
+
+| when | item | outcome |
+|---|---|---|
