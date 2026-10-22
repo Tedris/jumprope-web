@@ -77,6 +77,17 @@ export function startGame(canvas) {
   // leg can auto-resume through the lead-in while a manual pause waits for P.
   let paused = false;
   let pausedByVis = false;
+  // UI-02 (D-06): the OS reduced-motion preference is read once at boot and
+  // kept live through the MediaQueryList change event — no polling, no
+  // persistence, no in-game override; the OS setting is the single source of
+  // truth. The typeof guard mirrors the AudioContext one in press(): harnesses
+  // whose window stub lacks matchMedia boot with the flag false.
+  const motionQ = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  let reducedMotion = motionQ ? motionQ.matches : false;
+  if (motionQ && typeof motionQ.addEventListener === 'function') {
+    motionQ.addEventListener('change', e => { reducedMotion = e.matches; });
+  }
   let last = performance.now();
 
   function press() {
@@ -339,7 +350,7 @@ export function startGame(canvas) {
     }
     updateHud();
     try {
-      scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best, now, juice: juiceSig });
+      scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best, now, juice: juiceSig, reducedMotion });
     } catch (err) {
       console.error('render failed:', err);
     }
