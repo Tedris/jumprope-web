@@ -139,14 +139,21 @@ async function bootPolishShell() {
     consoleError: console.error
   };
   globalThis.document = documentStub;
-  globalThis.window = {
+  // UI-03: the window metrics are settable so the resize legs can drive the
+  // band math through the real listener; the defaults mirror the windowSize()
+  // 480×640 fallback, so every existing leg keeps booting into the
+  // letterbox-free passthrough.
+  const windowStub = {
     addEventListener: (type, fn) => { handlers.window[type] = fn; },
+    innerWidth: 480,
+    innerHeight: 640,
     // UI-02: the reduced-motion query resolves to the live mq stub; every
     // other query is a dead false/false pair.
     matchMedia: q => (q === '(prefers-reduced-motion: reduce)'
       ? mq
       : { matches: false, addEventListener() {} }),
   };
+  globalThis.window = windowStub;
   globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
   Object.defineProperty(globalThis, 'localStorage', {
     value: storageStub, configurable: true
@@ -211,7 +218,7 @@ async function bootPolishShell() {
     }
     console.error = saved.consoleError;
   };
-  return { frames, handlers, hud, views, log, contexts, mq, document: documentStub, map, restore };
+  return { frames, handlers, hud, views, log, contexts, mq, canvas, window: windowStub, document: documentStub, map, restore };
 }
 
 // ---------- pumping helpers (pickflow / bootAudioShell idiom) ----------
@@ -531,6 +538,80 @@ test('a live matchMedia change flips the view payload both ways, next frame, no 
     // The toggle is a pure view flag: the run kept stepping throughout.
     assert.strictEqual(env.views.at(-1).run.status, 'running', 'no pause/restart on the toggle');
     assert.ok(env.log.suspends === 0, 'reduced motion never suspends audio');
+  } finally {
+    env.restore();
+  }
+});
+
+// ---------- UI-03 legs ----------
+
+// UI-03 (D-07/D-10): set the stub metrics, then dispatch the shell's existing
+// resize listener — the same handlers-dispatch idiom as the keydown legs.
+function resizeTo(env, w, h) {
+  env.window.innerWidth = w;
+  env.window.innerHeight = h;
+  env.handlers.window.resize();
+}
+
+test('resize to 2000×400 clamps to the 2:1 band edge: 800×400 box, style writes match (D-07)', async () => {
+  const env = await bootPolishShell();
+  try {
+    resizeTo(env, 2000, 400);
+    const aspect = env.canvas.width / env.canvas.height;
+    assert.ok(aspect <= 2 && aspect >= 3 / 4,
+      `buffer aspect ${aspect} must sit inside the clamp band [0.75, 2]`);
+    assert.strictEqual(env.canvas.width, 800, 'contain-fit: min(2000, 400 * 2) = 800');
+    assert.strictEqual(env.canvas.height, 400, 'height keeps the full window: min(400, 2000 / 2)');
+    assert.strictEqual(env.canvas.style.width, '800px', 'CSS box follows the clamped buffer (Pitfall 9)');
+    assert.strictEqual(env.canvas.style.height, '400px');
+  } finally {
+    env.restore();
+  }
+});
+
+test('resize to 300×900 holds the 3:4 floor: 300×400 box, style writes match the buffer (D-07)', async () => {
+  const env = await bootPolishShell();
+  try {
+    resizeTo(env, 300, 900);
+    const aspect = env.canvas.width / env.canvas.height;
+    assert.ok(aspect >= 3 / 4 && aspect <= 2,
+      `buffer aspect ${aspect} must hold the 3:4 floor of the clamp band`);
+    assert.strictEqual(env.canvas.width, 300, 'width keeps the full window: min(300, 900 * 0.75)');
+    assert.strictEqual(env.canvas.height, 400, 'contain-fit: min(900, 300 / 0.75) = 400');
+    assert.strictEqual(env.canvas.style.width, '300px');
+    assert.strictEqual(env.canvas.style.height, '400px');
+  } finally {
+    env.restore();
+  }
+});
+
+test('a normal 480×640 window is the exact passthrough — no band, no margins (CONTEXT specifics §3)', async () => {
+  const env = await bootPolishShell();
+  try {
+    resizeTo(env, 480, 640);
+    assert.strictEqual(env.canvas.width, 480, 'in-band windows are byte-identical to today');
+    assert.strictEqual(env.canvas.height, 640);
+    assert.strictEqual(env.canvas.style.width, '480px');
+    assert.strictEqual(env.canvas.style.height, '640px');
+  } finally {
+    env.restore();
+  }
+});
+
+test('garbage window metrics (0 / undefined / 1×1) coerce — buffer dims stay finite and ≥ 2 (T-05-05)', async () => {
+  const env = await bootPolishShell();
+  try {
+    resizeTo(env, 0, undefined); // Number(x) || 480/640 is the sole input gate
+    assert.ok(Number.isFinite(env.canvas.width) && Number.isFinite(env.canvas.height),
+      'no NaN reaches the buffer after the coercion guard');
+    assert.ok(env.canvas.width >= 2 && env.canvas.height >= 2,
+      `buffer dims ${env.canvas.width}×${env.canvas.height} must be ≥ 2`);
+
+    resizeTo(env, 1, 1); // Math.max(2, …) floor against a physically tiny window
+    assert.ok(Number.isFinite(env.canvas.width) && Number.isFinite(env.canvas.height),
+      'the 1×1 window still yields finite buffer dims');
+    assert.ok(env.canvas.width >= 2 && env.canvas.height >= 2,
+      `the Math.max(2, …) floor holds: got ${env.canvas.width}×${env.canvas.height}`);
   } finally {
     env.restore();
   }
