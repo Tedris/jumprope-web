@@ -38,6 +38,7 @@ const LIGHT_INTENSITY = LOOK_KNOBS.light;   // D-05: the one light — brightnes
 const BAYER_FRAG = `
   uniform sampler2D tDiffuse;
   uniform vec2 uInternalRes;
+  uniform vec2 uShake;              // D-N06: post-pass UV jitter (dither cell stays on plain vUv)
   varying vec2 vUv;
 
   vec3 toSRGB( vec3 c ) {   // linear -> sRGB ENCODE: 1.055 * c^(1/2.4) - 0.055
@@ -50,8 +51,8 @@ const BAYER_FRAG = `
     return m[y][x] / 16.0;             // threshold in [0,1)
   }
   void main() {
-    vec3 c = toSRGB( texture2D( tDiffuse, vUv ).rgb );
-    vec2 cell = floor( vUv * uInternalRes );
+    vec3 c = toSRGB( texture2D( tDiffuse, vUv + uShake ).rgb );
+    vec2 cell = floor( vUv * uInternalRes );   // unjittered vUv: the pattern must not swim with the shake (Pitfall 3)
     vec3 q = floor( c * 31.0 + bayer4( cell ) ) / 31.0;
     gl_FragColor = vec4( q, 1.0 );
   }`;
@@ -250,6 +251,21 @@ export function createScene(canvas) {
   handleR.position.set(HANDLE_SPAN, 0, 0);
   ropePivot.add(handleR);
 
+  // Juice particles (D-N06): one pooled set of 16 flat quads built ONCE —
+  // spawns toggle visibility and write closed-form positions, so a burst
+  // allocates nothing. Snap-exempt like the rope; one shared material.
+  const PARTICLE_POOL = 16;
+  const particleMat = new THREE.MeshBasicMaterial({ color: PALE, fog: false, transparent: true });
+  const particleGroup = new THREE.Group();
+  const particles = [];
+  for (let k = 0; k < PARTICLE_POOL; k++) {
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.07), particleMat);
+    quad.visible = false;
+    particleGroup.add(quad);
+    particles.push(quad);
+  }
+  scene.add(particleGroup);
+
   const sun = new THREE.DirectionalLight(0xffffff, LIGHT_INTENSITY);   // D-05: the one light
   sun.position.set(-4, 7, 3);
   scene.add(sun);
@@ -267,7 +283,8 @@ export function createScene(canvas) {
   const ditherMat = new THREE.ShaderMaterial({
     uniforms: {
       tDiffuse: { value: null },
-      uInternalRes: { value: new THREE.Vector2(internalW, INTERNAL_H) }
+      uInternalRes: { value: new THREE.Vector2(internalW, INTERNAL_H) },
+      uShake: { value: new THREE.Vector2(0, 0) }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -300,6 +317,18 @@ export function createScene(canvas) {
   // the idle/trip branches below — the running pose never reads it (T-02-08).
   let lastStatus = 'idle';
   let tripAt = 0;
+
+  // Read-only juice-signal bookkeeping (D-N06): the shell's view.juice is
+  // sampled here and NEVER written back (Phase-1 D-01). Everything decays
+  // closed-form from these scalars — no timers, no accumulators, no RNG.
+  let lastJuiceAt = 0;
+  let juiceAt = 0;
+  let juiceShake = 0;
+  let spawnAt = 0;
+  let spawnOriginY = 0;
+  let spawnBase = 0;
+  let spawnCount = 0;
+  let particlesLive = false;
 
   function render(view) {
     // Passive resize poll: the canvas element is a constructor arg, so a
@@ -375,6 +404,50 @@ export function createScene(canvas) {
     // Blob shadow (D-17, RESEARCH Pattern 6): continuous shrink + fade with jump height.
     shadow.scale.setScalar(1 / (1 + playerY * WORLD_PER_PIXEL * 0.8));
     shadow.material.opacity = 0.45 / (1 + playerY * WORLD_PER_PIXEL * 0.8);
+
+    // Juice impulse (D-N06): a fresh view.juice.at spawns the pooled quads;
+    // every quantity below is closed-form in view.now - spawnAt, so the pool
+    // runs with zero per-frame allocation and zero Math.random.
+    if (view.juice && view.juice.at !== lastJuiceAt) {
+      juiceAt = view.juice.at;
+      juiceShake = Math.min(2, view.juice.shake ?? 0);   // D-N12: <= 2 post-pass px
+      lastJuiceAt = view.juice.at;
+      spawnAt = view.now ?? 0;
+      spawnOriginY = rig.position.y + 0.5;
+      spawnBase = spawnCount * 0.7;                     // spawn-counter phase, never RNG
+      spawnCount += 1;
+      const count = Math.min(view.juice.particles ?? 0, PARTICLE_POOL);
+      for (let k = 0; k < PARTICLE_POOL; k++) {
+        particles[k].visible = k < count;
+        particles[k].position.set(0, spawnOriginY, 0.1);
+      }
+      particlesLive = count > 0;
+      particleMat.opacity = 1;
+    }
+    if (particlesLive) {
+      const pt = ((view.now ?? 0) - spawnAt) / 1000;
+      if (pt > 0.45) {
+        particlesLive = false;
+        for (let k = 0; k < PARTICLE_POOL; k++) particles[k].visible = false;
+      } else if (pt > 0) {
+        for (let k = 0; k < PARTICLE_POOL; k++) {
+          if (!particles[k].visible) continue;
+          const angle = k * 2.399 + spawnBase;          // golden-angle spread
+          const speed = 1.6 + 0.05 * k;
+          particles[k].position.set(
+            Math.cos(angle) * speed * pt,
+            spawnOriginY + Math.sin(angle) * speed * pt - 0.5 * 3 * pt * pt,
+            0.1
+          );
+        }
+        particleMat.opacity = Math.max(0, 1 - pt / 0.45);
+      }
+    }
+    // Shake: UV-space jitter of the texture sample only (D-N06) — k is in
+    // post-pass pixels, divided down to UV units; the camera never moves.
+    const jt = (view.now ?? 0) - juiceAt;
+    const shake = jt >= 0 && jt < 140 ? juiceShake * Math.exp(-jt / 50) * Math.sin(jt * 0.55) : 0;
+    ditherMat.uniforms.uShake.value.set(shake / internalW, shake / INTERNAL_H);
 
     renderer.setRenderTarget(rt);
     renderer.render(scene, camera);                 // -> 240-row LINEAR target

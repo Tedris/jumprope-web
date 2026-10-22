@@ -259,3 +259,176 @@ test('a scripted late press trips the buffer near-miss path and the HUD flashes 
     env.restore();
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 2: render-side juice. Same data-URL mechanism as tests/render3d.test.js
+// but with a REGISTERING three-stub (globalThis.__juiceReg records every mesh,
+// material and camera the scene build allocates) so the pool, the shake
+// uniform and the camera invariant are all machine-inspectable.
+// ---------------------------------------------------------------------------
+
+let renderBoot = 0;
+
+const THREE_REG_STUB_HREF = 'data:text/javascript,' + encodeURIComponent([
+  'export const NearestFilter = 1003;',
+  'globalThis.__juiceReg = { meshes: [], materials: [], cameras: [] };',
+  'const reg = globalThis.__juiceReg;',
+  'export class Vec3 {',
+  '  constructor() { this.x = 0; this.y = 0; this.z = 0; }',
+  '  set(x, y, z) { this.x = x; this.y = y; this.z = z; }',
+  '  setScalar(v) { this.x = v; this.y = v; this.z = v; }',
+  '}',
+  'export class Node {',
+  '  constructor() {',
+  '    this.position = new Vec3();',
+  '    this.rotation = new Vec3();',
+  '    this.scale = new Vec3();',
+  '    this.scale.setScalar(1);',
+  '  }',
+  '  add() {}',
+  '  setSize() {}',
+  '  setRenderTarget() {}',
+  '  setPixelRatio() {}',
+  '  compile() {}',
+  '  updateProjectionMatrix() {}',
+  '  lookAt() {}',
+  '  render() {}',
+  '}',
+  'export class WebGLRenderer extends Node {}',
+  'export class Scene extends Node {}',
+  'export class Color { constructor() {} }',
+  'export class Vector3 extends Vec3 {',
+  '  constructor(x = 0, y = 0, z = 0) { super(); this.x = x; this.y = y; this.z = z; }',
+  '}',
+  'export class Vector2 {',
+  '  constructor(x = 0, y = 0) { this.x = x; this.y = y; }',
+  '  set(x, y) { this.x = x; this.y = y; }',
+  '}',
+  'export class WebGLRenderTarget {',
+  '  constructor() { this.texture = {}; }',
+  '  setSize() {}',
+  '}',
+  'export class PerspectiveCamera extends Node { constructor() { super(); reg.cameras.push(this); } }',
+  'export class OrthographicCamera extends Node { constructor() { super(); reg.cameras.push(this); } }',
+  'export class Group extends Node {}',
+  'export class PlaneGeometry extends Node {}',
+  'export class BoxGeometry extends Node {}',
+  'export class TubeGeometry extends Node {}',
+  'export class CatmullRomCurve3 extends Node {}',
+  'export class CircleGeometry extends Node {}',
+  'export class MeshBasicMaterial { constructor(o = {}) { this.transparent = false; this.opacity = 1; Object.assign(this, o); reg.materials.push(this); } }',
+  'export class MeshLambertMaterial { constructor(o = {}) { Object.assign(this, o); reg.materials.push(this); } }',
+  'export class ShaderMaterial { constructor(o = {}) { this.uniforms = o.uniforms; reg.materials.push(this); } }',
+  'export class DirectionalLight extends Node {}',
+  'export class Fog { constructor() {} }',
+  'export class Mesh extends Node {',
+  '  constructor(geometry, material) { super(); this.geometry = geometry; this.material = material; reg.meshes.push(this); }',
+  '}'
+].join('\n'));
+
+async function bootRender() {
+  const href = name => pathToFileURL(resolve(jsDir, name)).href;
+  const src = await readFile(resolve(jsDir, 'render3d.js'), 'utf8');
+  const rewritten = src
+    .replace(/from\s*['"]three['"]/, `from '${THREE_REG_STUB_HREF}'`)
+    .replace(/from\s*['"][^'"]*interpolate\.js['"]/, `from '${href('interpolate.js')}'`);
+  const mod = await import('data:text/javascript,' + encodeURIComponent(`${rewritten}\n//render ${++renderBoot}`));
+  const reg = globalThis.__juiceReg;
+  reg.meshes.length = 0;
+  reg.materials.length = 0;
+  reg.cameras.length = 0;
+  const scene = mod.createScene({ width: 480, height: 640 });
+  const ditherMat = reg.materials.find(m => m.uniforms && m.uniforms.uInternalRes);
+  // cameras[0] is the world PerspectiveCamera (the post quad's ortho comes later).
+  return { scene, reg, ditherMat, camera: reg.cameras[0] };
+}
+
+// The particle pool reads as flat transparent quads: PlaneGeometry + a
+// transparent basic material (the blob shadow is a Circle, the floor a
+// Lambert, the post quad a ShaderMaterial — all excluded).
+const poolQuads = reg => reg.meshes.filter(m => m.geometry && m.geometry.constructor.name === 'PlaneGeometry'
+  && m.material && m.material.transparent === true);
+
+function runningView(now, juice) {
+  return {
+    run: { status: 'running', score: 3, skips: 3 },
+    rope: { phase: 0.5, period: 1.3 },
+    player: { y: 0, vy: 0, grounded: true, squash: 1, squashVel: 0 },
+    prevPhase: 0.5,
+    alpha: 0,
+    best: 0,
+    now,
+    juice
+  };
+}
+
+test('uShake jitters the post-pass sample UV on a juice impulse and decays closed-form to exactly zero by 140 ms', async () => {
+  const { scene, ditherMat } = await bootRender();
+  const uv = () => [ditherMat.uniforms.uShake.value.x, ditherMat.uniforms.uShake.value.y];
+  const px = () => {
+    const [x, y] = uv();
+    return Math.hypot(x * 180, y * 240);   // internal buffer is 180x240 at 480x640
+  };
+
+  for (const now of [400, 700, 900]) scene.render(runningView(now, undefined));
+  assert.deepEqual(uv(), [0, 0], 'no juice, no jitter');
+
+  const J = { at: 1000, shake: 2, particles: 10 };
+  scene.render(runningView(1000, J));      // impulse onset: sin(0) = 0
+  scene.render(runningView(1016, J));
+  const early = px();
+  assert.ok(early > 0 && early <= 2, `t=16 ms: nonzero sub-2px jitter, got ${early}`);
+  scene.render(runningView(1050, J));
+  const late = px();
+  assert.ok(late > 0, 't=50 ms: the impulse is still live');
+  assert.ok(late < early, 'the envelope decays monotonically (exp(-t/50) bound on |sin|)');
+  scene.render(runningView(1140, J));
+  assert.deepEqual(uv(), [0, 0], 't=140 ms: closed-form gate returns the uniform to exact rest');
+  scene.render(runningView(5000, J));
+  assert.deepEqual(uv(), [0, 0], 'long after the impulse the post pass renders the pre-plan (0,0) path');
+});
+
+test('the particle pool is 16 quads built once; a spawn pass shows min(n, 16) and the closed-form decay hides every quad by t > 0.45 s', async () => {
+  const { scene, reg } = await bootRender();
+  const quads = poolQuads(reg);
+  assert.equal(quads.length, 16, 'the pool must be exactly 16 pooled quads, built once at scene creation');
+  assert.ok(quads.every(q => q.visible === false), 'the pool starts hidden');
+
+  const J = { at: 1000, shake: 2, particles: 10 };
+  scene.render(runningView(1000, J));
+  assert.equal(quads.filter(q => q.visible).length, 10, 'spawn shows exactly min(10, 16) quads');
+  scene.render(runningView(1100, J));
+  assert.equal(quads.filter(q => q.visible).length, 10, 'quads stay live through the 0.45 s lifetime');
+  assert.ok(quads.filter(q => q.visible).some(q => q.position.y !== 0.5),
+    'live quads advance on the closed-form trajectory (origin y 0.5 + sin term - droop)');
+
+  scene.render(runningView(1460, J));
+  assert.equal(quads.filter(q => q.visible).length, 0, 'every quad is hidden once t > 0.45 s');
+  assert.equal(poolQuads(reg).length, 16, 'no geometry is allocated per spawn — the pool size is constant');
+});
+
+test('a spawn burst clips at the pool size (T-4-04): requesting more quads than pooled still shows exactly 16', async () => {
+  const { scene, reg } = await bootRender();
+  scene.render(runningView(1000, { at: 1000, shake: 2, particles: 40 }));
+  assert.equal(poolQuads(reg).filter(q => q.visible).length, 16, 'spawns clip at the pool size by design');
+});
+
+test('the camera position/rotation stay bit-identical across juiced and unjuiced frames (Phase-2 zero-camera-motion invariant)', async () => {
+  const { scene, camera } = await bootRender();
+  const snap = c => [c.position.x, c.position.y, c.position.z, c.rotation.x, c.rotation.y, c.rotation.z];
+  const before = snap(camera);
+  scene.render(runningView(1000, { at: 1000, shake: 2, particles: 16 }));
+  scene.render(runningView(1016, { at: 1000, shake: 2, particles: 16 }));
+  scene.render(runningView(1032, undefined));
+  scene.render(runningView(1100, { at: 1100, shake: 2, particles: 16 }));
+  assert.deepEqual(snap(camera), before,
+    'D-N06: shake is UV-space — the camera object never moves, juiced or not');
+});
+
+test('with view.juice absent, render() leaves uShake at (0, 0) and the pool hidden (pre-plan render path)', async () => {
+  const { scene, reg, ditherMat } = await bootRender();
+  const quads = poolQuads(reg);
+  for (const now of [0, 300, 700, 1300]) scene.render(runningView(now, undefined));
+  assert.deepEqual([ditherMat.uniforms.uShake.value.x, ditherMat.uniforms.uShake.value.y], [0, 0]);
+  assert.equal(quads.filter(q => q.visible).length, 0, 'the pool stays hidden without juice');
+});
