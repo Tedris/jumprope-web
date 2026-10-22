@@ -235,17 +235,24 @@ export function startGame(canvas) {
   window.addEventListener('visibilitychange', () => {
     const hidden = typeof document !== 'undefined' && document.hidden;
     if (hidden) {
-      // releaseEverything first so nothing armed can survive the transition;
+      // releaseEverything first so nothing armed can survive the transition —
+      // it runs for EVERY status (WR-01: platforms that deliver
+      // visibilitychange without blur must still cancel a choose-status hold;
+      // it is a proven no-op for idle/over and arms nothing outside running).
       // enterPause's D-12 clearing then supersedes the armed release (a
       // hidden run clears holds rather than firing them).
-      if (run.status === 'running') { releaseEverything(); enterPause(true); }
+      releaseEverything();
+      if (run.status === 'running') enterPause(true);
       else if (audioReady) audio.gesture();
     } else {
       if (pausedByVis) resumeFromPause(); // tab-return auto-resume through the lead-in
-      else if (audioReady) audio.gesture(); // D-N08 recovery path, unchanged
+      // D-N08 recovery path — CR-01: never past a manual pause (T-05-01 covers
+      // this gesture as well as the focus listener below).
+      else if (audioReady && !paused) audio.gesture();
     }
   });
-  // Pitfall 4: focus must never un-suspend a context the game itself paused.
+  // Pitfall 4: neither the focus listener nor the visible-branch gesture above
+  // may un-suspend a context the game itself paused.
   window.addEventListener('focus', () => { if (audioReady && !paused) audio.gesture(); });
 
   function consumeIntents() {
