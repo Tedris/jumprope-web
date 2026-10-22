@@ -5,11 +5,11 @@ titles: json
 findings:
   - id: CR-01
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "Visible-tab `audio.gesture()` lacks the `!paused` guard — music resumes behind a manual-pause freeze frame"
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Hidden `visibilitychange` only routes `releaseEverything()` for the `running` status — a `choose`-status hold can auto-confirm on tab return"
   - id: WR-02
     severity: warning
@@ -27,7 +27,7 @@ findings:
     severity: info
     disposition: open
     title: "Sub-2px windows desynchronize the CSS box from the backing buffer"
-open: 6
+open: 4
 total: 6
 recorded: 2026-10-22T18:54:15.531Z
 ---
@@ -36,8 +36,8 @@ recorded: 2026-10-22T18:54:15.531Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| CR-01 | critical | open | - |
-| WR-01 | warning | open | - |
+| CR-01 | critical | fixed | 05-05 gap closure |
+| WR-01 | warning | fixed | 05-05 gap closure |
 | WR-02 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
