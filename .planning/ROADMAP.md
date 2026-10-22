@@ -127,10 +127,18 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. No stuck-hold state after blur or `pointercancel` — input reducer hardening ported into the new shell
 
 **Plans**: 4 plans
+**Wave 1**
 - [ ] 05-01-PLAN.md — Tracer: manual + tab-hidden pause with audio suspend and resumeRun lead-in re-entry (UI-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 05-02-PLAN.md — Live prefers-reduced-motion: wobble/shake/particle/cosmetic dampening (UI-02)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 05-03-PLAN.md — Clamp-band resize + DOM letterbox, five-harness style stubs (UI-03)
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 05-04-PLAN.md — release-everything input-loss hardening + phase integration gate (criterion 4)
+
 **UI hint**: yes
 
 ## Progress
