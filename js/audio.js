@@ -53,6 +53,7 @@ export function createAudio({ context, storage, fetchFn } = {}) {
   let settings = loadSettings(storage);
   let trackPlaying = false;
   let trackMissing = false;
+  let trackPending = false;
 
   function applyGain() {
     if (master) master.gain.value = settings.muted ? 0 : settings.volume;
@@ -82,11 +83,15 @@ export function createAudio({ context, storage, fetchFn } = {}) {
   // absent track is the tested DEFAULT (human-gated content): flag + silence,
   // never a throw, never a retry loop.
   function playTrack(url = TRACK_URL) {
-    if (!master || !fetchFn || trackPlaying || trackMissing) return false;
+    // trackPending flips synchronously: a gesture() racing a manual call
+    // must never start a second fetch while the first is still in flight.
+    if (!master || !fetchFn || trackPlaying || trackMissing || trackPending) return false;
+    trackPending = true;
     let p;
     try {
       p = fetchFn(url);
     } catch {
+      trackPending = false;
       trackMissing = true;
       return false;
     }
@@ -99,9 +104,11 @@ export function createAudio({ context, storage, fetchFn } = {}) {
         source.loop = true;
         source.connect(master);
         source.start(0);
+        trackPending = false;
         trackPlaying = true;
       })
       .catch(() => {
+        trackPending = false;
         trackMissing = true;
       });
     return true;

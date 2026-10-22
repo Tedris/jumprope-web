@@ -174,6 +174,24 @@ test('track: absent file = flag + silence, present file = one looping source on 
   assert.equal(present.getStatus().trackPlaying, true);
 });
 
+test('playTrack re-entry guard flips synchronously: gesture racing a manual call starts one loop (WR-04)', async () => {
+  const ctx = makeAudioContext();
+  let inflight = null;
+  const audio = createAudio({
+    storage: makeStorage(),
+    // every call shares the SAME in-flight promise, so a guard miss would
+    // resolve BOTH chains and start two looping sources through the master.
+    fetchFn: () => (inflight ??= Promise.resolve({ ok: true, arrayBuffer: async () => new Uint8Array([1]) })),
+  });
+  audio.gesture(ctx); // the gesture seam starts fetch #1 — still pending here
+  assert.equal(audio.playTrack(), false, 'a manual call racing the pending fetch is rejected');
+  await settle();
+  assert.equal(ctx.bufferSources.length, 1, 'exactly one looping source for the double call');
+  assert.equal(audio.getStatus().trackPlaying, true);
+  assert.equal(audio.getStatus().trackMissing, false);
+  assert.equal(audio.playTrack(), false, 'the settled track still no-ops');
+});
+
 test('settings: single-key round-trip, write-through, coercion, graceful degradation (AUD-04/T-4-06)', () => {
   const fresh = makeStorage();
   assert.deepEqual(loadSettings(fresh), { muted: false, volume: 1 });
