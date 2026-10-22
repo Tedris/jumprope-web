@@ -28,12 +28,14 @@ function makeAudioContext() {
     sampleRate: 8000,
     destination: { name: 'destination' },
     resumes: 0,
+    suspends: 0,
     gains: 0,
     started: 0,
     gainNodes: [],
     bufferSources: [],
   };
   ctx.resume = () => { ctx.state = 'running'; ctx.resumes++; };
+  ctx.suspend = () => { ctx.state = 'suspended'; ctx.suspends++; };
   ctx.createGain = () => {
     const rec = {
       gain: {
@@ -129,6 +131,21 @@ test('gesture is the only lifecycle site: create-once, resume-on-gesture (D-N08/
   assert.equal(ctx.resumes, 2, 'resume() on every gesture over a suspended context (1 init + 1 recovery)');
   assert.equal(other.gains, 0);
   assert.equal(audio.getStatus().ctxState, 'running');
+});
+
+test('suspend/resume round-trip: the pause lifecycle rides the state-guarded pair (UI-01)', () => {
+  const ctx = makeAudioContext();
+  const audio = createAudio({ storage: makeStorage() });
+  audio.gesture(ctx);
+  assert.equal(ctx.state, 'running', 'the first gesture lands the context in running state');
+  audio.suspend();
+  assert.equal(ctx.state, 'suspended', 'suspend() parks a running context');
+  assert.ok(ctx.suspends === 1, 'suspend called exactly once on the running state');
+  audio.suspend();
+  assert.ok(ctx.suspends === 1, 'suspend over a non-running context is a guarded no-op');
+  audio.gesture(ctx);
+  assert.ok(ctx.resumes >= 1, 'the next gesture resumes the suspended context');
+  assert.equal(ctx.state, 'running', 'the round-trip returns to running');
 });
 
 test('voice map: one voice per event, unknown names and offer silent (AUD-01)', () => {
