@@ -44,8 +44,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Shell (UI)
 
 - [x] **UI-01**: Game pauses on demand and auto-pauses when the tab is hidden
-- [ ] **UI-02**: Reduced motion dampens wobble/shake; `prefers-reduced-motion` respected automatically
-- [ ] **UI-03**: Low-res UI stays legible at any window size (resize/letterbox)
+- [x] **UI-02**: Reduced motion dampens wobble/shake; `prefers-reduced-motion` respected automatically
+- [x] **UI-03**: Low-res UI stays legible at any window size (resize/letterbox)
 
 ## v2 Requirements
 
@@ -99,8 +99,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUD-03 | Phase 4 | Complete |
 | AUD-04 | Phase 4 | Complete |
 | UI-01 | Phase 5 | Complete |
-| UI-02 | Phase 5 | Gaps Found |
-| UI-03 | Phase 5 | Gaps Found |
+| UI-02 | Phase 5 | Complete |
+| UI-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 22 total
