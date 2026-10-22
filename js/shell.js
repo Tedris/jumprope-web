@@ -240,7 +240,7 @@ export function startGame(canvas) {
         pressFired = false;
         ({ run, rope, player } = out);
         // D-N02 single-channel rule: sim events are audio's only feed.
-        if (audio) for (const ev of out.events) audio.handleEvent(ev);
+        if (audio) for (const ev of (out.events ?? [])) audio.handleEvent(ev);
         if (out.tripped) {
           best = Math.max(best, run.score);
           saveBest(localStorage, best);
