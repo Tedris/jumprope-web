@@ -11,95 +11,57 @@ files_reviewed_list:
 findings:
   critical: 1
   warning: 2
-  info: 3
-  total: 6
+  info: 4
+  total: 7
 status: issues_found
 ---
 
-# Phase 05: Code Review Report
+# Phase 05: Code Review Report (refreshed after 05-05 gap closure)
 
-**Reviewed:** 2026-10-22 (deep — cross-file trace of shell.js ↔ audio.js ↔ render3d.js ↔ game.js call chains)
+**Reviewed:** 2026-10-22 (deep — cross-file trace of shell.js ↔ audio.js ↔ render3d.js; 05-05 fix commit f6f35fc re-verified line by line)
 **Depth:** deep
-**Files Reviewed:** 4 source files (+ tests/polish.test.js, tests/render3d.test.js read for pin coverage only)
-**Status:** issues_found
+**Files Reviewed:** 4 source files (+ tests/polish.test.js read for pin coverage)
+**Status:** issues_found — the two blocking findings from the prior pass are **fixed and verified**; WR-02/IN-01/IN-02/IN-03 remain open exactly as recorded; one new Info-level observation (IN-04) emerged from the fix's asymmetry. Full suite green: 130 pass / 0 fail.
 
 ## Summary
 
-Reviewed the four Phase-05 changed source files (`git diff a1fae8c..HEAD -- js/ css/`) against the four PLAN/SUMMARY artifacts and AGENTS.md conventions. Full suite (`node --test tests/`) passes: 0 failures. The pause gate, letterbox band math, snap-grid shared helper, and release-hardening design are mostly sound: `enterPause`/`resumeFromPause` correctly route through `resumeRun` (score/effects/owned survive), the paused-frame `acc = 0` drain prevents Pitfall-1 fast-forward, the `Math.max(2, dw)` buffer floor and `Number(x) || fallback` NaN guard hold, the aspect passthrough for the 480×640 harness is exact, and no injection surface or unguarded storage write was introduced (`localStorage` access remains the pre-existing guarded `loadBest`/`saveBest`/audio-settings pattern; `three@0.186.1` importmap pin intact; render3d gains no `window`/`matchMedia` reference, so the one-way-view-payload ARCH fence holds).
+Second-pass review after the 05-05 gap closure. Scope: verify the CR-01/WR-01 fixes in the `visibilitychange` handler, then hunt for regressions in the pause/resume/visibility state machine and the resize path introduced by the phase.
 
-One blocker slipped through anyway: the visibilitychange **visible** branch calls `audio.gesture()` without the `!paused` guard that the phase's own threat model (05-01-PLAN.md T-05-01) explicitly required on it, letting background music resume behind a manual-pause freeze frame. Existing test legs pin the *focus* listener (`polish.test.js:431`) but never walk the manual-pause → hide → reveal sequence, so the suite is green over the defect.
+**CR-01 — FIXED, verified complete.** Every route that can reach `audio.gesture()`'s resume arm (`audio.js:77-78`) was enumerated and traced against the manual-pause state: `press()` is gated at entry (`shell.js:115`); `resumeFromPause()` only runs as part of leaving the paused state; the visible-branch gesture now carries the `!paused` guard (`shell.js:251`); the focus listener carries it too (`shell.js:256`). The hidden-branch `else if (audioReady) audio.gesture()` (`shell.js:246`) is the one sibling without the guard, but it is unreachable while paused: every status transition (`tickRun` choose/over edges, `tickPick` confirm, `startRun` restart) executes inside the STEP drain, which the pause gate (`shell.js:384`) holds shut — so `paused ⟹ run.status === 'running'` and the running branch (`enterPause`, which early-returns and leaves `pausedByVis` at `false`) always wins. No remaining route un-suspends a player-paused context. The new leg at `tests/polish.test.js:902-932` pins the manual-pause → hide → reveal sequence on all three channels (ctx.state, gesture log, resume count) plus phase-frozen stepping.
 
-## Critical Issues
+**WR-01 — FIXED, verified correct.** `releaseEverything()` is hoisted unconditional in the hidden leg (`shell.js:244`), so platforms delivering `visibilitychange` without `blur` still cancel a `choose`-status sub-confirm hold (`pickPressedAt`/`pickFill` cleared at `shell.js:160-163`). Ordering is sound: for `running` the hoisted call may arm `releaseIntent`, but `enterPause(true)` immediately after clears `holdFrom`/`releaseIntent` — a hidden run clears holds rather than firing them, as the comment states. No status exists where a backgrounded hold can auto-confirm: `over` arms nothing (T-05-07 preserved — the `else` leg only nulls `pressIntent`), `idle` is a pure no-op, and `tickPick` can never fire because `pickPressedAt` is null. Pinned at `tests/polish.test.js:941-970` (hidden-without-blur platform).
 
-### CR-01: Visible-tab `audio.gesture()` lacks the `!paused` guard — music resumes behind a manual-pause freeze frame
+**Regression sweep (clean):** the 05-05 diff (`git show f6f35fc`) is surgical — 11 insertions, all in the visibilitychange handler and comments. The resize path is untouched by 05-05; `applyWindowSize` writes both CSS box and buffer channels per frame-event, render3d's passive poll re-derives RT/aspect/snap-grid, and a resize during `pausedByVis` (rAF halted) lands correctly on the first post-return frame via that poll. The reduced-motion snap-grid refactor has both write sites routed through the one `snapGridFor` helper (`render3d.js:312,352`), closing Pitfall 12. Sim purity holds: `git diff a1fae8c..HEAD` against `rope.js`/`player.js`/`upgrades.js`/`game.js`/`interpolate.js` is empty. No secrets, injection surfaces, or debug artifacts introduced; `localStorage` writes remain the guarded pattern.
 
-**File:** `js/shell.js:243-245`
-**Issue:** Reproduce: mid-run press `P` (manual pause → `paused = true`, `pausedByVis = false`, `audio.suspend()`), switch tabs (hidden leg: `enterPause` early-returns at line 170 because `paused` is already true, so `pausedByVis` stays `false` and the context stays suspended), then return to the tab. The visible branch takes `else if (audioReady) audio.gesture()` — and `gesture()`'s recovery arm (`js/audio.js:77-78`: `else if (ctx.state === 'suspended') ctx.resume()`) un-suspends the AudioContext while the game is still paused. The looping background track plays against a frozen frame and the "paused — press P to resume" prompt. This is exactly the state-spoofing threat 05-01-PLAN.md T-05-01 mitigates — "Pitfall 4: focus must never un-suspend a context the game itself paused" — whose pinned mitigation covers "the focus listener **and the visible-branch gesture**". Only the focus listener (line 249) got the guard; the plan's Task 2 action text ("visible otherwise → unchanged `audio.gesture()`") under-specified it and the implementation followed the action text instead of the threat model. No test leg walks manual-pause → hidden → visible, which is why the suite is green.
+## Findings by disposition
+
+| ID | Severity | Status | Note |
+|----|----------|--------|------|
+| CR-01 | critical | **fixed — verified** | `!paused` guard on visible-branch gesture; all resume routes closed |
+| WR-01 | warning | **fixed — verified** | unconditional `releaseEverything()` in hidden leg; ordering with `enterPause` correct |
+| WR-02 | warning | open, unchanged | `render3d.js:387-389,424` — reduced-idle arms/scarf still oscillate off the wall clock; "frozen pose" comment still overstates. Not worse; not re-litigated |
+| IN-01 | info | open, unchanged | `shell.js:376,384` — dual pause guards (`acc = 0` pre-loop + in-gate `paused \|\|`) still both present |
+| IN-02 | info | open, unchanged | `audio.js:75,78,86` — fire-and-forget `resume()`/`suspend()` Promises still lack `.catch(() => {})` |
+| IN-03 | info | open, unchanged | `shell.js:46-48` — CSS box vs floored buffer can differ sub-2px |
+| IN-04 | info | **new** | see below |
+
+### IN-04: Hidden-branch gesture lacks the `!paused` guard its three siblings now carry
+
+**File:** `js/shell.js:246`
+**Issue:** After 05-05, the `press()`, visible-branch, and `focus` gesture sites are all locally guarded against un-suspending a player-paused context, but the hidden leg's `else if (audioReady) audio.gesture()` relies on a *global* invariant — `paused ⟹ status === 'running'` (true today, because every status transition lives behind the pause-gated drain) — to keep the branch unreachable during a pause. That invariant is correct but implicit; if a future phase ever permits pausing from `choose` or lets a status edge run while paused, this line silently reopens the exact CR-01 hole on the hidden edge. Not a current defect — a robustness/locality note in the spirit of T-05-01's "the mitigation covers both sites" phrasing.
 **Fix:**
 ```js
-// js/shell.js, visibilitychange visible branch
-if (pausedByVis) resumeFromPause();          // tab-return auto-resume through the lead-in
-else if (audioReady && !paused) audio.gesture(); // D-N08 recovery, but never past a manual pause
+releaseEverything();
+if (run.status === 'running') enterPause(true);
+else if (audioReady && !paused) audio.gesture(); // symmetric guard; unreachable today, drift-proof tomorrow
 ```
-Add a polish.test.js leg: manual-pause, fire hidden, fire visible, assert `ctx.state === 'suspended'` and `log.gestures` unchanged — the same pin style as the existing focus leg at `tests/polish.test.js:431`.
-
-## Warnings
-
-### WR-01: Hidden `visibilitychange` only routes `releaseEverything()` for the `running` status — a `choose`-status hold can auto-confirm on tab return
-
-**File:** `js/shell.js:235-242`
-**Issue:** `pickPressedAt` is wall-clock-based (`tickPick`, line 300). On blur, `releaseEverything` cleanly cancels an armed sub-confirm hold (lines 160-163), but the hidden leg calls it only under `run.status === 'running'` (line 241). Desktop browsers fire `blur` alongside `visibilitychange` on a tab switch, so the blur handler normally covers the `choose` status — but platforms that deliver `visibilitychange` without a reliable `blur` (mobile app-switch, screen lock, some Safari paths) leave the hold armed while the tab is backgrounded; on the first pumped frame after return, `(now - pickPressedAt) >= PICK_HOLD_MS` is already satisfied and `tickPick` confirms the card with no user action — a state change caused by focus loss, contrary to the D-11 "one shared release for every focus/pointer loss" intent stated at lines 139-141.
-**Fix:**
-```js
-if (hidden) {
-  releaseEverything(); // cancel any armed hold for every status (no-ops idle/over)
-  if (run.status === 'running') enterPause(true);
-  else if (audioReady) audio.gesture();
-}
-```
-(`releaseEverything` is already a safe no-op for `idle`/`over`: it clears `pressIntent` and never arms `releaseIntent` outside `running`.)
-
-### WR-02: Reduced-motion "frozen pose" during idle is not frozen — arms and scarf keep oscillating off the wall clock
-
-**File:** `js/render3d.js:387-389, 423-425`
-**Issue:** The line-385 comment claims the reduced-idle branch yields a "frozen pose", and `rig.position.y` / `ropePivot.rotation.x` do go still. But `beat = now / 1400` still drives `armL/armR.rotation.x = ±Math.sin(beat)` (±1.0 rad amplitude) and the scarf loop (line 424: `Math.sin(beat - k * 0.4) * 0.5`, ±0.5 rad) — perpetual, purely cosmetic idle life (D-15) that never stops under `prefers-reduced-motion`. The 05-02 plan's "arms/legs byte-identical" pin is justified for the *running* branch (judgment legibility, D-05); the idle arm sway is not judgment-relevant — nothing is airborne or scoring — so it falls on the dampen-to-still side of the same Open-Q3 resolution, and at minimum the code comment overstates what the branch does.
-**Fix:**
-```js
-beat = now / 1400;
-armL.rotation.x = reduced ? 0 : Math.sin(beat);
-armR.rotation.x = reduced ? 0 : -Math.sin(beat);
-// and in the shared scarf loop:
-scarf[k].rotation.x = reduced && status === 'idle' ? 0 : Math.sin(beat - k * 0.4) * 0.5;
-```
-(or freeze the idle `beat` to a constant when reduced; if the team decides to keep the sway per the pinned byte-identical reading, correct the "frozen pose" comment so the claim matches the behavior.)
-
-## Info
-
-### IN-01: Dead `paused` disjunct in the drain gate
-
-**File:** `js/shell.js:369, 377`
-**Issue:** `if (paused) acc = 0;` at line 369 guarantees `while (acc >= STEP)` never executes while paused, so the `paused ||` inside the gate at line 377 can never be the deciding term. Harmless belt-and-braces, but two guards for one invariant invite drift if one is later "cleaned up."
-**Fix:** Keep the in-gate guard and drop the pre-loop `acc = 0` (or vice versa), plus a one-line comment naming the survivor.
-
-### IN-02: Fire-and-forget `ctx.suspend()` / `ctx.resume()` Promises can surface as unhandled rejections
-
-**File:** `js/audio.js:86` (new `suspend()`; same pattern at pre-existing lines 75, 78)
-**Issue:** `suspend()` calls `ctx.suspend()` and discards the returned Promise. A rejection (e.g. `InvalidStateError` if the UA races its own autoplay-driven suspend/resume) becomes an unhandled promise rejection in the console. The `resume()` sites set the precedent, but the new call widens the surface, and a rejection between `enterPause` and a fast `resumeFromPause` is exactly the interleaving where it can fire.
-**Fix:** `if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});` — and the same `.catch(() => {})` on the two `resume()` sites for consistency.
-
-### IN-03: Sub-2px windows desynchronize the CSS box from the backing buffer
-
-**File:** `js/shell.js:46-48`
-**Issue:** The CSS box gets `dw + 'px'` while the buffer floor is `Math.max(2, dw)`; for a hypothetical `dw` or `dh` of 1 px the two differ (1 px vs 2 px), and render3d's passive poll then re-derives the aspect from the floored buffer, not the CSS box. Invisible in practice (no realistic window is 1 px), noted for completeness of the Pitfall-9 "both channels, always" rule the function otherwise enforces.
-**Fix:** Floor once and use the floored value in both writes: `const bw = Math.max(2, dw); canvas.style.width = bw + 'px'; canvas.width = bw;`
 
 ---
 
 ## Security notes (no findings)
 
-- **Event-handler hardening:** `releaseEverything` (shell.js:150-164) correctly cannot arm `releaseIntent` outside `running` status, so blur/pointercancel can never trigger the `over`-status release-restart path (T-05-07 holds); the double-release race (blur-fires-jump then a still-delivered `keyup`) is correctly defused by the `holdFrom !== null` check in `consumeIntents:271`.
-- **localStorage:** unchanged guarded patterns only (`loadBest`/`saveBest` try/catch; audio settings shape-pinned read, `clampVolume` finiteness check — no `||` coalescing of a legitimate 0). No new storage writes this phase.
-- **Injection surfaces:** none added — no `innerHTML`, no URL/query construction from user data, `roleClass` concatenation remains bounded by the fixed card-colour catalogue, and the `matchMedia` change handler stores only a coerced boolean.
+- **Event-handler hardening:** `releaseEverything` still cannot arm `releaseIntent` outside `running`, so blur/pointercancel/hidden can never trigger the `over`-status release-restart path (T-05-07 holds under the hoisted call — the hoist only *added* the `choose`-cancel leg, which nulls timers and arms nothing).
+- **localStorage / injection:** unchanged guarded patterns only; no new writes, no `innerHTML`, no URL construction from user data this phase.
 
 ---
 
