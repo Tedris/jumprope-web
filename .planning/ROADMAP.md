@@ -109,6 +109,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. Player can mute and set volume; settings persist across sessions
 
 **Plans**: TBD
+- [x] 04-01-PLAN.md
+- [x] 04-02-PLAN.md
+- [x] 04-03-PLAN.md
+- [x] 04-04-PLAN.md
 
 ### Phase 5: Accessibility & Polish
 
@@ -135,5 +139,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Render-Shell Foundation | 3/3 | Complete    | 2026-10-16 |
 | 2. PS1 Presentation & Scene | 3/3 | Complete    | 2026-10-17 |
 | 3. Card Catalogue Realness | 3/3 | Complete    | 2026-10-17 |
-| 4. Feel & Audio | 0/? | Not started | - |
+| 4. Feel & Audio | 4/4 | In Progress | - |
 | 5. Accessibility & Polish | 0/? | Not started | - |
