@@ -22,4 +22,4 @@ Rules for the night loop (`tools/night/night_loop.sh`) and its operators:
 - [!] GSD-04-02: 04-feel-audio plan 04-02 — brief GSD-04-02.md
 - [x] GSD-04-03: 04-feel-audio plan 04-03 — brief GSD-04-03.md
 - [!] GSD-04-04: 04-feel-audio plan 04-04 — brief GSD-04-04.md
-- [ ] FEEL-SWEEP: forgiveness-window soak sweep -> morning tuning table — brief FEEL-SWEEP.md
+- [!] FEEL-SWEEP: forgiveness-window soak sweep -> morning tuning table — brief FEEL-SWEEP.md
