@@ -394,7 +394,7 @@ Rename/migration inventory not applicable (pure feature phase). Checked anyway f
 **Warning signs:** audio-wrapper test log shows `suspend` followed by `resumes++` before any resume action.
 
 ### Pitfall 5: New shell capabilities crash the frozen harnesses
-**What goes wrong:** all three data-URL harnesses stub `globalThis.window = { addEventListener }` `[VERIFIED: tests/shell.test.js:59-61; tests/audio.test.js:309-311]`, canvas objects have no `style` `[VERIFIED: tests/shell.test.js:39-43]`, and `document` has only `getElementById`. Therefore: unguarded `window.matchMedia(...)` → `TypeError` at boot in all existing shell-boot tests; `canvas.style.width = …` in the resize path → TypeError when the D-02/T-01-08 legs call the resize handler (they don't today, but new ones will); `document.hidden` is `undefined` under stubs → treated as visible (benign — new visibility legs must *set* `document.hidden` explicitly).
+**What goes wrong:** all five data-URL shell-boot harnesses (shell.test.js, audio.test.js Part B, pickflow.test.js, juice.test.js, feelcap.test.js — five-copy count confirmed live; plan 05-03 carries the sweep) stub `globalThis.window = { addEventListener }` `[VERIFIED: tests/shell.test.js:59-61; tests/audio.test.js:309-311]`, canvas objects have no `style` `[VERIFIED: tests/shell.test.js:39-43]`, and `document` has only `getElementById`. Therefore: unguarded `window.matchMedia(...)` → `TypeError` at boot in all existing shell-boot tests; `canvas.style.width = …` in the resize path → TypeError when the D-02/T-01-08 legs call the resize handler (they don't today, but new ones will); `document.hidden` is `undefined` under stubs → treated as visible (benign — new visibility legs must *set* `document.hidden` explicitly).
 **How to avoid:** `typeof window.matchMedia === 'function'` guard (mirrors the `typeof AudioContext` guard `[VERIFIED: js/shell.js:82]`); harness additions in the same PR as the code: `style: {}` on canvas stubs, a `matchMedia` stub returning `{ matches, addEventListener }` with a test-visible `emit(matches)` hook, `innerWidth`/`innerHeight` on the window stub, `hidden` on the document stub.
 **Warning signs:** `node --test tests/` boot failures naming `data:text/javascript,…` module evaluation.
 
@@ -405,7 +405,7 @@ Rename/migration inventory not applicable (pure feature phase). Checked anyway f
 
 ### Pitfall 7: New static relative imports in `shell.js` break every harness boot
 **What goes wrong:** harnesses boot shell source as a `data:` URL, rewriting only `render3d/game/rope/player` specifiers `[VERIFIED: tests/shell.test.js:82-86]`; `audio.js` survives only because it is a *dynamic* import inside a `.catch` `[VERIFIED: js/shell.js:39-48]`. A new `import { x } from './viewport.js'` in shell.js has no base URL to resolve against → boot throws → all existing data-URL boots fail.
-**How to avoid:** do not add static js/ imports to shell.js; if a pure helper module is genuinely wanted, extend all three harness rewrite sets (shell.test.js, audio.test.js Part B, pickflow.test.js) in the same change — or keep the arithmetic inline in `shell.js` (recommended, Pattern 3 is 6 lines).
+**How to avoid:** do not add static js/ imports to shell.js; if a pure helper module is genuinely wanted, extend all five harness rewrite sets — live count verified this revision: tests/shell.test.js, tests/audio.test.js Part B, tests/pickflow.test.js, tests/juice.test.js, tests/feelcap.test.js boot the real shell via rewritten data: URLs — in the same change, or keep the arithmetic inline in `shell.js` (recommended, Pattern 3 is 6 lines). Plan 05-03's five-copy `style: {}` sweep is the authoritative harness inventory.
 **Warning signs:** `ERR_MODULE_NOT_FOUND` inside a boot test.
 
 ### Pitfall 8: A test importing `shell.js` directly trips the ARCH-01 fence
@@ -512,18 +512,18 @@ globalThis.window.matchMedia = q => (q === '(prefers-reduced-motion: reduce)' ? 
 | A5 | Clamp band exactly 3:4–2:1 (CONTEXT's "roughly") | Pattern 3 constants | planner's documented call; the 480×640 harness fallback sits exactly on the 3:4 edge, so a stricter MIN would add surprise bars in tests |
 | A6 | Phase-3's deferred "reduced-motion flash dampening" (the 150 ms `CLOSE!`/card-name HUD text flash `[VERIFIED: js/shell.js:219-220,259-264]`) is closed as no-op because D-05 protects the HUD channel | Pattern 2 scope | a motion-sensitive user may find a brief text flash unpleasant; revisit only in UAT |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does tab-return auto-resume, or must the player press a key?**
+1. **Does tab-return auto-resume, or must the player press a key?** — RESOLVED: auto-resume via the lead-in on visible, pinned by plan 05-01 (Task 2 visible-auto-resume leg asserting `rope.phase === START_PHASE`; objective records the one-line `else`-branch fallback if UAT prefers press-to-resume).
    - What we know: D-03 — "tab-return and manual-resume both land the player in a known safe rhythm window"; the prompt wording "paused — press P to resume" describes manual pause.
    - What's unclear: whether "land" means automatically-on-visible or on-first-input-after-visible.
    - Recommendation: auto-resume via the lead-in on visible (Pattern 1 code as written); if UAT prefers manual resume, gate on first keypress/press instead and reuse `LEAD_IN_MS` lock — planner picks one and pins it with a test either way.
 
-2. **Which pause state shows the prompt after a tab-hide?**
+2. **Which pause state shows the prompt after a tab-hide?** — RESOLVED: accepted as recommended (prompt serves the manual-pause case; tab-hide pause gets no extra UI on return), per plan 05-01's flagged-assumption note in its objective.
    - If auto-resume-on-visible (recommended), the paused prompt is only visible mid-hidden-tab (invisible) — so D-02's prompt effectively serves the manual-pause case, and tab-hide pause needs only the audio/sim freeze. Accept the asymmetry or add a brief "resuming…" flash on return (flash channel exists `[VERIFIED: js/shell.js:68-69,259-263]`).
    - Recommendation: accept; don't add UI.
 
-3. **Trip-settle and idle cosmetic motion under reduced motion** (A4).
+3. **Trip-settle and idle cosmetic motion under reduced motion** (A4). — RESOLVED: dampen both to their still endpoints, hitstop stays — implemented and pinned by plan 05-02 (Task 2 cosmetic dampens; Task 3 dampen legs).
    - Recommendation: dampen both to their still endpoints; keep hitstop (CONTEXT default).
 
 ## Environment Availability
@@ -616,7 +616,7 @@ Config: `security_enforcement: true`, ASVS L1.
 **Confidence breakdown:**
 - Standard stack: HIGH — zero new deps; all web APIs cross-checked on MDN this session
 - Architecture: HIGH — every cited line reference re-verified against file contents this session
-- Pitfalls: HIGH for harness interactions (read all three harnesses); MEDIUM for float32 snap-grid behavior at sub-pixel S (A3)
+- Pitfalls: HIGH for harness interactions (read all five harnesses — shell.test.js, audio.test.js Part B, pickflow.test.js, juice.test.js, feelcap.test.js); MEDIUM for float32 snap-grid behavior at sub-pixel S (A3)
 
 **Research date:** 2026-10-22
 **Valid until:** 2026-11-21 (stable browser baselines; re-verify only if harness/frozen test files change)
