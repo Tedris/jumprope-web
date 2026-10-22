@@ -543,6 +543,43 @@ test('a live matchMedia change flips the view payload both ways, next frame, no 
   }
 });
 
+test('the HUD channel is byte-identical under reduced motion — legibility anchors untouched (D-05)', async () => {
+  const full = await bootPolishShell();
+  const calm = await bootPolishShell();
+  try {
+    emitMq(calm, true); // calm runs the whole session with reduced motion on
+    const snap = env => ['hud-score', 'hud-best', 'hud-prompt', 'hud-owned']
+      .map(k => env.hud[k].textContent).join(' | ');
+    const stF = { t: performance.now() };
+    const stC = { t: stF.t };
+    // Dual-boot caveat (harness globals point at the LAST boot): re-registrations
+    // from both shells land in calm.frames, so each boot must be pumped through
+    // its OWN frame closure — frames[0], the boot registration — not at(-1).
+    const pump = (env, st) => { st.t += 50; env.frames[0](st.t); };
+
+    // Identical scripted session on both boots: start, then 30 pumped frames
+    // at identical timestamps — enough to cross the lead-in crossing so the
+    // score tick and prompt transitions are exercised on the HUD channel.
+    press(full);
+    press(calm);
+    for (let i = 0; i < 30; i++) {
+      pump(full, stF);
+      pump(calm, stC);
+      assert.strictEqual(snap(calm), snap(full), `HUD text byte-identical at frame ${i}`);
+    }
+    // Both boots' payloads share the harness view sink; the flag sets prove the
+    // two sessions differed ONLY in the reducedMotion payload.
+    const flags = new Set(calm.views.map(v => v.reducedMotion));
+    assert.ok(flags.has(true) && flags.has(false),
+      'differential proof: one session ran reducedMotion=true, the other false');
+    assert.notStrictEqual(full.hud['hud-score'].textContent, '0',
+      'liveness: the session actually scored — the parity check is not comparing two dead HUDs');
+  } finally {
+    full.restore();
+    calm.restore();
+  }
+});
+
 // ---------- UI-03 legs ----------
 
 // UI-03 (D-07/D-10): set the stub metrics, then dispatch the shell's existing
@@ -615,6 +652,26 @@ test('garbage window metrics (0 / undefined / 1×1) coerce — buffer dims stay 
   } finally {
     env.restore();
   }
+});
+
+test('boot sizes through the shared applyWindowSize — style + buffer written before any resize event (D-10)', async () => {
+  const env = await bootPolishShell();
+  try {
+    // No resize dispatch anywhere in this leg: these writes can only come
+    // from the boot-time call of the SAME applyWindowSize the listener uses.
+    assert.strictEqual(env.canvas.width, 480, 'boot buffer width = passthrough of the 480×640 stub window');
+    assert.strictEqual(env.canvas.height, 640);
+    assert.strictEqual(env.canvas.style.width, '480px', 'boot writes the CSS box too, not only the buffer (Pitfall 9)');
+    assert.strictEqual(env.canvas.style.height, '640px');
+  } finally {
+    env.restore();
+  }
+});
+
+test('no orientationchange listener is registered — the resize path is the sole sizing channel (D-10)', async () => {
+  const src = await readFile(resolve(jsDir, 'shell.js'), 'utf8');
+  assert.ok(!/addEventListener\(\s*['"]orientationchange['"]/.test(src),
+    'js/shell.js must not bind orientationchange — resize alone drives applyWindowSize (D-10)');
 });
 
 // ---------- criterion 4 legs: input-loss hardening (D-11/D-12) ----------

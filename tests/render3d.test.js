@@ -232,3 +232,121 @@ test('reduced motion pins particle flight while spawn, opacity fade and lifetime
   env.scene.render(dampenView({ now: 1500, reducedMotion: true }));
   assert.ok(pool.children.every(p => !p.visible), 'the 0.45 s lifetime retires the burst as today');
 });
+
+// ---------- D-05 untouched-channel + still-endpoint audit legs (plan 05-02 truths 3+4) ----------
+
+// rig and ropePivot are the world scene's two 3-children Groups: the rig
+// parents three child Groups (torso group + two legs), the pivot three Meshes
+// (tube + two handles). Both fingerprints are unique among the stub children.
+function rigAndPivot(worldScene) {
+  const trios = worldScene.children.filter(c => (c.children?.length ?? 0) === 3);
+  const rigs = trios.filter(g => g.children.every(c => !c.material));
+  const pivots = trios.filter(g => g.children.every(c => c.material));
+  assert.strictEqual(rigs.length, 1, 'exactly one rig-shaped Group in the stub world');
+  assert.strictEqual(pivots.length, 1, 'exactly one ropePivot-shaped Group in the stub world');
+  return { rig: rigs[0], pivot: pivots[0] };
+}
+
+// The judgment-relevant pose channels D-05 protects: rope pivot, rig height
+// and squash, arms (torsoGroup children added after headGroup), legs, and the
+// blob shadow (the only Mesh whose material opacity render() animates — it is
+// < 0.45 exactly while airborne, null on the ground frames).
+function runningPose(worldScene) {
+  const { rig, pivot } = rigAndPivot(worldScene);
+  const torsoGroup = rig.children[0];
+  const shadow = worldScene.children.find(
+    c => typeof c.material?.opacity === 'number' && c.material.opacity < 0.45 &&
+      Math.abs(c.rotation.x + Math.PI / 2) < 1e-9
+  );
+  return {
+    rigY: rig.position.y,
+    rigScale: [rig.scale.x, rig.scale.y, rig.scale.z],
+    pivotX: pivot.rotation.x,
+    pivotZ: pivot.rotation.z,
+    armL: torsoGroup.children[2].rotation.x,
+    armR: torsoGroup.children[3].rotation.x,
+    legL: rig.children[1].rotation.x,
+    legR: rig.children[2].rotation.x,
+    shadowScale: shadow ? shadow.scale.x : null,
+    shadowOpacity: shadow ? shadow.material.opacity : null,
+  };
+}
+
+test('reduced motion holds the idle and trip-settle still endpoints; full motion animates them (Open Q3)', async () => {
+  const env = await bootDampenScene();
+  const { rig, pivot } = rigAndPivot(env.world);
+
+  // Idle life under reduced motion: breath bob and twirl hold their still
+  // endpoints on every frame, regardless of the cosmetic clock advancing.
+  env.scene.render(dampenView({ run: { status: 'idle' }, now: 1000, reducedMotion: true }));
+  const first = [rig.position.y, pivot.rotation.x];
+  env.scene.render(dampenView({ run: { status: 'idle' }, now: 1400, reducedMotion: true }));
+  assert.strictEqual(rig.position.y, 0, 'the breath bob holds its still endpoint at 0');
+  assert.strictEqual(pivot.rotation.x, 0, 'the idle twirl is frozen at the rest pose');
+  assert.deepStrictEqual([rig.position.y, pivot.rotation.x], first,
+    'the idle pose is still across a clock advance — no slow drift');
+
+  // Trip settle under reduced motion: the pivot holds exactly -PI, the damped
+  // oscillation term is gone at every sampled t after the trip.
+  env.scene.render(dampenView({ run: { status: 'running' }, now: 2000, reducedMotion: true }));
+  env.scene.render(dampenView({ run: { status: 'over' }, now: 2000, reducedMotion: true }));
+  for (const t of [2010, 2050, 2300]) {
+    env.scene.render(dampenView({ run: { status: 'over' }, now: t, reducedMotion: true }));
+    assert.strictEqual(pivot.rotation.x, -Math.PI, `settle holds -PI exactly at +${t - 2000} ms`);
+  }
+
+  // Gate proof: the SAME frame sequences under full motion do animate — the
+  // stillness above is the reducedMotion branch firing, not dead code.
+  const fresh = await bootDampenScene();
+  const ctl = rigAndPivot(fresh.world);
+  fresh.scene.render(dampenView({ run: { status: 'idle' }, now: 1000 }));
+  const idle0 = ctl.pivot.rotation.x;
+  fresh.scene.render(dampenView({ run: { status: 'idle' }, now: 1400 }));
+  assert.notStrictEqual(ctl.pivot.rotation.x, idle0, 'gate proof: full motion twirls while idle');
+
+  fresh.scene.render(dampenView({ run: { status: 'running' }, now: 2000 }));
+  fresh.scene.render(dampenView({ run: { status: 'over' }, now: 2000 }));
+  fresh.scene.render(dampenView({ run: { status: 'over' }, now: 2010 }));
+  assert.notStrictEqual(ctl.pivot.rotation.x, -Math.PI, 'gate proof: full motion shakes at the settle');
+});
+
+test('the running pose, rope pivot, limbs and blob shadow are byte-identical under reduced motion (D-05)', async () => {
+  const a = await bootDampenScene();  // reduced motion on
+  const b = await bootDampenScene();  // full-motion reference, same scripted views
+  const frames = [
+    { now: 1000, phase: 0.25, prevPhase: 0.2, alpha: 0.5, playerY: 0, squash: 1 },
+    { now: 1150, phase: 0.75, prevPhase: 0.7, alpha: 0.5, playerY: 30, squash: 1 },
+    { now: 1300, phase: 0.5, prevPhase: 0.5, alpha: 0, playerY: 0, squash: 0.9 },
+  ];
+  const posesA = [];
+  const posesB = [];
+  for (const f of frames) {
+    const view = {
+      ...dampenView({
+        run: { status: 'running' },
+        rope: { phase: f.phase },
+        prevPhase: f.prevPhase,
+        alpha: f.alpha,
+        now: f.now,
+        player: { y: f.playerY, squash: f.squash },
+      }),
+    };
+    a.scene.render({ ...view, reducedMotion: true });
+    b.scene.render(view);
+    posesA.push(runningPose(a.world));
+    posesB.push(runningPose(b.world));
+  }
+  posesA.forEach((pose, i) => {
+    assert.deepStrictEqual(pose, posesB[i],
+      `judgment-relevant pose byte-identical at frame ${i} (now=${frames[i].now})`);
+  });
+
+  // Liveness proof 1: the airborne frame's shadow genuinely faded in BOTH
+  // scenes — the pose probe reached the real animated shadow, not a stub null.
+  assert.ok(typeof posesA[1].shadowOpacity === 'number' && posesA[1].shadowOpacity < 0.45,
+    'the blob shadow fades with jump height under reduced motion exactly as without');
+  // Liveness proof 2: the flag DID reach render3d — the PS1 snap layer diverges
+  // between the two scenes while every channel compared above stayed equal.
+  assert.notStrictEqual(snapGridUniform(a.world).value.x, snapGridUniform(b.world).value.x,
+    'the reduced flag demonstrably took effect (dampened snap grid) while poses stayed identical');
+});
