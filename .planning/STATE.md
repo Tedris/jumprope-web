@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Accessibility & Polish
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-10-22T18:00:42.672Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-10-22T18:13:24.169Z"
 last_activity: 2026-10-22
 last_activity_desc: Phase 05 execution started
-state_head: 59eb1c45177038c887906192cabec1bfdb0bc269
+state_head: 8375c79ac61268a6a2ee51323f94701d50fe9953
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
   percent: 80
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-17)
 ## Current Position
 
 Phase: 05 (Accessibility & Polish) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-10-22 — Phase 05 execution started
 
@@ -57,6 +57,7 @@ Progress: [████████░░] 80%
 | Phase 03 P03 | 9min | 2 tasks | 1 files |
 | Phase 05 P01 | 13 min | 3 tasks | 4 files |
 | Phase 05 P02 | 11min | 3 tasks | 4 files |
+| Phase 05 P03 | 6min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,7 @@ Recent decisions affecting current work:
 - [Phase 05]: UI-02: SNAP_OFF=0.25 sub-pixel snap grid via ONE shared snapGridFor() helper — resize can never re-apply the wobble (Pitfall 12); never Infinity/0 (GLSL floor NaN)
 - [Phase 05]: UI-02: reduced-motion flag stored in render() BEFORE the passive size poll and consumed exactly like view.now — render3d gains no window/matchMedia reference (ARCH fence green)
 - [Phase 05]: UI-02: Open Q3 pinned — trip settle holds exactly -PI, idle bob/twirl at still endpoints, hitstop stays; Phase-3 deferred HUD flash dampening closed as no-op (D-05 protects the HUD channel, A6)
+- [Phase 05]: UI-03: clamp band pinned exactly [3/4, 2] (A5) — applyWindowSize writes CSS box AND buffer together; letterbox is DOM-only, render3d byte-identical
 
 ### Pending Todos
 
@@ -114,6 +116,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-10-22T18:00:42.576Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-10-22T18:13:24.080Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
