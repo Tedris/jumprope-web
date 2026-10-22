@@ -27,8 +27,12 @@ findings:
     severity: info
     disposition: open
     title: "Sub-2px windows desynchronize the CSS box from the backing buffer"
-open: 4
-total: 6
+  - id: IN-04
+    severity: info
+    disposition: open
+    title: "Hidden-branch gesture lacks the `!paused` guard its siblings got — safe only via the implicit paused ⟹ running invariant"
+open: 5
+total: 7
 recorded: 2026-10-22T18:54:15.531Z
 ---
 
@@ -42,6 +46,7 @@ recorded: 2026-10-22T18:54:15.531Z
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
+| IN-04 | info | open | - |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.
