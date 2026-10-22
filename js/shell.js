@@ -19,6 +19,23 @@ export function startGame(canvas) {
   [canvas.width, canvas.height] = windowSize();
   const scene = createScene(canvas);
   const rng = Math.random;
+  // D-N07: js/shell.js is audio.js's sole consumer. The import is dynamic so
+  // the frozen data:-URL Node harnesses (which cannot resolve new relative
+  // specifiers) boot unmodified — there the rejection leaves the game silent,
+  // never broken (the visible 'audio off' diagnostic covers D-N08's rule).
+  let audio = null;
+  let audioReady = false;
+  let audioDiag = '';
+  import('./audio.js')
+    .then(({ createAudio }) => {
+      audio = createAudio({
+        storage: localStorage,
+        fetchFn: typeof fetch === 'function' ? fetch : undefined,
+      });
+    })
+    .catch(() => {
+      audioDiag = 'audio-error';
+    });
   const hudScore = document.getElementById('hud-score');
   const hudBest = document.getElementById('hud-best');
   const hudPrompt = document.getElementById('hud-prompt');
@@ -45,6 +62,21 @@ export function startGame(canvas) {
   let last = performance.now();
 
   function press() {
+    // D-N08: the ONLY AudioContext-creation site is this first gesture; every
+    // later gesture only revives a suspended context. A constructor throw
+    // leaves the game running with a diagnostic, never blocked.
+    if (audio) {
+      if (!audioReady && typeof AudioContext === 'function') {
+        try {
+          audio.gesture(new AudioContext());
+          audioReady = true;
+        } catch {
+          audioDiag = 'audio-error';
+        }
+      } else if (audioReady) {
+        audio.gesture();
+      }
+    }
     if (pressIntent === null) pressIntent = performance.now();
   }
 
@@ -54,9 +86,20 @@ export function startGame(canvas) {
 
   canvas.addEventListener('pointerdown', press);
   canvas.addEventListener('pointerup', release);
-  window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); } });
+  window.addEventListener('keydown', e => {
+    // AUD-04: audio controls short-circuit BEFORE the Space press/release
+    // reducer so a volume tweak never charges a jump or starts a run.
+    if (e.code === 'Mute') { e.preventDefault(); if (audio) audio.toggleMute(); return; }
+    if (e.code === 'Minus') { e.preventDefault(); if (audio) audio.setVolume(Math.max(0, audio.getVolume() - 0.1)); return; }
+    if (e.code === 'Equal') { e.preventDefault(); if (audio) audio.setVolume(Math.min(1, audio.getVolume() + 0.1)); return; }
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); }
+  });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
   window.addEventListener('resize', () => { [canvas.width, canvas.height] = windowSize(); });
+  // D-N08 resume hooks: recover a context the browser suspended mid-session
+  // (no-op before the first gesture ever lands).
+  window.addEventListener('visibilitychange', () => { if (audioReady) audio.gesture(); });
+  window.addEventListener('focus', () => { if (audioReady) audio.gesture(); });
 
   function consumeIntents() {
     if (pressIntent !== null) {
@@ -80,6 +123,7 @@ export function startGame(canvas) {
       if (run.status === 'running') {
         if (performance.now() - reentryAt >= LEAD_IN_MS && holdFrom !== null) {
           player = jump(player, (performance.now() - holdFrom) / 1000);
+          audio?.handleEvent('jump');
           holdFrom = null;
         }
       } else if (run.status === 'choose') {
@@ -107,6 +151,7 @@ export function startGame(canvas) {
       if (pickFill >= 1 && !pickDone) {
         const picked = run.offer[pickIdx];
         flashName = picked.name;
+        audio?.handleEvent('pick');
         flashUntil = performance.now() + FLASH_MS;
         run = applyCard(run, picked);
         ({ rope, player, run } = resumeRun(run));
@@ -152,6 +197,7 @@ export function startGame(canvas) {
       prompt = 'Missed! Score ' + run.score;
     } else if (run.status === 'idle') {
       prompt = 'press space / tap to start';
+      if (audioDiag) prompt += ' (audio off)';
     } else if (run.status === 'running' && performance.now() < flashUntil) {
       prompt = flashName.toUpperCase();
     } else if (run.status === 'running' && run.skips === 0) {
@@ -171,6 +217,8 @@ export function startGame(canvas) {
         prevPhase = rope.phase;
         const out = tickRun(run, rope, player, STEP, rng);
         ({ run, rope, player } = out);
+        // D-N02 single-channel rule: sim events are audio's only feed.
+        if (audio) for (const ev of out.events) audio.handleEvent(ev);
         if (out.tripped) {
           best = Math.max(best, run.score);
           saveBest(localStorage, best);
