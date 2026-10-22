@@ -893,3 +893,78 @@ test('blur while paused is a no-op — nothing airborne, nothing armed for the l
     env.restore();
   }
 });
+
+// ---------- gap-closure legs (plan 05-05): CR-01 / WR-01 pins ----------
+
+// CR-01 / T-05-01: the mitigation covers "the focus listener AND the
+// visible-branch gesture" — the focus leg above pins the first half, this leg
+// walks the manual-pause half the suite never walked.
+test('manual-pause -> hide -> reveal never un-suspends the paused context (CR-01/T-05-01)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    for (let i = 0; i < 4; i++) tick(env, st);
+
+    keydown(env, 'KeyP'); // manual pause: enterPause(false) — pausedByVis stays false
+    const ctx = env.contexts[0];
+    assert.ok(env.log.suspends === 1, 'manual pause suspended the context once');
+    assert.equal(ctx.state, 'suspended', 'the context is suspended behind the freeze frame');
+    const gestures0 = env.log.gestures;
+    const resumes0 = ctx.resumes;
+    const phase0 = env.views.at(-1).rope.phase;
+
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange(); // enterPause early-returns — pausedByVis stays false
+    env.document.hidden = false;
+    env.handlers.window.visibilitychange(); // the visible else-branch must not gesture past a pause
+
+    tick(env, st);
+    tick(env, st);
+    assert.equal(ctx.state, 'suspended', 'the visible-leg event did not resume the paused context');
+    assert.equal(env.log.gestures, gestures0, 'the visible branch dispatched no gesture() past the manual pause');
+    assert.equal(ctx.resumes, resumes0, 'no resumes++ while the player holds the pause');
+    assert.match(env.hud['hud-prompt'].textContent, /paused — press P to resume/);
+    assert.strictEqual(env.views.at(-1).rope.phase, phase0, 'stepping stayed frozen across the round-trip');
+  } finally {
+    env.restore();
+  }
+});
+
+// WR-01 / D-11: the hidden leg must run the one shared release for EVERY
+// status. Platform caveat pinned here: tickPick times the hold on the REAL
+// performance.now (shell.js), which bootPolishShell does not stub, so the
+// st.t += 900 jump below simulates elapsed frame-loop time only and can never
+// produce an in-harness auto-confirm — the deciding red signal is the fill
+// cue surviving the hidden event (pickPressedAt never cleared), and the
+// real-browser confirm edge stays on manual UAT row 5.
+test('tab hidden during a sub-confirm card hold cancels — no auto-confirm on return (WR-01/D-11)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    runToChoose(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'choose', 'the 10-skip offer froze the run');
+
+    env.handlers.canvas.pointerdown({ pointerId: 1 }); // cycles cursor, (re)arms the hold
+    tick(env, st);
+    assert.match(env.hud['hud-prompt'].textContent, /\[[-#]+\]/,
+      'the fill cue is live during the sub-confirm hold');
+
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange(); // hidden WITHOUT any blur — the WR-01 platform
+    st.t += 900; // background longer than PICK_HOLD_MS (800)
+    env.document.hidden = false;
+    env.handlers.window.visibilitychange();
+    tick(env, st);
+    tick(env, st);
+
+    const prompt = env.hud['hud-prompt'].textContent;
+    assert.strictEqual(env.views.at(-1).run.status, 'choose', 'the hold did not confirm in the background');
+    assert.ok(!prompt.includes('['), 'the fill cue is gone — the hidden leg cancelled the hold');
+    assert.ok(!env.log.voices.includes('pick'), 'the audio log shows no pick event');
+    assert.match(prompt, /^> /m, 'the offer prompt still lists the offer');
+  } finally {
+    env.restore();
+  }
+});
