@@ -25,8 +25,29 @@ function windowSize() {
   return [Number(window.innerWidth) || 480, Number(window.innerHeight) || 640];
 }
 
+// UI-03 (D-07): the aspect clamp band — outside it the canvas box is shrunk to
+// the band edge and the black page background shows through as letterbox bars.
+// RESEARCH A5: the 480×640 harness fallback sits exactly on the 3:4 edge, so
+// MIN must not exceed 0.75 or the Node boots would grow surprise bars.
+const ASPECT_MIN = 3 / 4;
+const ASPECT_MAX = 2 / 1;
+
 export function startGame(canvas) {
-  [canvas.width, canvas.height] = windowSize();
+  // UI-03 (D-07/D-10): one contain-fit band computation sizes BOTH the CSS box
+  // and the backing buffer — render3d's passive poll re-derives RT, snap grid
+  // and camera aspect from canvas.width/height, and CSS-only or buffer-only
+  // writes would each re-introduce the distortion (Pitfall 9). In-band windows
+  // compute dw = innerWidth, dh = innerHeight: the pixel-identical passthrough.
+  function applyWindowSize() {
+    const [w, h] = windowSize(); // the Number(x) || fallback coercion is the NaN guard (T-05-05)
+    const aspect = Math.min(ASPECT_MAX, Math.max(ASPECT_MIN, w / h));
+    const dw = Math.round(Math.min(w, h * aspect));
+    const dh = Math.round(Math.min(h, w / aspect));
+    canvas.style.width = dw + 'px';
+    canvas.style.height = dh + 'px';
+    [canvas.width, canvas.height] = [Math.max(2, dw), Math.max(2, dh)];
+  }
+  applyWindowSize();
   const scene = createScene(canvas);
   const rng = Math.random;
   // D-N07: js/shell.js is audio.js's sole consumer. The import is dynamic so
@@ -169,7 +190,10 @@ export function startGame(canvas) {
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); }
   });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
-  window.addEventListener('resize', () => { [canvas.width, canvas.height] = windowSize(); });
+  // UI-03 (D-10): the existing resize listener re-derives the band/letterbox;
+  // orientation changes fire resize on all target browsers, so an
+  // orientationchange listener is deliberately absent.
+  window.addEventListener('resize', applyWindowSize);
   // UI-01 (D-04): the visibilitychange event carries no state — direction
   // comes from document.hidden. Only an active stepping run enters the paused
   // state; idle/choose/over keep today's D-N08 gesture path verbatim. Both

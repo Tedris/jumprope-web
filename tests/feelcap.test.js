@@ -166,6 +166,7 @@ async function bootCap({
   const canvas = {
     width: 0,
     height: 0,
+    style: {},
     addEventListener: (type, fn) => { handlers.canvas[type] = fn; },
   };
   const views = [];

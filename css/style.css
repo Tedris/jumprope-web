@@ -1,9 +1,10 @@
-html, body { margin: 0; height: 100%; background: #2a3440; }
+/* UI-03 (D-07): black page background carries the letterbox bars; the canvas
+   box itself is sized by the shell's applyWindowSize() style writes — the old
+   full-viewport stretch is gone, it would defeat the clamp band (Pitfall 9). */
+html, body { margin: 0; height: 100%; background: #000; }
 body { display: grid; place-items: center; }
 canvas {
   display: block;
-  width: 100vw;
-  height: 100vh;
   image-rendering: pixelated;
   background: #2a3440;
 }
