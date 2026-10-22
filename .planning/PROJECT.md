@@ -24,6 +24,7 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 - ✓ Card catalogue: expand the upgrade set from 4 effect multipliers into a real catalogue with rarity, stacking rules, and clearer card identity — Phase 3 (`js/upgrades.js`, 8 cards / 5 roles, caps + offer-count escalation, headless-sim balance gate)
 - ✓ Feel layer: forgiving input buffer on the phase clock, near-miss callouts, significance-scaled juice (hitstop/shake/particles) — Phase 4 (`js/game.js`, `js/shell.js`, `js/render3d.js`)
 - ✓ SFX via WebAudio: five procedural voices, gesture-lifecycle, master bus, persisted mute/volume, no beat-lock (rope stays free-running) — Phase 4 (`js/audio.js`)
+- ✓ Accessibility & polish: pause/hidden-tab state+audio handling (P key, visibilitychange/blur/focus guards), OS reduced-motion support (wobble/shake dampened, judgment unchanged), aspect-correct letterbox resize keeping the low-res UI legible — Phase 5 (`js/shell.js`, `js/render3d.js`, `css/style.css`)
 
 ### Active
 
@@ -64,6 +65,9 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 | `pickOffers` canonical; `pickTwo` shim | Keep frozen distinct-pair test green while the offer generator grows past pairs | ✓ Working (Phase 3) |
 | Offer size 3 beyond skip 30, 2 before | Escalating variety late-run without diluting the first offer's read | ✓ Working (Phase 3) |
 | ropeMul capped per-card, never per-frame | Stacked speed cards stay inside the ~15.6s rope-wrap blackout bound by construction; `js/rope.js` untouched | ✓ Verified by sim gate (Phase 3) |
+| One shared releaseEverything() for all interruption paths | blur/pointercancel/hidden-leg share one release; arms releaseIntent only when 'running' with a live hold — no phantom jumps, no silent restarts from 'over' | ✓ Pinned by tests (Phase 5) |
+| Audio resumes only on player-initiated routes | `audioReady && !paused` guards on focus/visible-branch gestures; a browser event never un-suspends a player-paused context | ✓ Pinned red-green (Phase 5, CR-01) |
+| Reduced motion dampens cosmetics, never judgment | snap grid via ONE shared snapGridFor() helper; wobble/shake stilled, rope timing identical; flag never persisted (D-06) | ✓ Verified (Phase 5) |
 
 ## Evolution
 
@@ -83,4 +87,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-22 after Phase 4*
+*Last updated: 2026-10-22 after Phase 5*

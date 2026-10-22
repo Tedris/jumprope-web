@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: PS1 Presentation & Scene** - Low-res dithered wobble look, original low-poly character, readable fixed-camera rope judgment
 - [x] **Phase 3: Card Catalogue Realness** - Real card choice, identity/rarity/stack caps/dead-pick filtering, 6–10+ card catalogue with owned-card HUD (completed 2026-10-17)
 - [x] **Phase 4: Feel & Audio** - Input forgiveness, significance-scaled juice, near-miss callouts, full WebAudio SFX + loop with persisted mute/volume (completed 2026-10-22)
-- [ ] **Phase 5: Accessibility & Polish** - Pause/hidden-tab handling, reduced motion, resize-legible low-res UI
+- [x] **Phase 5: Accessibility & Polish** - Pause/hidden-tab handling, reduced motion, resize-legible low-res UI (completed 2026-10-22)
 
 ## Phase Details
 
@@ -126,7 +126,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The low-res UI stays legible at any window size (resize/letterbox handling)
   4. No stuck-hold state after blur or `pointercancel` — input reducer hardening ported into the new shell
 
-**Plans**: 5/5 plans executed
+**Plans**: 5/5 plans complete
 **Wave 1**
 - [x] 05-01-PLAN.md — Tracer: manual + tab-hidden pause with audio suspend and resumeRun lead-in re-entry (UI-01)
 
@@ -155,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. PS1 Presentation & Scene | 3/3 | Complete    | 2026-10-17 |
 | 3. Card Catalogue Realness | 3/3 | Complete    | 2026-10-17 |
 | 4. Feel & Audio | 4/4 | Complete    | 2026-10-22 |
-| 5. Accessibility & Polish | 5/5 | In Progress | - |
+| 5. Accessibility & Polish | 5/5 | Complete    | 2026-10-22 |
 
 ## Backlog
 

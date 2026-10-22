@@ -1,0 +1,53 @@
+{
+  "result": "issues_found",
+  "phase": "05-accessibility-polish",
+  "plans_checked": 4,
+  "counts": {
+    "blocker": 0,
+    "warning": 3,
+    "info": 2
+  },
+  "issues": [
+    {
+      "plan": null,
+      "dimension": "research_resolution",
+      "severity": "warning",
+      "required_property": "RESEARCH.md carries no unresolved open question at execution time",
+      "description": "05-RESEARCH.md '## Open Questions' lacks the (RESOLVED) suffix and per-question RESOLVED markers; all three answers are pinned in plans 01/02 but the artifact still reads as open",
+      "fix_hint": "Mark questions 1-3 RESOLVED with a pointer to the pinning plan"
+    },
+    {
+      "plan": "05-02",
+      "task": 3,
+      "dimension": "verify_command_sanity",
+      "severity": "warning",
+      "required_property": "Every hardcoded count gate is reachable given the plan's own specified test additions",
+      "description": "render3d.test.js measures 3 passing tests today; the task adds 3 specified legs but its acceptance gate asserts pass >= 8 — unreachable as written (3+3=6)",
+      "fix_hint": "Set the gate to the measured floor (>=6) or enumerate the legs so >=8 is genuinely produced"
+    },
+    {
+      "plan": null,
+      "dimension": "numeric_claim_authority",
+      "severity": "warning",
+      "required_property": "Harness-count claims in planning artifacts match live measurement",
+      "description": "Live measurement finds 5 data-URL shell-boot harnesses; RESEARCH Pitfall 7 and the primary recommendation say 3. Plan 03 five-copy correction is confirmed correct",
+      "fix_hint": "Update RESEARCH.md Pitfall 7 to five copies"
+    },
+    {
+      "plan": "05-02",
+      "dimension": "scope_reduction",
+      "severity": "info",
+      "required_property": "Deferred cross-phase items are honored, or their rejection is justified against a locked decision",
+      "description": "Phase-3 deferred HUD-flash dampening closed as no-op; consistent with locked D-05 (HUD channel untouched), surfaced as flagged assumption (RESEARCH A6)",
+      "fix_hint": "None required; keep the D-05 code-comment reference"
+    },
+    {
+      "plan": "05-04",
+      "dimension": "requirement_coverage",
+      "severity": "info",
+      "required_property": "Requirement-to-plan attribution reflects the work each plan does",
+      "description": "Plan 04 frontmatter claims UI-01 for what is primarily roadmap criterion 4 (no REQ-ID)",
+      "fix_hint": "Note the criterion-4 attribution in frontmatter or plan objective"
+    }
+  ]
+}
