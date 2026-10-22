@@ -159,10 +159,23 @@ export function startGame(canvas) {
   });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
   window.addEventListener('resize', () => { [canvas.width, canvas.height] = windowSize(); });
-  // D-N08 resume hooks: recover a context the browser suspended mid-session
-  // (no-op before the first gesture ever lands).
-  window.addEventListener('visibilitychange', () => { if (audioReady) audio.gesture(); });
-  window.addEventListener('focus', () => { if (audioReady) audio.gesture(); });
+  // UI-01 (D-04): the visibilitychange event carries no state — direction
+  // comes from document.hidden. Only an active stepping run enters the paused
+  // state; idle/choose/over keep today's D-N08 gesture path verbatim. Both
+  // transitions run synchronously here — rAF stops in a hidden tab, so a
+  // transition deferred to frame() would land only on return (Pitfall 10).
+  window.addEventListener('visibilitychange', () => {
+    const hidden = typeof document !== 'undefined' && document.hidden;
+    if (hidden) {
+      if (run.status === 'running') enterPause(true);
+      else if (audioReady) audio.gesture();
+    } else {
+      if (pausedByVis) resumeFromPause(); // tab-return auto-resume through the lead-in
+      else if (audioReady) audio.gesture(); // D-N08 recovery path, unchanged
+    }
+  });
+  // Pitfall 4: focus must never un-suspend a context the game itself paused.
+  window.addEventListener('focus', () => { if (audioReady && !paused) audio.gesture(); });
 
   function consumeIntents() {
     if (pressIntent !== null) {

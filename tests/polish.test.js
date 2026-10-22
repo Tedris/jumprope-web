@@ -377,3 +377,100 @@ test('pause clears run.buffer — the post-resume crossing trips, never forgives
     env.restore();
   }
 });
+
+test('tab hidden mid-run auto-pauses with suspend; focus never un-suspends (D-04/T-05-01)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    for (let i = 0; i < 4; i++) tick(env, st);
+    const phase0 = env.views.at(-1).rope.phase;
+    const ctx = env.contexts[0];
+    const resumesAtPause = ctx.resumes;
+
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange();
+    const phases = [];
+    for (let i = 0; i < 3; i++) {
+      tick(env, st); // still "hidden" — the run must be frozen
+      phases.push(env.views.at(-1).rope.phase);
+    }
+    assert.ok(phases.every(p => p === phase0), 'hidden mid-run: zero sim steps');
+    assert.ok(env.log.suspends === 1, 'tab-hide suspended audio exactly once');
+    assert.equal(ctx.state, 'suspended');
+    assert.match(env.hud['hud-prompt'].textContent, /paused — press P to resume/);
+
+    // T-05-01: a focus event racing the hide must not resurrect the context.
+    env.handlers.window.focus();
+    assert.equal(ctx.state, 'suspended', 'focus did not un-suspend the paused context');
+    assert.equal(ctx.resumes, resumesAtPause, 'no resumes++ before any resume action');
+  } finally {
+    env.restore();
+  }
+});
+
+test('tab hidden during game-over stays the D-N08 gesture path — no paused state (D-04)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    let guard = 0; // never jump: the second grounded crossing trips the run
+    while (env.views.at(-1).run.status === 'running' && ++guard < 90) tick(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'over', 'the run tripped to game-over');
+
+    const gestures0 = env.log.gestures;
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange();
+    assert.strictEqual(env.log.suspends, 0, 'hiding outside a stepping run never suspends');
+    assert.equal(env.log.gestures, gestures0 + 1, 'the D-N08 gesture path is the only effect');
+    tick(env, st);
+    tick(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'over', 'no paused state over a dead run');
+    assert.match(env.hud['hud-prompt'].textContent, /^Missed!/, 'the game-over prompt is untouched');
+
+    env.document.hidden = false;
+    env.handlers.window.visibilitychange(); // visible otherwise = today's gesture recovery
+    assert.strictEqual(env.views.at(-1).run.status, 'over', 'and the return leg changes nothing');
+  } finally {
+    env.restore();
+  }
+});
+
+test('hidden-on-idle no-ops; tab-return while pausedByVis auto-resumes through the lead-in (A1)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    // hidden while idle: no paused state, no suspend, prompt untouched.
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange();
+    tick(env, st);
+    tick(env, st);
+    assert.strictEqual(env.log.suspends, 0, 'hidden-on-idle suspends nothing');
+    assert.strictEqual(env.views.at(-1).run.status, 'idle', 'idle entered no paused state');
+    assert.match(env.hud['hud-prompt'].textContent, /press space \/ tap to start/, 'idle prompt unchanged');
+    env.document.hidden = false;
+    env.handlers.window.visibilitychange();
+
+    // hidden mid-run, then the tab-return auto-resume leg:
+    startRunning(env, st);
+    for (let i = 0; i < 3; i++) tick(env, st);
+    const phase0 = env.views.at(-1).rope.phase;
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange();
+    tick(env, st);
+    tick(env, st);
+    assert.strictEqual(env.views.at(-1).rope.phase, phase0, 'hidden run is frozen');
+
+    env.document.hidden = false;
+    env.handlers.window.visibilitychange(); // no keypress — return alone resumes
+    env.frames.at(-1)(st.t); // zero-delta snapshot of the resume instant
+    const back = env.views.at(-1);
+    assert.strictEqual(back.rope.phase, START_PHASE, 'tab-return auto-resumes through the lead-in');
+    assert.strictEqual(back.run.status, 'running', 'back to a live run without a keypress');
+    assert.equal(env.contexts[0].state, 'running', 'audio recovered on return');
+    tick(env, st);
+    assert.ok(env.views.at(-1).rope.phase > START_PHASE, 'stepping resumed');
+  } finally {
+    env.restore();
+  }
+});
