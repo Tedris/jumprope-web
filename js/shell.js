@@ -72,9 +72,15 @@ export function startGame(canvas) {
   let stopUntil = 0;
   let juiceSig = null;
   let pressFired = false;
+  // UI-01 (D-01/D-04): pause lives entirely shell-side — the sim never learns
+  // it exists (ARCH-01). pausedByVis records tab-hide origin so the visible
+  // leg can auto-resume through the lead-in while a manual pause waits for P.
+  let paused = false;
+  let pausedByVis = false;
   let last = performance.now();
 
   function press() {
+    if (paused) return; // input is locked behind the freeze frame (D-12/Pitfall 4)
     // D-N08: the ONLY AudioContext-creation site is this first gesture; every
     // later gesture only revives a suspended context. A constructor throw
     // leaves the game running with a diagnostic, never blocked.
@@ -94,7 +100,41 @@ export function startGame(canvas) {
   }
 
   function release() {
+    if (paused) return; // releaseIntent must never arm behind the freeze frame
     releaseIntent = true;
+  }
+
+  // UI-01: entering pause freezes the frame by holding the drain gate open
+  // (D-02, the hitstop pattern) and clears every pending press state (D-12) —
+  // the sim buffer goes via the same spread idiom as the boot state copy.
+  function enterPause(byVisibility) {
+    if (paused || run.status !== 'running') return; // D-04: only an active stepping run
+    paused = true;
+    pausedByVis = !!byVisibility;
+    holdFrom = null;
+    pressIntent = null;
+    releaseIntent = false;
+    run = { ...run, buffer: 0 };
+    acc = 0;
+    stopUntil = 0;
+    juiceSig = null;
+    if (audioReady) audio.suspend?.();
+  }
+
+  // D-03: resume re-enters the card-pick lead-in through the one resumeRun
+  // path — NOT startRun(), which would wipe score/effects/owned (Pitfall 3).
+  function resumeFromPause() {
+    if (!paused) return;
+    paused = false;
+    pausedByVis = false;
+    ({ rope, player, run } = resumeRun({ ...run, buffer: 0 }));
+    reentryAt = performance.now(); // D-07 re-entry lock, same as the pick-confirm path
+    holdFrom = null;
+    pressIntent = null;
+    releaseIntent = false;
+    acc = 0;
+    stopUntil = 0;
+    if (audioReady) audio.gesture(); // gesture() resumes the suspended context
   }
 
   canvas.addEventListener('pointerdown', press);
@@ -107,6 +147,14 @@ export function startGame(canvas) {
     if (e.code === 'Mute') { e.preventDefault(); if (audio && !e.repeat) audio.toggleMute(); return; }
     if (e.code === 'Minus') { e.preventDefault(); if (audio && !e.repeat) audio.setVolume(Math.max(0, audio.getVolume() - 0.1)); return; }
     if (e.code === 'Equal') { e.preventDefault(); if (audio && !e.repeat) audio.setVolume(Math.min(1, audio.getVolume() + 0.1)); return; }
+    // UI-01 (D-01): P/Esc toggles pause, after the audio short-circuits and
+    // before the Space reducer so it never charges a jump. !e.repeat: an OS
+    // key-repeat must not strobe pause/resume at ~30 Hz (Pitfall 11).
+    if (e.code === 'KeyP' || e.code === 'Escape') {
+      e.preventDefault();
+      if (!e.repeat) { paused ? resumeFromPause() : enterPause(false); }
+      return;
+    }
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); }
   });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
@@ -207,7 +255,9 @@ export function startGame(canvas) {
       .join(' ');
     let prompt = '';
     let roleClass = '';
-    if (run.status === 'choose' && run.offer) {
+    if (paused) {
+      prompt = 'paused — press P to resume';
+    } else if (run.status === 'choose' && run.offer) {
       prompt = run.offer.map((card, i) => offerLine(card, i === pickIdx)).join('\n');
       const highlight = run.offer[pickIdx];
       if (highlight && highlight.color) roleClass = 'role-' + highlight.color;
@@ -229,12 +279,18 @@ export function startGame(canvas) {
     acc += (now - last) / 1000;
     last = now;
     if (acc > 0.25) acc = 0.25;
+    // UI-01 (D-02): the pause gate — an indefinite freeze must hold no sim
+    // time at all, so acc drains to zero every paused frame; without this the
+    // clamped backlog would fast-forward the post-resume lead-in (Pitfall 1).
+    if (paused) acc = 0;
     while (acc >= STEP) {
       // D-N05: juice freeze gate — a pending event deadline halts the drain
       // here, delaying (never dropping) the remaining steps of this drain;
       // the held acc resumes under the unchanged 0.25 clamp above. With the
       // gate removed the drain is byte-identical to the pre-Phase-4 loop.
-      if (now < stopUntil) break;
+      // UI-01: the paused flag holds the same gate open indefinitely, while
+      // updateHud()/scene.render() below keep the freeze frame + prompt live.
+      if (paused || now < stopUntil) break;
       consumeIntents();
       if (run.status === 'running') {
         prevPhase = rope.phase;

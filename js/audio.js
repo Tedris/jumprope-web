@@ -79,6 +79,13 @@ export function createAudio({ context, storage, fetchFn } = {}) {
     }
   }
 
+  // UI-01: pause suspends context time entirely — the symmetric counterpart
+  // of gesture()'s recovery arm, state-guarded the same way. The returned
+  // Promise is fire-and-forget; gesture() above is the resume path.
+  function suspend() {
+    if (ctx && ctx.state === 'running') ctx.suspend();
+  }
+
   // D-N09: one pre-rendered file, looped through the shared master bus. The
   // absent track is the tested DEFAULT (human-gated content): flag + silence,
   // never a throw, never a retry loop.
@@ -200,6 +207,7 @@ export function createAudio({ context, storage, fetchFn } = {}) {
 
   return {
     gesture,
+    suspend,
     handleEvent,
     playTrack,
     setMuted,
