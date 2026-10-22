@@ -803,3 +803,36 @@ test('hidden mid-hold pauses and stays cleared — the post-resume crossing trip
     env.restore();
   }
 });
+
+// D-12 matrix extension (plan 05-04 Task 2): the pause leg composes with the
+// blur leg — behind the freeze frame every press path is early-returned and
+// every loss event is a no-op, so a blur while paused neither fires an airborne
+// state nor leaves an intent armed for the post-resume rhythm.
+test('blur while paused is a no-op — nothing airborne, nothing armed for the lead-in (D-12 matrix)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    for (let i = 0; i < 4; i++) tick(env, st);
+    keydown(env, 'KeyP'); // manual pause, run.status stays 'running'
+
+    blur(env); // focus loss behind the freeze frame must change nothing
+    const frozen = env.views.at(-1);
+    for (let i = 0; i < 3; i++) tick(env, st);
+    const after = env.views.at(-1);
+    assert.strictEqual(after.rope.phase, frozen.rope.phase, 'stepping stayed frozen across the blur');
+    assert.strictEqual(after.player.y, frozen.player.y, 'no airborne state appeared behind the freeze');
+
+    keydown(env, 'KeyP'); // resume through the lead-in
+    env.frames.at(-1)(st.t);
+    assert.strictEqual(env.views.at(-1).rope.phase, START_PHASE, 'resume landed the lead-in');
+    // A phantom releaseIntent would fire as soon as the D-07 lock drops; with
+    // the no-op honored, the untouched first grounded crossing trips.
+    let guard = 0;
+    while (env.views.at(-1).run.status === 'running' && ++guard < 90) tick(env, st);
+    assert.strictEqual(env.views.at(-1).run.status, 'over',
+      'no phantom jump leaked from the paused blur — the crossing trips');
+  } finally {
+    env.restore();
+  }
+});
