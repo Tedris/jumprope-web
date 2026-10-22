@@ -136,6 +136,33 @@ export function startGame(canvas) {
     releaseIntent = true;
   }
 
+  // Criterion 4 (D-11): ONE shared release-everything handler for every
+  // focus/pointer loss — window blur, canvas pointercancel, and the
+  // hidden+running visibility leg all route here, never a per-event cleanup
+  // fork. It behaves exactly as if the player released at that instant: a
+  // mid-press loss converts pressIntent to holdFrom FIRST so the fired jump
+  // keeps real hold time, then arms releaseIntent and deliberately leaves
+  // holdFrom in place for consumeIntents to fire-and-clear (Pitfall 6 — zero-
+  // ing it here would silently eat the jump). releaseIntent is armed ONLY for
+  // a live hold while running, so the over-status release-restart branch
+  // below can never be triggered by focus loss (T-05-07). A choose-status
+  // sub-confirm hold cancels cleanly instead.
+  function releaseEverything() {
+    if (run.status === 'running' && pressIntent !== null) {
+      holdFrom = pressIntent;
+      pressIntent = null;
+    }
+    if (run.status === 'running' && holdFrom !== null) {
+      releaseIntent = true; // fires via consumeIntents with the hold-so-far (D-11)
+    } else {
+      pressIntent = null;
+    }
+    if (run.status === 'choose') {
+      pickPressedAt = null;
+      pickFill = 0;
+    }
+  }
+
   // UI-01: entering pause freezes the frame by holding the drain gate open
   // (D-02, the hitstop pattern) and clears every pending press state (D-12) —
   // the sim buffer goes via the same spread idiom as the boot state copy.
@@ -171,6 +198,12 @@ export function startGame(canvas) {
 
   canvas.addEventListener('pointerdown', press);
   canvas.addEventListener('pointerup', release);
+  // Criterion 4 (D-11): focus/pointer loss routes to the one shared release.
+  // The drag-out / cursor-leave pointer gestures stay deliberately unbound —
+  // browsers deliver a pointerup outside the canvas anyway. Both handlers run
+  // synchronously in the event, like every other transition here.
+  canvas.addEventListener('pointercancel', releaseEverything);
+  window.addEventListener('blur', releaseEverything);
   window.addEventListener('keydown', e => {
     // AUD-04: audio controls short-circuit BEFORE the Space press/release
     // reducer so a volume tweak never charges a jump or starts a run.
@@ -202,7 +235,10 @@ export function startGame(canvas) {
   window.addEventListener('visibilitychange', () => {
     const hidden = typeof document !== 'undefined' && document.hidden;
     if (hidden) {
-      if (run.status === 'running') enterPause(true);
+      // releaseEverything first so nothing armed can survive the transition;
+      // enterPause's D-12 clearing then supersedes the armed release (a
+      // hidden run clears holds rather than firing them).
+      if (run.status === 'running') { releaseEverything(); enterPause(true); }
       else if (audioReady) audio.gesture();
     } else {
       if (pausedByVis) resumeFromPause(); // tab-return auto-resume through the lead-in
