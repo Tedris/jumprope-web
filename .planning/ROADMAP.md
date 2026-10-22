@@ -141,3 +141,13 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Card Catalogue Realness | 3/3 | Complete    | 2026-10-17 |
 | 4. Feel & Audio | 4/4 | In Progress | - |
 | 5. Accessibility & Polish | 0/? | Not started | - |
+
+## Backlog
+
+### Phase 999.1: Follow-up — Phase 4 deferred UAT follow-up: Test 6 (BACKLOG)
+
+**Goal:** Resolve the UAT checkpoint deferred during Phase 4 verification
+**Source phase:** 4
+**Deferred at:** 2026-10-22 during /gsd-verify-work 4 session completion
+**Follow-ups:**
+- [ ] Test 6: Supply a music track at audio/track.ogg (loop under rope, shared master bus, no beat-lock) — mechanism shipped and test-pinned; content intentionally deferred at UAT acceptance. (deferred 2026-10-22)
