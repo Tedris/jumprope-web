@@ -102,9 +102,11 @@ export function startGame(canvas) {
   window.addEventListener('keydown', e => {
     // AUD-04: audio controls short-circuit BEFORE the Space press/release
     // reducer so a volume tweak never charges a jump or starts a run.
-    if (e.code === 'Mute') { e.preventDefault(); if (audio) audio.toggleMute(); return; }
-    if (e.code === 'Minus') { e.preventDefault(); if (audio) audio.setVolume(Math.max(0, audio.getVolume() - 0.1)); return; }
-    if (e.code === 'Equal') { e.preventDefault(); if (audio) audio.setVolume(Math.min(1, audio.getVolume() + 0.1)); return; }
+    // e.repeat: a held key must not flap mute or hammer setVolume's
+    // synchronous write-through at OS repeat rate.
+    if (e.code === 'Mute') { e.preventDefault(); if (audio && !e.repeat) audio.toggleMute(); return; }
+    if (e.code === 'Minus') { e.preventDefault(); if (audio && !e.repeat) audio.setVolume(Math.max(0, audio.getVolume() - 0.1)); return; }
+    if (e.code === 'Equal') { e.preventDefault(); if (audio && !e.repeat) audio.setVolume(Math.min(1, audio.getVolume() + 0.1)); return; }
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); }
   });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
