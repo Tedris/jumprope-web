@@ -644,3 +644,65 @@ test('AUD-02/D-N09 track mechanism: the absent file is the tested-normal state (
     process.off('unhandledRejection', grab);
   }
 });
+
+// Task 2: graph audit — mirrors tests/boundary.test.js's SPECIFIER_RE/walkFile
+// mechanism but seeds the walk at js/audio.js: the containment D-N07/D-N09
+// depends on becomes a self-extending, directory-walked pin (a new sim module
+// is covered the day it is born; a back-edge self-diagnoses by file:line).
+test('AUD-02 structural: the graph seeded at js/audio.js reaches zero sim files, the sim holds zero audio references, and shell.js is the single importer (D-N07/D-N09)', async () => {
+  const SPECIFIER_RE = /(?:\bfrom\s*|\bimport\s*\(\s*)['"]([^'"]+)['"]/g;
+
+  async function walkFile(file, graph, bare) {
+    if (graph.has(file)) return;
+    graph.add(file);
+    const src = await readFile(file, 'utf8');
+    for (const m of src.matchAll(SPECIFIER_RE)) {
+      const spec = m[1];
+      if (spec.startsWith('.')) {
+        await walkFile(resolve(dirname(file), spec), graph, bare);
+      } else {
+        bare.add(`${spec} (imported by ${file})`);
+      }
+    }
+  }
+
+  // 1. Forward reachability: audio.js must be a LEAF — the graph is itself.
+  const graph = new Set();
+  const bare = new Set();
+  await walkFile(resolve(jsDir, 'audio.js'), graph, bare);
+  assert.deepEqual([...graph].map(f => f.slice(jsDir.length + 1)), ['audio.js'],
+    'a path from js/audio.js into any sim file breaks D-N09 — audio must never reach updateRope/updatePlayer/tickRun/applyUpgrade');
+  assert.deepEqual([...bare], [], 'an npm dependency crept into audio.js (D-N07 zero-dependency rule)');
+  const audioSrc = await readFile(resolve(jsDir, 'audio.js'), 'utf8');
+  assert.equal((audioSrc.match(/(?:^|\n)\s*(?:import|export)\s[^\n]*\bfrom\b/g) ?? []).length, 0,
+    'js/audio.js gained an import/export-from statement — it must stay a leaf');
+
+  // 2. Reverse references: zero files under js/ (excluding audio.js itself
+  //    and its single consumer shell.js) may name audio, even in a comment.
+  //    Directory-walked, so future modules are covered the day they are born.
+  const offenders = [];
+  for (const name of (await readdir(jsDir)).sort()) {
+    if (name === 'audio.js' || name === 'shell.js') continue;
+    const src = await readFile(resolve(jsDir, name), 'utf8');
+    src.split('\n').forEach((line, i) => {
+      if (/audio/i.test(line)) offenders.push(`${name}:${i + 1} ${line.trim()}`);
+    });
+  }
+  assert.deepEqual(offenders, [],
+    'a js/ module outside shell.js references audio by name — reword it (D-N09: the sim holds zero audio references, comments included)');
+
+  // 3. Containment: exactly ONE js/ file imports './audio.js', decided with
+  //    the same specifier-regex loop (not a substring match).
+  const importers = [];
+  for (const name of (await readdir(jsDir)).sort()) {
+    const file = resolve(jsDir, name);
+    const src = await readFile(file, 'utf8');
+    for (const m of src.matchAll(SPECIFIER_RE)) {
+      if (m[1].startsWith('.') && resolve(dirname(file), m[1]) === resolve(jsDir, 'audio.js')) {
+        importers.push(name);
+      }
+    }
+  }
+  assert.deepEqual([...new Set(importers)], ['shell.js'],
+    "D-N07's one-importer containment: exactly js/shell.js may import './audio.js'");
+});
