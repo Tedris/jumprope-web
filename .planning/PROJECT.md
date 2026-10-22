@@ -22,10 +22,12 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 - ✓ PS1-style 3D presentation: Three.js (via CDN) rendering the simulation state at low internal resolution with vertex snapping, flat shading, and dithering — Phase 2 (`js/render3d.js`)
 - ✓ Original low-poly character (skipping figure) and a small stylized stage — not a Scarlet lookalike — Phase 2 (`js/render3d.js`)
 - ✓ Card catalogue: expand the upgrade set from 4 effect multipliers into a real catalogue with rarity, stacking rules, and clearer card identity — Phase 3 (`js/upgrades.js`, 8 cards / 5 roles, caps + offer-count escalation, headless-sim balance gate)
+- ✓ Feel layer: forgiving input buffer on the phase clock, near-miss callouts, significance-scaled juice (hitstop/shake/particles) — Phase 4 (`js/game.js`, `js/shell.js`, `js/render3d.js`)
+- ✓ SFX via WebAudio: five procedural voices, gesture-lifecycle, master bus, persisted mute/volume, no beat-lock (rope stays free-running) — Phase 4 (`js/audio.js`)
 
 ### Active
 
-- [ ] SFX and a looping vibe track via WebAudio (no beat-lock; rope stays free-running)
+- [ ] Looping vibe track file at `audio/track.ogg` — mechanism shipped and test-pinned in Phase 4; content deferred to backlog Phase 999.1 during Phase 4 UAT
 
 ### Out of Scope
 
@@ -81,4 +83,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-17 after Phase 3*
+*Last updated: 2026-10-22 after Phase 4*

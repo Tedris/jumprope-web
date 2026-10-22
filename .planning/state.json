@@ -1,0 +1,38 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Render-Shell Foundation",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "PS1 Presentation & Scene",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Card Catalogue Realness",
+      "status": "complete"
+    },
+    {
+      "number": "4",
+      "name": "Feel & Audio",
+      "status": "complete"
+    },
+    {
+      "number": "5",
+      "name": "Accessibility & Polish",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step (plan phase 5)",
+    "reason": "Phase 5 of 5 — needs a plan"
+  },
+  "updated_at": "2026-10-22T15:10:23.287Z"
+}

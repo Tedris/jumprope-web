@@ -30,16 +30,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Feel (FEEL)
 
-- [ ] **FEEL-01**: A slightly late/early press near the timing moment is forgiven (~0.1 s input buffer on the phase clock)
-- [ ] **FEEL-02**: Skips, near-misses, and trips produce juice scaled by significance (hitstop, shake, particles)
-- [ ] **FEEL-03**: Near-misses register as a distinct event with callout and streak feedback
+- [x] **FEEL-01**: A slightly late/early press near the timing moment is forgiven (~0.1 s input buffer on the phase clock)
+- [x] **FEEL-02**: Skips, near-misses, and trips produce juice scaled by significance (hitstop, shake, particles)
+- [x] **FEEL-03**: Near-misses register as a distinct event with callout and streak feedback
 
 ### Audio (AUD)
 
-- [ ] **AUD-01**: Player hears distinct SFX for jump, skip, near-miss, trip, card-pick
-- [ ] **AUD-02**: Player hears a looping vibe track; the rope never locks to it
-- [ ] **AUD-03**: Audio "just works" — context resumes on first press, no silent broken state
-- [ ] **AUD-04**: Player can mute and set volume, persisted across sessions
+- [x] **AUD-01**: Player hears distinct SFX for jump, skip, near-miss, trip, card-pick
+- [x] **AUD-02**: Player hears a looping vibe track; the rope never locks to it
+- [x] **AUD-03**: Audio "just works" — context resumes on first press, no silent broken state
+- [x] **AUD-04**: Player can mute and set volume, persisted across sessions
 
 ### Shell (UI)
 
@@ -91,13 +91,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CARD-05 | Phase 3 | Complete |
 | CARD-06 | Phase 3 | Complete |
 | CARD-07 | Phase 3 | Complete |
-| FEEL-01 | Phase 4 | Pending |
-| FEEL-02 | Phase 4 | Pending |
-| FEEL-03 | Phase 4 | Pending |
-| AUD-01 | Phase 4 | Pending |
-| AUD-02 | Phase 4 | Pending |
-| AUD-03 | Phase 4 | Pending |
-| AUD-04 | Phase 4 | Pending |
+| FEEL-01 | Phase 4 | Complete |
+| FEEL-02 | Phase 4 | Complete |
+| FEEL-03 | Phase 4 | Complete |
+| AUD-01 | Phase 4 | Complete |
+| AUD-02 | Phase 4 | Complete |
+| AUD-03 | Phase 4 | Complete |
+| AUD-04 | Phase 4 | Complete |
 | UI-01 | Phase 5 | Pending |
 | UI-02 | Phase 5 | Pending |
 | UI-03 | Phase 5 | Pending |

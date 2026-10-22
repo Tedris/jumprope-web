@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Render-Shell Foundation** - Split sim from shell, pin Three.js via importmap, render the playable game as placeholder 3D with one canonical clock (completed 2026-10-16)
 - [x] **Phase 2: PS1 Presentation & Scene** - Low-res dithered wobble look, original low-poly character, readable fixed-camera rope judgment
 - [x] **Phase 3: Card Catalogue Realness** - Real card choice, identity/rarity/stack caps/dead-pick filtering, 6–10+ card catalogue with owned-card HUD (completed 2026-10-17)
-- [ ] **Phase 4: Feel & Audio** - Input forgiveness, significance-scaled juice, near-miss callouts, full WebAudio SFX + loop with persisted mute/volume
+- [x] **Phase 4: Feel & Audio** - Input forgiveness, significance-scaled juice, near-miss callouts, full WebAudio SFX + loop with persisted mute/volume (completed 2026-10-22)
 - [ ] **Phase 5: Accessibility & Polish** - Pause/hidden-tab handling, reduced motion, resize-legible low-res UI
 
 ## Phase Details
@@ -139,7 +139,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Render-Shell Foundation | 3/3 | Complete    | 2026-10-16 |
 | 2. PS1 Presentation & Scene | 3/3 | Complete    | 2026-10-17 |
 | 3. Card Catalogue Realness | 3/3 | Complete    | 2026-10-17 |
-| 4. Feel & Audio | 4/4 | In Progress | - |
+| 4. Feel & Audio | 4/4 | Complete    | 2026-10-22 |
 | 5. Accessibility & Polish | 0/? | Not started | - |
 
 ## Backlog
