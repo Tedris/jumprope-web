@@ -111,6 +111,13 @@ async function bootPolishShell() {
   };
   const views = [];
   globalThis.__shellTestViews = views;
+  // UI-02 (D-06): stubbed MediaQueryList with a test-visible emit hook
+  // (RESEARCH harness shape) — mq.matches = v; mq.listeners.forEach(...)
+  const mq = {
+    matches: false,
+    listeners: [],
+    addEventListener(type, fn) { if (type === 'change') this.listeners.push(fn); },
+  };
   // Wrapper-visible call log: every gesture()/suspend()/handleEvent() the
   // shell routes through the audio seam, plus the live ctx stubs.
   const log = { voices: [], suspends: 0, gestures: 0 };
@@ -133,7 +140,12 @@ async function bootPolishShell() {
   };
   globalThis.document = documentStub;
   globalThis.window = {
-    addEventListener: (type, fn) => { handlers.window[type] = fn; }
+    addEventListener: (type, fn) => { handlers.window[type] = fn; },
+    // UI-02: the reduced-motion query resolves to the live mq stub; every
+    // other query is a dead false/false pair.
+    matchMedia: q => (q === '(prefers-reduced-motion: reduce)'
+      ? mq
+      : { matches: false, addEventListener() {} }),
   };
   globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
   Object.defineProperty(globalThis, 'localStorage', {
@@ -199,7 +211,7 @@ async function bootPolishShell() {
     }
     console.error = saved.consoleError;
   };
-  return { frames, handlers, hud, views, log, contexts, document: documentStub, map, restore };
+  return { frames, handlers, hud, views, log, contexts, mq, document: documentStub, map, restore };
 }
 
 // ---------- pumping helpers (pickflow / bootAudioShell idiom) ----------
@@ -219,6 +231,13 @@ function release(env) {
 
 function keydown(env, code) {
   env.handlers.window.keydown({ code, repeat: false, preventDefault() {} });
+}
+
+// UI-02 (D-06): fire a live MediaQueryList change — the harness shape from
+// RESEARCH Pattern 2's stub block.
+function emitMq(env, value) {
+  env.mq.matches = value;
+  env.mq.listeners.forEach(fn => fn({ matches: value }));
 }
 
 // Start a running run: the first Space starts the run AND constructs the
@@ -470,6 +489,48 @@ test('hidden-on-idle no-ops; tab-return while pausedByVis auto-resumes through t
     assert.equal(env.contexts[0].state, 'running', 'audio recovered on return');
     tick(env, st);
     assert.ok(env.views.at(-1).rope.phase > START_PHASE, 'stepping resumed');
+  } finally {
+    env.restore();
+  }
+});
+
+// ---------- UI-02 legs ----------
+
+test('the boot view payload carries reducedMotion false and a change subscription exists (D-06)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    const view = env.views.at(-1);
+    assert.ok('reducedMotion' in view, 'the one-way view payload carries the reducedMotion key');
+    assert.strictEqual(view.reducedMotion, false, 'the boot read of the false query is false');
+    assert.ok(env.mq.listeners.length >= 1,
+      'the shell subscribed to the MediaQueryList change event (addEventListener)');
+  } finally {
+    env.restore();
+  }
+});
+
+test('a live matchMedia change flips the view payload both ways, next frame, no restart (D-06)', async () => {
+  const env = await bootPolishShell();
+  try {
+    const st = { t: performance.now() };
+    startRunning(env, st);
+    assert.strictEqual(env.views.at(-1).reducedMotion, false, 'boot state: full motion');
+
+    emitMq(env, true);
+    tick(env, st);
+    assert.strictEqual(env.views.at(-1).reducedMotion, true,
+      'the very next pumped frame carries the flipped preference (D-06 live on)');
+
+    emitMq(env, false);
+    tick(env, st);
+    assert.strictEqual(env.views.at(-1).reducedMotion, false,
+      'flipping back takes effect on the very next frame too (D-06 live off)');
+
+    // The toggle is a pure view flag: the run kept stepping throughout.
+    assert.strictEqual(env.views.at(-1).run.status, 'running', 'no pause/restart on the toggle');
+    assert.ok(env.log.suspends === 0, 'reduced motion never suspends audio');
   } finally {
     env.restore();
   }
