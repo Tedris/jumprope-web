@@ -126,7 +126,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The low-res UI stays legible at any window size (resize/letterbox handling)
   4. No stuck-hold state after blur or `pointercancel` — input reducer hardening ported into the new shell
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans executed
 **Wave 1**
 - [x] 05-01-PLAN.md — Tracer: manual + tab-hidden pause with audio suspend and resumeRun lead-in re-entry (UI-01)
 
@@ -140,7 +140,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 05-04-PLAN.md — release-everything input-loss hardening + phase integration gate (criterion 4)
 
 **Wave 5** *(gap closure — verification CR-01)*
-- [ ] 05-05-PLAN.md — close CR-01 visible-branch `!paused` gesture guard + WR-01 hidden-branch release routing (UI-01)
+- [x] 05-05-PLAN.md — close CR-01 visible-branch `!paused` gesture guard + WR-01 hidden-branch release routing (UI-01)
 
 **UI hint**: yes
 
@@ -155,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. PS1 Presentation & Scene | 3/3 | Complete    | 2026-10-17 |
 | 3. Card Catalogue Realness | 3/3 | Complete    | 2026-10-17 |
 | 4. Feel & Audio | 4/4 | Complete    | 2026-10-22 |
-| 5. Accessibility & Polish | 4/4 | In Progress | - |
+| 5. Accessibility & Polish | 5/5 | In Progress | - |
 
 ## Backlog
 
