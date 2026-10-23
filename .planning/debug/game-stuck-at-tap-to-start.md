@@ -3,6 +3,10 @@ status: diagnosed
 trigger: "The game just says tap to start and tapping does not appear to do anything"
 created: 2026-10-15T00:00:00Z
 updated: 2026-10-15T21:20:00Z
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-10-22
+  status: diagnosed
 ---
 
 ## Current Focus

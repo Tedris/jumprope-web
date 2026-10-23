@@ -7,6 +7,9 @@ files:
   - js/render3d.js:8-10
   - js/render3d.js:35-44
   - js/rope.js:14-16
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-10-22
 ---
 
 ## Problem

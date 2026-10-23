@@ -17,18 +17,19 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 - ✓ Fixed-timestep pure simulation core, testable in Node — existing (`js/game.js`, `tests/`)
 - ✓ Pick-two upgrade offers every 10 skips with effect multipliers — existing (`js/upgrades.js`)
 - ✓ Run state machine (idle → running → choose → over) with best-score persistence — existing (`js/game.js`)
-- ✓ Draw-layer replacement: Canvas 2D shell swapped for a WebGL shell that reads the same immutable simulation state each frame — Phase 1 (`js/shell.js`, `js/render3d.js`)
-- ✓ Simulation core preserved: pure functions, injectable randomness, Node-testable — no gameplay logic inside the render layer — Phase 1 (ARCH-01/02, boundary test in `tests/boundary.test.js`)
-- ✓ PS1-style 3D presentation: Three.js (via CDN) rendering the simulation state at low internal resolution with vertex snapping, flat shading, and dithering — Phase 2 (`js/render3d.js`)
-- ✓ Original low-poly character (skipping figure) and a small stylized stage — not a Scarlet lookalike — Phase 2 (`js/render3d.js`)
-- ✓ Card catalogue: expand the upgrade set from 4 effect multipliers into a real catalogue with rarity, stacking rules, and clearer card identity — Phase 3 (`js/upgrades.js`, 8 cards / 5 roles, caps + offer-count escalation, headless-sim balance gate)
-- ✓ Feel layer: forgiving input buffer on the phase clock, near-miss callouts, significance-scaled juice (hitstop/shake/particles) — Phase 4 (`js/game.js`, `js/shell.js`, `js/render3d.js`)
-- ✓ SFX via WebAudio: five procedural voices, gesture-lifecycle, master bus, persisted mute/volume, no beat-lock (rope stays free-running) — Phase 4 (`js/audio.js`)
-- ✓ Accessibility & polish: pause/hidden-tab state+audio handling (P key, visibilitychange/blur/focus guards), OS reduced-motion support (wobble/shake dampened, judgment unchanged), aspect-correct letterbox resize keeping the low-res UI legible — Phase 5 (`js/shell.js`, `js/render3d.js`, `css/style.css`)
+- ✓ Draw-layer replacement: Canvas 2D shell swapped for a WebGL shell that reads the same immutable simulation state each frame — v1.0 Phase 1 (`js/shell.js`, `js/render3d.js`)
+- ✓ Simulation core preserved: pure functions, injectable randomness, Node-testable — no gameplay logic inside the render layer — v1.0 Phase 1 (ARCH-01/02, boundary test in `tests/boundary.test.js`)
+- ✓ PS1-style 3D presentation: Three.js (via CDN) rendering the simulation state at low internal resolution with vertex snapping, flat shading, and dithering — v1.0 Phase 2 (PRES-01, `js/render3d.js`)
+- ✓ Original low-poly character (skipping figure) and a small stylized stage — not a Scarlet lookalike — v1.0 Phase 2 (PRES-02/03, `js/render3d.js`)
+- ✓ Card catalogue: 8 original cards / 5 roles with rarity, stacking caps, dead-pick filtering, owned-card HUD, headless-sim balance gate — v1.0 Phase 3 (CARD-01..07, `js/upgrades.js`)
+- ✓ Feel layer: forgiving input buffer on the phase clock, near-miss callouts, significance-scaled juice (hitstop/shake/particles) — v1.0 Phase 4 (FEEL-01..03, `js/game.js`, `js/shell.js`, `js/render3d.js`)
+- ✓ SFX via WebAudio: five procedural voices, gesture-lifecycle, master bus, persisted mute/volume, no beat-lock (rope stays free-running) — v1.0 Phase 4 (AUD-01..04, `js/audio.js`)
+- ✓ Accessibility & polish: pause/hidden-tab state+audio handling (P key, visibilitychange/blur/focus guards), OS reduced-motion support (wobble/shake dampened, judgment unchanged), aspect-correct letterbox resize keeping the low-res UI legible — v1.0 Phase 5 (UI-01..03, `js/shell.js`, `js/render3d.js`, `css/style.css`)
 
 ### Active
 
 - [ ] Looping vibe track file at `audio/track.ogg` — mechanism shipped and test-pinned in Phase 4; content deferred to backlog Phase 999.1 during Phase 4 UAT
+- [ ] v2 candidates surfaced during v1.0: rules-beyond-multipliers cards (CARD-08, spike-gated), escalating offer pacing (CARD-09), between-run meta progression (META-01) — see archived REQUIREMENTS v2 list
 
 ### Out of Scope
 
@@ -40,10 +41,11 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 
 ## Context
 
-- Brownfield: working prototype (~20 commits) with zero npm dependencies, pure functional core / imperative shell architecture (see `.planning/codebase/`).
-- Reference game: *Scarlet Skips* — 1-button jump-rope roguelike, Steam, Sept 2026; research pulled from Steam/wiki/aggregator pages.
-- The repo's zero-dependency rule is deliberately broken once: Three.js loaded via CDN (`import` from a pinned URL or vendored file). Simulation core must stay dependency-free.
-- Known architecture notes from the codebase map: dual state-init paths in `js/game.js` (`phase: 0.33` duplication) and inline `Math.random` in `tickRun` are worth fixing when the shell is rewritten.
+- **Shipped v1.0** (2026-10-22): 5 phases, 18 plans, 42 tasks; ~5,656 LOC across `js/` + `tests/` (ES modules, zero npm deps besides CDN-pinned `three@0.186.1`). Archive: `.planning/milestones/v1.0-ROADMAP.md`.
+- Architecture today: pure sim core (`js/game.js`, `js/rope.js`, `js/player.js`, `js/upgrades.js`) + impure shell (`js/shell.js`) + sole-`three` renderer (`js/render3d.js`) + `js/audio.js`; boundary enforced by `tests/boundary.test.js` import-graph walk.
+- Test suite: 42+ Node tests, deterministic (seeded rng injection), incl. 1000-tick headless-sim balance gate.
+- Known debt / open items: Phase 5 WR-02 (reduced-motion idle pose still animates arms/scarf off wall-clock `beat`, `js/render3d.js:387` — one-line fix); backlog Phase 999.1 (music track file `audio/track.ogg`); `audio/track.ogg` mechanism shipped, content missing.
+- Reference game: *Scarlet Skips* — demake of the spirit, original character/cards/stage.
 
 ## Constraints
 
@@ -56,11 +58,11 @@ One button, one rope, one perfect rhythm loop — the jump-timing feel must be j
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Demake the *spirit*, not the letter | Own the design; avoid cloning card lists/story | — Pending |
-| Low-end 3D (PS1-style) over 2D | Player pull toward PS1 demake aesthetic; low-poly look is cheap to render | — Pending |
+| Demake the *spirit*, not the letter | Own the design; avoid cloning card lists/story | ✓ Working — original character/stage/8-card catalogue shipped (v1.0) |
+| Low-end 3D (PS1-style) over 2D | Player pull toward PS1 demake aesthetic; low-poly look is cheap to render | ✓ Working — signed-off PS1 pipeline shipped (Phase 2) |
 | Three.js via CDN | Pragmatic WebGL; breaks zero-dep rule once, contained to the render shell | ✓ Working — importmap-pinned `three@0.186.1`, full run playable through WebGL shell (Phase 1) |
-| Deeper in-run cards, no meta progression | Roguelike depth without long-term balance burden this cycle | — Pending |
-| SFX + music without beat-lock | Keep rope phase as free canonical clock; audio follows gameplay | — Pending |
+| Deeper in-run cards, no meta progression | Roguelike depth without long-term balance burden this cycle | ✓ Working — 8-card catalogue proven balanced; META-01 deferred to v2 |
+| SFX + music without beat-lock | Keep rope phase as free canonical clock; audio follows gameplay | ✓ Working — procedural SFX + free-running rope; track file deferred (Phase 999.1) |
 | Original character/stage | Avoid Scarlet lookalike; demake of the idea, not the IP | ✓ Working — low-poly skipper + stage shipped (Phase 2) |
 | `pickOffers` canonical; `pickTwo` shim | Keep frozen distinct-pair test green while the offer generator grows past pairs | ✓ Working (Phase 3) |
 | Offer size 3 beyond skip 30, 2 before | Escalating variety late-run without diluting the first offer's read | ✓ Working (Phase 3) |
@@ -87,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-22 after Phase 5*
+*Last updated: 2026-10-22 after v1.0 milestone*
