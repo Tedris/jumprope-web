@@ -53,11 +53,12 @@ The rope's normalized 0–1 phase is the canonical clock driving scoring, geomet
 
 ## Workflow: BMAD
 
-Project management runs on [BMAD](https://bmadcode.com/) (installed under `_bmad/`, skills under `.agents/skills/`, output under `_bmad-output/`).
+Project management runs on [BMAD](https://bmadcode.com/) (installed under `_bmad/`, skills under `.agents/skills/`, output under `_bmad-output/`). Modules: **core**, **bmm** (BMad Method), and **gds** (Game Dev Studio).
 
 - **Planning artifacts**: `_bmad-output/planning-artifacts/` — `prd.md` (product truth, v1.0 state, v2 candidates) and `architecture.md` (technical spine)
-- **Agents**: `bmad-agent-analyst` (Mary), `bmad-agent-pm` (John), `bmad-agent-architect` (Winston), `bmad-agent-dev` (Amelia), `bmad-agent-ux-designer` (Sally); `bmad-help` recommends the right next step
-- **Typical cycle**: `bmad-prd` → `bmad-create-epics-and-stories` → `bmad-sprint-planning` → `bmad-build` per story → `bmad-retrospective`
+- **Agents (bmm)**: `bmad-agent-analyst` (Mary), `bmad-agent-pm` (John), `bmad-agent-architect` (Winston), `bmad-agent-dev` (Amelia), `bmad-agent-ux-designer` (Sally); `bmad-help` recommends the right next step
+- **Agents (gds)**: `gds-agent-game-designer` (Samus), `gds-agent-game-architect` (Cloud), `gds-agent-game-dev` (Link), `gds-agent-game-solo-dev` (Indie), `gds-agent-tech-writer` (Paige) — plus game workflows: `gds-create-game-brief`, `gds-gdd`, `gds-ux`, `gds-create-epics-and-stories`, `gds-sprint-planning`, `gds-dev-story`, `gds-playtest-plan`, `gds-retrospective`
+- **Typical cycle**: `bmad-prd` → `gds-gdd` (game design) → `gds-create-epics-and-stories` → `gds-sprint-planning` → `gds-dev-story` per story → `gds-retrospective`
 - **Legacy GSD artifacts**: archived read-only under `docs/archive/gsd/` — do not extend; consult for history (v1.0 phase detail, retrospectives, decisions)
 
 ## Housekeeping
