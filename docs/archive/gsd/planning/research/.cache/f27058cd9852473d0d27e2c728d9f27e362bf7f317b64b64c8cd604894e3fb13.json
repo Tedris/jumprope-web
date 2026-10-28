@@ -1,0 +1,1 @@
+{"content":"Determinism in node:test achieved by injecting seeded stub rng functions, already the established pattern in this repo (tests/startrun.test.js, tests/game.test.js stub rng = () => 0.5).","source":"web","provider":"websearch","confidence":"HIGH","fetched_at":"2026-10-17T04:33:12.383Z","ttl":86400000,"kind":"web"}

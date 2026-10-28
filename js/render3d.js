@@ -4,7 +4,8 @@ import { lerpPhase } from './interpolate.js';
 const WORLD_PER_PIXEL = 0.01;
 
 // Canonical PS1 tuning values — copied verbatim from the signed-off look
-// spike (".planning/spikes/ps1-look.html", "## Look Decisions"). Every knob
+// spike ("docs/archive/gsd/planning/spikes/ps1-look.html",
+// "## Look Decisions"). Every knob
 // below was approved as-rendered at the 02-01 checkpoint; change only with
 // a fresh sign-off.
 const INTERNAL_H = 240;        // D-01: locked internal rows; width follows the buffer aspect
