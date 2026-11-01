@@ -1,0 +1,96 @@
+# generated: 2026-10-28
+# last_updated: 2026-10-29
+# project: jumprope-web
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-10-28
+last_updated: 2026-10-29
+project: jumprope-web
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Ropes as Health
+  epic-1: in-progress
+  1-1-multi-rope-simulation-core: review
+  1-2-trip-resolution-lose-the-fastest-rope-ride-the-i-frames: backlog
+  1-3-rope-count-on-the-hud: backlog
+  1-4-near-miss-streak-under-multi-rope: backlog
+  1-5-input-hygiene-v1-parity-proof: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Altitude & the Win
+  epic-2: backlog
+  2-1-score-is-altitude-one-number-everywhere: backlog
+  2-2-jump-peak-vs-ceiling-and-the-summit-win: backlog
+  2-3-the-ceiling-marker-telegraph-the-moon-jump: backlog
+  2-4-win-loss-presentation-with-true-permadeath: backlog
+  2-5-ascent-economy-balance-harness: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Rule-Changing Cards
+  epic-3: backlog
+  3-1-four-new-cards-in-the-catalogue: backlog
+  3-2-spare-rope-launch-heels-the-simple-effects: backlog
+  3-3-steel-cord-charges-that-survive-one-trip: backlog
+  3-4-second-wind-the-mid-air-jump: backlog
+  3-5-picker-keys-the-state-aware-owned-card-hud: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: The Ascent Ladder
+  epic-4: backlog
+  4-1-the-area-ladder-five-tiers-one-way-up: backlog
+  4-2-area-pressure-rope-period-per-tier: backlog
+  4-3-area-vistas-palette-fog-horizon: backlog
+  4-4-the-ceiling-break-moment: backlog
+  4-5-summit-approach-one-way-guarantees: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Feel & Fidelity
+  epic-5: backlog
+  5-1-ascent-stinger-win-fanfare: backlog
+  5-2-rope-loss-thud-last-rope-tension: backlog
+  5-3-i-frame-trip-juice: backlog
+  5-4-reduced-motion-for-new-states-the-wr-02-fix: backlog
+  5-5-audio-lifecycle-regression-sweep: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Balance & Prove
+  epic-6: backlog
+  6-1-policy-bot-summit-gate-the-balance-master-dial: backlog
+  6-2-real-tunables-retire-the-placeholders: backlog
+  6-3-offer-pacing-verdict-card-09: backlog
+  6-4-docs-provenance-pass: backlog
+  epic-6-retrospective: optional

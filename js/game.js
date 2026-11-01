@@ -1,4 +1,4 @@
-import { updateRope, atFeet } from './rope.js';
+import { updateRope, atFeetOffset } from './rope.js';
 import { jump, createPlayer, updatePlayer, clearsRope } from './player.js';
 import { CARDS, freshEffects, pickOffers, shouldOfferUpgrade, offerCount } from './upgrades.js';
 
@@ -15,6 +15,15 @@ export const BUFFER_SEC = 0.1;
 // FEEL-03 (D-N03): near-miss tightness as a fraction of the minHeight
 // threshold — provisional seed, UAT re-tunes the number only.
 export const NEAR_MARGIN = 0.5;
+
+// FR1: valid rope counts are 1–5; anything else is clamped as data at read.
+export const MIN_ROPES = 1;
+export const MAX_ROPES = 5;
+
+function clampRopes(count) {
+  const n = Number.isFinite(count) ? Math.trunc(count) : MIN_ROPES;
+  return Math.min(MAX_ROPES, Math.max(MIN_ROPES, n));
+}
 
 // The one canonical lead-in (ARCH-02): both cold start and post-pick resume
 // compose this exact pair — never duplicate the constants.
@@ -34,7 +43,7 @@ export function resumeRun(run) {
 }
 
 export function createRun() {
-  return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0 };
+  return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1 };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
@@ -51,10 +60,13 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   let streak = run.streak ?? 0;
   const events = [];
   if (player.grounded && !nextPlayer.grounded) events.push('jump');
-  const wasFeet = atFeet(rope);
-  const isFeet = atFeet(nextRope);
-  if (!wasFeet && isFeet) {
-    const minHeight = 18 / run.effects.windowMul;
+  const minHeight = 18 / run.effects.windowMul;
+  // FR1: N ropes on the one canonical clock — rope k's feet window is the
+  // phase clock offset by k/N. With ropes = 1 (or absent, hence the ?? 1
+  // fallback for hand-built run records) this is exactly the v1 single edge.
+  const ropeCount = clampRopes(run.ropes ?? MIN_ROPES);
+  for (let k = 0; k < ropeCount; k++) {
+    if (atFeetOffset(rope.phase, k, ropeCount) || !atFeetOffset(nextRope.phase, k, ropeCount)) continue;
     if (clearsRope(nextPlayer.y, minHeight)) {
       score += run.effects.scoreMul;
       skips += 1;
@@ -63,10 +75,13 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // threshold is a near-miss — a full skip with a callout event on top.
       if (nextPlayer.y < minHeight * (1 + NEAR_MARGIN)) {
         events.push('nearMiss');
-        streak = (run.streak ?? 0) + 1;
+        streak += 1;
       } else {
         streak = 0;
       }
+      // Checked per pass increment so a multi-pass tick can never step over a
+      // 10th-skip boundary; the offer stops crossing resolution for this tick
+      // (tickRun never runs in choose).
       if (shouldOfferUpgrade(skips)) {
         const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng);
         // Pitfall 6: an exhausted pool must never freeze the run in choose.
@@ -74,6 +89,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
           status = 'choose';
           offer = offers;
           events.push('offer');
+          break;
         }
       }
     } else if (buffer > 0) {
@@ -83,13 +99,17 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       score += run.effects.scoreMul;
       skips += 1;
       buffer = 0;
-      streak = (run.streak ?? 0) + 1;
+      streak += 1;
       events.push('skip', 'nearMiss');
     } else {
+      // Story 1.2 replaces this branch with rope-as-HP trip resolution
+      // (strip fastest rope, i-frames). Until then a failed crossing ends
+      // the run for any rope count, exactly as v1.
       status = 'over';
       tripped = true;
       streak = 0;
       events.push('trip');
+      break;
     }
   }
   return {
