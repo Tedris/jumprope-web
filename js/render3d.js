@@ -19,6 +19,18 @@ const PALE = 0xf4f0d8;         // D-09: rope pale — unlit and fog-exempt so it
 const ROPE_RADIUS = 0.75;      // D-10: rope reach clears head (≈1.35) and floor from the hip-high hands axis
 const HANDLE_HEIGHT = 0.7;     // D-08: hands axis at hip height — the rope sweeps about this X axis
 const HANDLE_SPAN = 0.5;       // hands' |x|: rope ends converge here; shoulders can reach it
+// Chest-jiggle gag (spec-chest-jiggle-physics): a cosmetic wink, not anatomy —
+// one kill switch plus a damped spring coupled to vy deltas. Amplitude is
+// sized against the D-03 snap quantum at the character plane (≈ 0.055 world
+// units): peaks land ≈ 2–3 snap blocks so the wobble reads as chunky PS1
+// hops instead of sub-quantum stillness; a hard clamp keeps vy teleports
+// (leadIn swaps on resume/restart/pick) bounded.
+const CHEST_JIGGLE = true;       // ON/OFF switch for the chest-jiggle gag — false: no meshes, no spring
+const JIGGLE_COUPLING = 0.0025;  // vy delta (px/s) -> spring velocity kick (world units/s)
+const JIGGLE_STIFF = 90;         // spring stiffness: ≈ 1.5 Hz wobble
+const JIGGLE_DAMP = 4;           // damping ratio ≈ 0.2: 2–3 visible hops, settles ≈ 1 s
+const JIGGLE_CLAMP = 0.15;       // max |offset| world units (~3 snap blocks, half the torso height)
+const CHEST_BASE_Y = 0.28;       // chestGroup rest height on torsoGroup (torso front face: local z ≈ 0.12)
 // Live look-tuning during UAT: append ?light=&fogNear=&fogFar= to override.
 // Browser-only read; Node/test import path always takes the shipped defaults.
 const LOOK_KNOBS = (() => {
@@ -212,6 +224,25 @@ export function createScene(canvas) {
   armRMesh.position.set(0, -0.16, 0);
   armR.add(armRMesh);
 
+  // Chest-jiggle gag: two deliberately boxy props on the chest front (D-13
+  // chibi boxes, rose like the torso), parented as a pair so ONE shared
+  // spring writes ONE position. Hidden entirely when CHEST_JIGGLE is off.
+  // Appended LAST on torsoGroup: the frozen render3d.test.js pose probes
+  // read children[2]/[3] as armL/armR — the chest must not shift them.
+  const chestGroup = new THREE.Group();
+  chestGroup.position.set(0, CHEST_BASE_Y, 0);
+  chestGroup.visible = CHEST_JIGGLE;
+  torsoGroup.add(chestGroup);
+  if (CHEST_JIGGLE) {
+    const chestGeo = new THREE.BoxGeometry(0.11, 0.11, 0.11);
+    const chestL = new THREE.Mesh(chestGeo, roseMat);
+    chestL.position.set(-0.09, 0, 0.14);                // centered just in front of the torso face
+    chestGroup.add(chestL);
+    const chestR = new THREE.Mesh(chestGeo, roseMat);
+    chestR.position.set(0.09, 0, 0.14);
+    chestGroup.add(chestR);
+  }
+
   const legL = new THREE.Group();
   legL.position.set(-0.1, 0.35, 0);                     // hips
   rig.add(legL);
@@ -341,6 +372,14 @@ export function createScene(canvas) {
   let spawnCount = 0;
   let particlesLive = false;
 
+  // Chest-jiggle spring (the sanctioned stateful exception to the juice
+  // closed-form rule): offset + velocity, driven by vy deltas on the same
+  // view.now clock. UI-02 parity: reduced motion pins the still endpoint 0.
+  let jiggleOff = 0;
+  let jiggleVel = 0;
+  let lastVy = 0;
+  let jigglePrevNow = 0;
+
   function render(view) {
     // UI-02 (D-06): view.reducedMotion is consumed exactly like view.now —
     // one-way data, no listener and no window reference here (ARCH fence).
@@ -423,6 +462,33 @@ export function createScene(canvas) {
 
     for (let k = 0; k < scarf.length; k++) {
       scarf[k].rotation.x = Math.sin(beat - k * 0.4) * 0.5;   // scarf trails a beat behind (D-15)
+    }
+
+    // Chest-jiggle gag: damped spring integrated OUTSIDE the status branches so
+    // idle/trip decay to rest too. vy only changes when sim steps run, so
+    // constant-vy free-flight adds no new force — existing oscillation decays.
+    if (CHEST_JIGGLE) {
+      const vy = Number.isFinite(view.player.vy) ? view.player.vy : 0;
+      const jiggleNow = view.now ?? 0;
+      const dt = jigglePrevNow === 0 ? 0
+        : Math.min(0.05, Math.max(0.001, (jiggleNow - jigglePrevNow) / 1000));   // first frame skips; tab-refocus can't explode
+      jigglePrevNow = jiggleNow;
+      if (reduced) {
+        jiggleOff = 0;
+        jiggleVel = 0;
+      } else if (dt > 0) {
+        // Inertial lag: kick opposite the vy delta, so a launch (vy steps up)
+        // reads as a downward lag; gravity's steady vy drop gives hang-time lift.
+        jiggleVel += -(vy - lastVy) * JIGGLE_COUPLING - (JIGGLE_STIFF * jiggleOff + JIGGLE_DAMP * jiggleVel) * dt;
+        jiggleOff += jiggleVel * dt;
+        jiggleOff = Math.min(JIGGLE_CLAMP, Math.max(-JIGGLE_CLAMP, jiggleOff));   // leadIn vy teleports stay bounded
+        if (!Number.isFinite(jiggleOff) || !Number.isFinite(jiggleVel)) {
+          jiggleOff = 0;
+          jiggleVel = 0;
+        }
+      }
+      lastVy = vy;
+      chestGroup.position.y = CHEST_BASE_Y + jiggleOff;   // one vertical axis, never NaN
     }
 
     // Blob shadow (D-17, RESEARCH Pattern 6): continuous shrink + fade with jump height.
