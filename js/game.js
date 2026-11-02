@@ -21,7 +21,10 @@ export const MIN_ROPES = 1;
 export const MAX_ROPES = 5;
 
 function clampRopes(count) {
-  const n = Number.isFinite(count) ? Math.trunc(count) : MIN_ROPES;
+  // +Infinity is "very many ropes" -> the maximum; NaN/nullish/strings -> the
+  // minimum. (Number.isFinite is false for Infinity, so it needs its own arm.)
+  const n = Number.isFinite(count) ? Math.trunc(count)
+    : count === Infinity ? MAX_ROPES : MIN_ROPES;
   return Math.min(MAX_ROPES, Math.max(MIN_ROPES, n));
 }
 
@@ -79,9 +82,11 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       } else {
         streak = 0;
       }
-      // Checked per pass increment so a multi-pass tick can never step over a
-      // 10th-skip boundary; the offer stops crossing resolution for this tick
-      // (tickRun never runs in choose).
+      // Checked per cleared-pass increment so a multi-pass tick cannot step
+      // over a 10th-skip boundary on the scoring path; the offer stops
+      // crossing resolution for this tick (tickRun never runs in choose).
+      // Buffer-forgiven passes below are v1-frozen and skip this check — a
+      // forgiven 10th defers the offer to the next cleared crossing.
       if (shouldOfferUpgrade(skips)) {
         const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng);
         // Pitfall 6: an exhausted pool must never freeze the run in choose.

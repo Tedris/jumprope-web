@@ -4,7 +4,7 @@ baseline_commit: 6739d59459d3e1e2130e3da6de9add514ff79e24
 
 # Story 1.1: Multi-rope simulation core
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -44,6 +44,17 @@ so that added ropes mean more scored passes (and more risk) per revolution witho
   - [x] Full suite green: `node --test tests/` in well under 10 s (NFR4)
 - [x] Task 5: Boundary confirmation (AC: 3)
   - [x] `tests/boundary.test.js` passes unmodified (it's frozen) — do not touch it; the fence walks the graph derived from test imports, so the new test file automatically extends its coverage
+
+### Review Findings
+
+- [x] [Review][Patch] `clampRopes` sends `+Infinity` to the minimum, not the maximum — `Number.isFinite(Infinity)` is false, so `ropes: Infinity` yields 1 rope/rev; invalid-count legs also never pin `Infinity` (`js/game.js:22-26`)
+- [x] [Review][Patch] Comment overclaims the offer-boundary guarantee: `shouldOfferUpgrade` is checked only in the cleared-pass branch, but the comment asserts a 10th-skip boundary can never be stepped over per pass — a buffer-forgiven 10th skips it and defers the offer to skip 20 (`js/game.js:82-84`; behavior byte-identical to v1, see Defer)
+- [x] [Review][Patch] Task 3 promised a multi-crossing-per-tick test leg; `tests/multirope.test.js` has no window-disjointness invariant leg, no failed-crossing leg on a rope with k ≥ 1, and the per-pass formula leg (`3 * done.effects.scoreMul`) is vacuous when `scoreMul === 1`
+- [x] [Review][Defer] Buffer-forgiven pass skips the offer check entirely — forgiven 10th skip defers the offer to skip 20 (`js/game.js:95-103`) — deferred, pre-existing (byte-identical v1 branch; Story 1.2 rewrites this branch for rope-as-HP)
+- [x] [Review][Defer] Rising-edge crossing detection is blind when a tick's phase step exceeds the 0.1-wide window, or when a run resumes with a rope's window already active — at `ropes: 5`, the canonical `leadIn` phase 0.33 sits inside rope 1's window, granting rope 1 one non-lethal revolution — deferred, pre-existing pattern (v1 shared both); N ropes widen the exposure; relevant to Stories 1.2/1.5
+- [x] [Review][Defer] `atFeet` gained `% 1` semantics: out-of-domain phases (`phase ≥ 1` after a pathological `updateRope` wrap, or negative phase) now report window membership where v1 returned false — deferred, pre-existing class, unreachable at shell step sizes; normalize with `((x % 1) + 1) % 1` if ever revisited
+- [x] [Review][Defer] Offer cadence and `CLOSE! ×N` streak escalation run N× per revolution (first offer at ~1.85 revs at N=5) — deferred to Epic 6 balance pass (GDD §163-186 assigns offer-pacing rebalancing there)
+- [x] [Review][Defer] Clamp is at read only — `tickRun` returns the raw `ropes` value unchanged in the record (e.g. `6` stays `6`); any future direct reader (HUD, Story 1.3) must re-apply `clampRopes` — deferred, compliant with invalid-states-as-data; note for Story 1.3
 
 ## Dev Notes
 
@@ -135,3 +146,4 @@ Qwen3.8-Flash (ultrafast/qwen)
 ### Change Log
 
 - 2026-10-29: Story implemented — multi-rope derived-offset crossing on the one phase clock, `ropes` run field, clamped-as-data counts, 13 new tests, full suite green (143/143). Status → review.
+- 2026-11-01: Code review (3 adversarial layers) — 3 patch findings fixed (`clampRopes` ±Infinity arms, honest offer-boundary comment, +2 new legs and one strengthened assertion in `tests/multirope.test.js`, suite 145/145); 5 findings deferred to `deferred-work.md`. Status → done.

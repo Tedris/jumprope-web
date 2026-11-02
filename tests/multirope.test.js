@@ -5,6 +5,7 @@ import {
   MIN_ROPES, MAX_ROPES, START_PHASE, ROPE_PERIOD,
 } from '../js/game.js';
 import { jumpVelocity } from '../js/player.js';
+import { atFeetOffset } from '../js/rope.js';
 import { UPGRADES, freshEffects } from '../js/upgrades.js';
 
 // One synthetic revolution: rope period 1, dt 1/60, so 60 ticks sweep the
@@ -79,7 +80,10 @@ test('multi-rope passes score with the unchanged per-pass formula', () => {
   const run = applyUpgrade({ ...createRun(), ropes: 3 }, multi);
   const { run: done } = oneRevolution(run);
   assert.equal(done.skips, 3);
-  assert.equal(done.score, 3 * done.effects.scoreMul);
+  // Literal 6 = 3 passes x scoreMul 2 (multi adds +1); reading the multiplier
+  // back off the system under test would pass even if scoring ignored it.
+  assert.equal(done.effects.scoreMul, 2);
+  assert.equal(done.score, 6);
 });
 
 test('offer fires once per tick and stops resolving crossings', () => {
@@ -126,17 +130,54 @@ test('buffer forgives one failing crossing at any rope count, consumed at the cr
   }
 });
 
+test('windows are disjoint: at most one rope is at-feet for any phase, N = 1..5', () => {
+  // Pins the invariant the offer/trip `break` logic relies on: offsets k/N
+  // are >= 0.2 apart for N <= 5 while the feet window is 0.1 wide, so two
+  // rising edges can never land on one tick — Story 1.2 builds on this.
+  for (let n = MIN_ROPES; n <= MAX_ROPES; n++) {
+    for (let i = 0; i < 1000; i++) {
+      const phase = i / 1000;
+      let live = 0;
+      for (let k = 0; k < n; k++) if (atFeetOffset(phase, k, n)) live += 1;
+      assert.ok(live <= 1, `N=${n} phase ${phase}: ${live} windows live at once`);
+    }
+  }
+});
+
+test('a failing crossing on rope k >= 1 trips, and the buffer saves it, too', () => {
+  // N=2 rope 1's window is (phase + 0.5) mod 1 in [0.45, 0.55], i.e. phase
+  // in [0.95, 1) u [0, 0.05): the wrap-straddling rope must judge a grounded
+  // player exactly like rope 0 does.
+  const grounded = { y: 0, vy: 0, grounded: true, squash: 1, squashVel: 0 };
+  const over = tickRun({ ...createRun(), ropes: 2 }, { phase: 0.94, period: 1 }, grounded, DT);
+  assert.equal(over.tripped, true);
+  assert.equal(over.run.status, 'over');
+  assert.equal(over.events.at(-1), 'trip');
+
+  const saved = tickRun({ ...createRun(), ropes: 2 }, { phase: 0.94, period: 1 }, grounded, DT, undefined, true);
+  assert.equal(saved.tripped, false);
+  assert.equal(saved.run.status, 'running');
+  assert.equal(saved.run.skips, 1);
+  assert.equal(saved.run.buffer, 0);
+  assert.ok(saved.events.includes('skip') && saved.events.includes('nearMiss'));
+});
+
 test('out-of-range rope counts are clamped data, never a throw', () => {
   const grounded = { y: 40, vy: 0, grounded: false, squash: 1, squashVel: 0 };
-  for (const bad of [0, -3, 6, 99, NaN, undefined, null]) {
+  for (const bad of [0, -3, 6, 99, NaN, undefined, null, Infinity, -Infinity, '4']) {
     assert.doesNotThrow(() => tickRun({ ...createRun(), ropes: bad },
       { phase: 0.44, period: 1 }, grounded, DT), `ropes=${String(bad)} must not throw`);
   }
-  // 0/negative/nullish behave as the minimum; 6+ clamp to the maximum.
+  // 0/negative/nullish/non-numeric behave as the minimum; 6+ clamp to the
+  // maximum — +Infinity included ("very many ropes", the opposite arm from
+  // NaN's minimum default; a string is uninterpretably minimum, not "4").
   assert.equal(oneRevolution({ ...createRun(), ropes: 0 }).skipTicks.length, MIN_ROPES);
   assert.equal(oneRevolution({ ...createRun(), ropes: -2 }).skipTicks.length, MIN_ROPES);
   assert.equal(oneRevolution({ ...createRun(), ropes: 6 }).skipTicks.length, MAX_ROPES);
   assert.equal(oneRevolution({ ...createRun(), ropes: 12 }).skipTicks.length, MAX_ROPES);
+  assert.equal(oneRevolution({ ...createRun(), ropes: Infinity }).skipTicks.length, MAX_ROPES);
+  assert.equal(oneRevolution({ ...createRun(), ropes: -Infinity }).skipTicks.length, MIN_ROPES);
+  assert.equal(oneRevolution({ ...createRun(), ropes: '4' }).skipTicks.length, MIN_ROPES);
 });
 
 test('N=1 parity: explicit ropes:1 ≡ field-absent ≡ v1 for one scripted sequence', () => {
