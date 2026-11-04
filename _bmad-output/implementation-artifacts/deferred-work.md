@@ -7,3 +7,9 @@
 - **`atFeet`/`atFeetOffset` mod-1 domain change** — derived phase now uses `% 1`, so out-of-domain inputs (`phase ≥ 1` after a pathological `updateRope` wrap, or negative phase) report window membership where v1 returned false. Normalize with `((x % 1) + 1) % 1` if this code is ever revisited.
 - **Offer cadence + streak escalation scale with rope count** — first offer ≈1.85 revolutions at N=5; `CLOSE! ×N` callouts accumulate N× per revolution. Assigned to Epic 6 (balance pass) by GDD §163-186.
 - **`run.ropes` clamp is at-read only** — invalid values are never normalized into the record; Story 1.3's HUD must re-apply `clampRopes` rather than render the raw field.
+
+## Deferred from: code review of story 1-2-trip-resolution-lose-the-fastest-rope-ride-the-i-frames (2026-11-02)
+
+- **`ropeLost` event cue wiring has no explicit owner** (`js/audio.js` VOICES, `js/shell.js` JUICE_TIERS, renderer rope-count visuals) — a strip trip is currently audio-visually silent. The pieces are split across 1.3 (rope-count HUD), 5.2 (rope-loss thud), 5.3 (i-frame juice), but no story lists the event→cue wiring itself; claim it in whichever of 1.3/5.2 lands first.
+- **AGENTS.md frozen-test rule lacks the sanctioned re-contract exception** — Story 1.2 pre-authorized re-contracting two interim legs in `tests/multirope.test.js`, which AGENTS.md's "existing test files stay byte-identical" wording does not describe. Amend the Conventions block when convenient (or confirm the wording is deliberately absolute and interim-fence edits need a different home).
+

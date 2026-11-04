@@ -1,5 +1,5 @@
 # generated: 2026-10-28
-# last_updated: 2026-11-01
+# last_updated: 2026-11-02
 # project: jumprope-web
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-10-28
-last_updated: 2026-10-29
+last_updated: 2026-11-02
 project: jumprope-web
 project_key: NOKEY
 tracking_system: file-system
@@ -45,8 +45,8 @@ development_status:
   # Epic 1: Ropes as Health
   epic-1: in-progress
   1-1-multi-rope-simulation-core: done
-  1-2-trip-resolution-lose-the-fastest-rope-ride-the-i-frames: backlog
-  1-3-rope-count-on-the-hud: backlog
+  1-2-trip-resolution-lose-the-fastest-rope-ride-the-i-frames: done
+  1-3-rope-count-on-the-hud: review
   1-4-near-miss-streak-under-multi-rope: backlog
   1-5-input-hygiene-v1-parity-proof: backlog
   epic-1-retrospective: optional

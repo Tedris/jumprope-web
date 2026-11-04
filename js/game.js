@@ -46,7 +46,7 @@ export function resumeRun(run) {
 }
 
 export function createRun() {
-  return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1 };
+  return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, iFrames: 0 };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
@@ -61,6 +61,12 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   let buffer = Math.max(0, (run.buffer ?? 0) - dt * (run.effects.ropeMul ?? 1));
   if (press) buffer = BUFFER_SEC;
   let streak = run.streak ?? 0;
+  // FR3: i-frames are a crossing count, not a second clock (NFR8). NaN would
+  // survive Math.max, so non-numeric records behave as "no i-frames" (data).
+  // Capped like clampRopes: a legitimate count is at most MAX_ROPES - 1, and
+  // an unbounded float would decrement forever into permanent invulnerability.
+  let iframesLeft = Number.isFinite(run.iFrames) ? Math.min(MAX_ROPES, Math.max(0, run.iFrames)) : 0;
+  let strippedTo = null;
   const events = [];
   if (player.grounded && !nextPlayer.grounded) events.push('jump');
   const minHeight = 18 / run.effects.windowMul;
@@ -70,6 +76,13 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   const ropeCount = clampRopes(run.ropes ?? MIN_ROPES);
   for (let k = 0; k < ropeCount; k++) {
     if (atFeetOffset(rope.phase, k, ropeCount) || !atFeetOffset(nextRope.phase, k, ropeCount)) continue;
+    // FR3: during a blank every crossing is a harmless pass — a true blank on
+    // the clock: no score, no skips (so offers cannot fire mid-blank), no
+    // trip, no streak change, no buffer consumption.
+    if (iframesLeft > 0) {
+      iframesLeft -= 1;
+      continue;
+    }
     if (clearsRope(nextPlayer.y, minHeight)) {
       score += run.effects.scoreMul;
       skips += 1;
@@ -106,10 +119,27 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       buffer = 0;
       streak += 1;
       events.push('skip', 'nearMiss');
+    } else if (ropeCount > 1) {
+      // FR2: ropes are health — strip one rope and blank the clock. All ropes
+      // share the one period, so "fastest" is degenerate (any rope; offsets
+      // re-space as k/(N-1) on the next tick). Writing the clamped count heals
+      // out-of-range records by construction. The blank counts the POST-strip
+      // ropes: the harmless passes are evenly spaced, so first-pass to
+      // first-live spans exactly one revolution (NFR8). Measured from the trip
+      // tick, the next live crossing is never sooner than one revolution, but
+      // a trip riding a later rope's edge runs its passes out sooner (pinned
+      // by tests/tripresolution.test.js). Streak is deliberately untouched:
+      // death zeroes it, and Story 1.4 owns streak policy under multi-rope.
+      // The break is safe because feet windows are disjoint — at most one
+      // rising edge per tick (pinned by tests/multirope.test.js) — so no
+      // second crossing can hide behind it.
+      strippedTo = ropeCount - 1;
+      iframesLeft = strippedTo;
+      events.push('ropeLost');
+      break;
     } else {
-      // Story 1.2 replaces this branch with rope-as-HP trip resolution
-      // (strip fastest rope, i-frames). Until then a failed crossing ends
-      // the run for any rope count, exactly as v1.
+      // Last rope: the v1 death, verbatim. tripped stays fatal-only so the
+      // shell's saveBest/juice handling needs no changes.
       status = 'over';
       tripped = true;
       streak = 0;
@@ -117,8 +147,10 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       break;
     }
   }
+  const nextRun = { ...run, score, skips, status, offer, buffer, streak, iFrames: iframesLeft };
+  if (strippedTo !== null) nextRun.ropes = strippedTo;
   return {
-    run: { ...run, score, skips, status, offer, buffer, streak },
+    run: nextRun,
     rope: nextRope,
     player: nextPlayer,
     tripped,

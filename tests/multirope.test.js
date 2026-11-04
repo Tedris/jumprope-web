@@ -103,15 +103,24 @@ test('offer fires once per tick and stops resolving crossings', () => {
   assert.equal(run.offer.length, 2);
 });
 
-test('failed crossing with no live buffer still trips the run for any rope count', () => {
+test('failed crossing with no live buffer: last rope dies, N >= 2 strips one rope', () => {
+  // Re-contracted from Story 1.1's interim fence to the rope-as-HP rule (1.2).
   for (let n = MIN_ROPES; n <= MAX_ROPES; n++) {
     const grounded = { y: 0, vy: 0, grounded: true, squash: 1, squashVel: 0 };
     const { run, tripped, events } = tickRun(
       { ...createRun(), ropes: n }, { phase: 0.44, period: 1 }, grounded, DT,
     );
-    assert.equal(tripped, true, `N=${n} must trip`);
-    assert.equal(run.status, 'over');
-    assert.equal(events.at(-1), 'trip');
+    if (n === MIN_ROPES) {
+      assert.equal(tripped, true, `N=${n} must die on the last rope`);
+      assert.equal(run.status, 'over');
+      assert.equal(events.at(-1), 'trip');
+    } else {
+      assert.equal(tripped, false, `N=${n} must strip, not die`);
+      assert.equal(run.status, 'running');
+      assert.equal(run.ropes, n - 1);
+      assert.equal(run.iFrames, n - 1);
+      assert.equal(events.at(-1), 'ropeLost');
+    }
   }
 });
 
@@ -144,15 +153,17 @@ test('windows are disjoint: at most one rope is at-feet for any phase, N = 1..5'
   }
 });
 
-test('a failing crossing on rope k >= 1 trips, and the buffer saves it, too', () => {
+test('a failing crossing on rope k >= 1 strips a rope, and the buffer saves it, too', () => {
   // N=2 rope 1's window is (phase + 0.5) mod 1 in [0.45, 0.55], i.e. phase
   // in [0.95, 1) u [0, 0.05): the wrap-straddling rope must judge a grounded
   // player exactly like rope 0 does.
   const grounded = { y: 0, vy: 0, grounded: true, squash: 1, squashVel: 0 };
-  const over = tickRun({ ...createRun(), ropes: 2 }, { phase: 0.94, period: 1 }, grounded, DT);
-  assert.equal(over.tripped, true);
-  assert.equal(over.run.status, 'over');
-  assert.equal(over.events.at(-1), 'trip');
+  const stripped = tickRun({ ...createRun(), ropes: 2 }, { phase: 0.94, period: 1 }, grounded, DT);
+  assert.equal(stripped.tripped, false);
+  assert.equal(stripped.run.status, 'running');
+  assert.equal(stripped.run.ropes, 1);
+  assert.equal(stripped.run.iFrames, 1);
+  assert.equal(stripped.events.at(-1), 'ropeLost');
 
   const saved = tickRun({ ...createRun(), ropes: 2 }, { phase: 0.94, period: 1 }, grounded, DT, undefined, true);
   assert.equal(saved.tripped, false);
