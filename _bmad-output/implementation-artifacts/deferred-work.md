@@ -13,3 +13,8 @@
 - **`ropeLost` event cue wiring has no explicit owner** (`js/audio.js` VOICES, `js/shell.js` JUICE_TIERS, renderer rope-count visuals) — a strip trip is currently audio-visually silent. The pieces are split across 1.3 (rope-count HUD), 5.2 (rope-loss thud), 5.3 (i-frame juice), but no story lists the event→cue wiring itself; claim it in whichever of 1.3/5.2 lands first.
 - **AGENTS.md frozen-test rule lacks the sanctioned re-contract exception** — Story 1.2 pre-authorized re-contracting two interim legs in `tests/multirope.test.js`, which AGENTS.md's "existing test files stay byte-identical" wording does not describe. Amend the Conventions block when convenient (or confirm the wording is deliberately absolute and interim-fence edits need a different home).
 
+## Deferred from: code review of story 1-3-rope-count-on-the-hud (2026-11-04)
+
+- **`ropeLost` still has no juice/audio consumer** (`js/shell.js` JUICE_TIERS, `js/audio.js` VOICES) — confirmed silent in 1.3's review; same item as the 1.2-review entry above. Story 1.3 deliberately claimed only the visual-state cue (ghost pip); 5.2 owns the thud and any cue-tier wiring.
+- **`updateHud()` runs outside the frame try/catch and now calls `replaceChildren`** (`js/shell.js:393` vs the try at `:451-456`) — a throw in the new pip block skips `requestAnimationFrame(frame)` and silently freezes the rAF loop; `replaceChildren` (Safari ≥ 14 / Chrome ≥ 86) is the first modern-only DOM API in the per-frame path. Spec sanctions the API via NFR11 evergreen targets and updateHud's position outside the try is pre-existing structure; if a defensive pass ever touches `frame()`, bring `updateHud()` inside the safety net.
+

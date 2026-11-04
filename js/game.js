@@ -20,7 +20,7 @@ export const NEAR_MARGIN = 0.5;
 export const MIN_ROPES = 1;
 export const MAX_ROPES = 5;
 
-function clampRopes(count) {
+export function clampRopes(count) {
   // +Infinity is "very many ropes" -> the maximum; NaN/nullish/strings -> the
   // minimum. (Number.isFinite is false for Infinity, so it needs its own arm.)
   const n = Number.isFinite(count) ? Math.trunc(count)

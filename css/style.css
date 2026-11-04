@@ -25,6 +25,11 @@ canvas {
 #hud-score { font-size: 32px; }
 #hud-prompt { white-space: pre-line; }
 #hud-owned { font-size: 20px; }
+/* Story 1.3 rope pips: solid/ghost glyphs are shape-reinforced, so the two
+   colors (DESIGN.md rope / ropeLost tokens) are never the only cue. */
+#hud-ropes { font-size: 20px; letter-spacing: 2px; }
+.pip-held { color: #f4f0d8; }
+.pip-ghost { color: #4d4a3e; }
 /* CARD-02 role color: class toggle on the prompt span, keyed by the
    highlighted card's color field (RESEARCH Open-Q1 recommendation). */
 .role-sky { color: #8fd3ff; }

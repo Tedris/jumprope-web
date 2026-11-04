@@ -1,4 +1,4 @@
-import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS } from './game.js';
+import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
@@ -71,6 +71,9 @@ export function startGame(canvas) {
   const hudBest = document.getElementById('hud-best');
   const hudPrompt = document.getElementById('hud-prompt');
   const hudOwned = document.getElementById('hud-owned');
+  // Story 1.3: null-guarded — the frozen Node harnesses answer getElementById
+  // from fixed 4-key hud maps, so this id resolves to undefined there.
+  const hudRopes = document.getElementById('hud-ropes');
 
   let rope = createRope(ROPE_PERIOD);
   let player = createPlayer();
@@ -89,6 +92,10 @@ export function startGame(canvas) {
   let flashUntil = 0;
   let flashName = '';
   let best = loadBest(localStorage);
+  // Story 1.3 display bookkeeping, same status as `best`: max ropes ever
+  // held this run (row width) and the last drawn solid/ghost signature.
+  let ropesEver = MIN_ROPES;
+  let pipsShown = '';
   let acc = 0;
   let stopUntil = 0;
   let juiceSig = null;
@@ -264,6 +271,8 @@ export function startGame(canvas) {
           holdFrom = pressIntent;
         }
       } else if (run.status === 'idle') {
+        ropesEver = MIN_ROPES; // a new run starts with a single solid pip
+        pipsShown = '';
         ({ rope, player, run } = startRun());
       } else if (run.status === 'choose' && run.offer) {
         // D-01/D-02: press = cycle the cursor (wraps), and (re)arm the hold timer.
@@ -293,6 +302,8 @@ export function startGame(canvas) {
       } else if (run.status === 'over') {
         best = Math.max(best, run.score);
         saveBest(localStorage, best);
+        ropesEver = MIN_ROPES; // permadeath-clean row for the restarted run
+        pipsShown = '';
         ({ rope, player, run } = startRun());
       }
       releaseIntent = false;
@@ -364,6 +375,27 @@ export function startGame(canvas) {
     }
     hudPrompt.textContent = prompt;
     hudPrompt.className = roleClass;
+    // Story 1.3: pip row re-derived from run.ropes every frame — the clamp is
+    // re-applied at read because invalid counts are never normalized into the
+    // record. Rebuild children only when the solid/ghost signature changes.
+    if (hudRopes) {
+      const held = clampRopes(run.ropes ?? MIN_ROPES);
+      ropesEver = Math.max(ropesEver, held);
+      const sig = 'h'.repeat(held) + 'g'.repeat(ropesEver - held);
+      if (sig !== pipsShown) {
+        pipsShown = sig;
+        const makePip = (cls, glyph) => {
+          const pip = document.createElement('span');
+          pip.className = cls;
+          pip.textContent = glyph;
+          return pip;
+        };
+        hudRopes.replaceChildren(
+          ...Array.from({ length: held }, () => makePip('pip-held', '\u2588')),
+          ...Array.from({ length: ropesEver - held }, () => makePip('pip-ghost', '\u2592')),
+        );
+      }
+    }
   }
 
   function frame(now) {
