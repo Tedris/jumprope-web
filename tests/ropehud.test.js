@@ -106,6 +106,8 @@ async function bootRopeHudShell({ frozenHud = false } = {}) {
   await import('data:text/javascript,' + encodeURIComponent(`${src}\n//ropehud-boot ${++bootCount}`));
 
   const restore = () => {
+    delete globalThis.__ropehudScript;
+    delete globalThis.__shellTestViews;
     globalThis.document = saved.document;
     globalThis.window = saved.window;
     globalThis.requestAnimationFrame = saved.requestAnimationFrame;
@@ -141,6 +143,7 @@ function keydown(env, code) {
 function startRunning(env, st) {
   press(env);
   tick(env, st);
+  assert.ok(env.views.length > 0, 'the shell rendered at least one frame');
   assert.equal(env.views.at(-1).run.status, 'running', 'the opening Space tap started the run');
 }
 
@@ -172,8 +175,9 @@ test('contract: #hud-ropes lives inside #hud between hud-best and hud-prompt, wi
   const prompt = block.indexOf('id="hud-prompt"');
   assert.ok(best >= 0 && ropes >= 0 && prompt >= 0, 'hud-ropes must sit inside #hud');
   assert.ok(best < ropes && ropes < prompt, 'document order: best -> ropes -> prompt');
-  assert.match(css, /#f4f0d8/, 'pip-held carries the DESIGN.md rope token');
-  assert.match(css, /#4d4a3e/, 'pip-ghost carries the DESIGN.md ropeLost token');
+  assert.match(css, /#hud-ropes\s*\{/, 'the pip row has its own HUD slot rule');
+  assert.match(css, /\.pip-held\s*\{[^}]*#f4f0d8/i, 'pip-held carries the DESIGN.md rope token');
+  assert.match(css, /\.pip-ghost\s*\{[^}]*#4d4a3e/i, 'pip-ghost carries the DESIGN.md ropeLost token');
 });
 
 // ---------- render legs (AC 1) ----------

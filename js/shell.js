@@ -96,6 +96,8 @@ export function startGame(canvas) {
   // held this run (row width) and the last drawn solid/ghost signature.
   let ropesEver = MIN_ROPES;
   let pipsShown = '';
+  // One shared reset for every new-run path (house rule: no per-path duplication).
+  const resetPips = () => { ropesEver = MIN_ROPES; pipsShown = ''; };
   let acc = 0;
   let stopUntil = 0;
   let juiceSig = null;
@@ -271,8 +273,7 @@ export function startGame(canvas) {
           holdFrom = pressIntent;
         }
       } else if (run.status === 'idle') {
-        ropesEver = MIN_ROPES; // a new run starts with a single solid pip
-        pipsShown = '';
+        resetPips(); // a new run starts with a single solid pip
         ({ rope, player, run } = startRun());
       } else if (run.status === 'choose' && run.offer) {
         // D-01/D-02: press = cycle the cursor (wraps), and (re)arm the hold timer.
@@ -302,8 +303,7 @@ export function startGame(canvas) {
       } else if (run.status === 'over') {
         best = Math.max(best, run.score);
         saveBest(localStorage, best);
-        ropesEver = MIN_ROPES; // permadeath-clean row for the restarted run
-        pipsShown = '';
+        resetPips(); // permadeath-clean row for the restarted run
         ({ rope, player, run } = startRun());
       }
       releaseIntent = false;

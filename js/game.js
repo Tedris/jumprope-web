@@ -61,10 +61,11 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   let buffer = Math.max(0, (run.buffer ?? 0) - dt * (run.effects.ropeMul ?? 1));
   if (press) buffer = BUFFER_SEC;
   let streak = run.streak ?? 0;
-  // FR3: i-frames are a crossing count, not a second clock (NFR8). NaN would
-  // survive Math.max, so non-numeric records behave as "no i-frames" (data).
-  // Capped like clampRopes: a legitimate count is at most MAX_ROPES - 1, and
-  // an unbounded float would decrement forever into permanent invulnerability.
+  // FR3: i-frames are a crossing count, not a second clock (NFR8). Any
+  // non-finite record (NaN/Infinity/nullish) behaves as "no i-frames" — there
+  // is no clampRopes-style Infinity arm here. Capped to MAX_ROPES so crafted
+  // floats cannot decrement forever; legitimate writers only ever produce
+  // integers 0..MAX_ROPES - 1 (a strip leaves ropeCount - 1).
   let iframesLeft = Number.isFinite(run.iFrames) ? Math.min(MAX_ROPES, Math.max(0, run.iFrames)) : 0;
   let strippedTo = null;
   const events = [];

@@ -4,7 +4,7 @@ baseline_commit: 140ac14
 
 # Story 1.3: Rope count on the HUD
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -167,15 +167,16 @@ Qwen3.8-Flash (ultrafast/qwen)
 
 - 2026-11-02: Story implemented — DOM pip row in the HUD (`#hud-ropes`, solid `█` / ghost `▒`), `clampRopes` exported and re-applied at display read, `ropesEver` ever-max display memory with resets at both `startRun()` sites. Red-green per Task 4; full suite 169/169 green. Status → review.
 - 2026-11-04: Adversarial code review (Blind/Edge/Auditor). Story 1.2 residue committed first as `7353f92` per review decision D1; this story follows as its own commit.
+- 2026-11-04: Review patches applied — honest i-frames coercion comment (js/game.js), selector-scoped CSS contract legs + harness hygiene (tests/ropehud.test.js), shared `resetPips()` seam at both startRun sites (js/shell.js). Full suite 169/169 green.
 
 ### Review Findings
 
 <!-- Adversarial code review 2026-11-04 — Blind Hunter / Edge Case Hunter / Acceptance Auditor (diff vs baseline 140ac14). -->
 
 - [x] [Review][Decision] Story 1.2's uncommitted work entangles 1.3's clean-tree evidence — RESOLVED 2026-11-04: option (a). Story 1.2's residue (js/game.js iFrames/strip hunks, tests/multirope.test.js re-contract, tests/tripresolution.test.js, its story file, its deferred-work section, sprint-status) landed in commit `7353f92`; story 1.3 follows as its own commit. Completion-note claim corrected below.
-- [ ] [Review][Patch] i-frames coercion comment misdescribes the code (`js/game.js:65-68`) — comment says "Capped like clampRopes" but the code differs: `Infinity → 0` (clampRopes maps it to MAX), no `Math.trunc` (clampRopes truncs), and the cap `Math.min(MAX_ROPES, …)` admits 5 although the comment's own invariant is `MAX_ROPES - 1`. Gameplay writers only produce integers 0–4 and `tests/tripresolution.test.js` pins the current crafted-record semantics, so the honest fix is a comment rewrite, not a behavior change.
-- [ ] [Review][Patch] CSS contract leg greps hexes unscoped (`tests/ropehud.test.js:175-176`) — `assert.match(css, /#f4f0d8/)` passes if the hex lands on any selector; the leg never asserts the `.pip-held`/`.pip-ghost` rules (or the `#hud-ropes` rule) exist. Tighten to selector-scoped matches so the DESIGN.md-token guarantee is actually pinned.
-- [ ] [Review][Patch] Test harness hygiene (`tests/ropehud.test.js`) — `restore()` never deletes `globalThis.__ropehudScript` / `__shellTestViews` (latent cross-harness contaminator if process isolation ever changes); `env.views.at(-1)` throws TypeError instead of a clean assertion failure if the shell rendered zero frames (`startRunning`, :144).
-- [ ] [Review][Patch] Pip reset duplicated at both startRun sites (`js/shell.js:274-275`, `:305-306`) — `ropesEver = MIN_ROPES; pipsShown = '';` copy-pasted verbatim; AGENTS.md convention ("one shared handler per cross-cutting concern — no per-path duplication") calls for a tiny shared `resetPips()` closure called at both sites (spec's "reset at both startRun sites" is honored either way).
+- [x] [Review][Patch] i-frames coercion comment misdescribes the code (`js/game.js:65-68`) — comment says "Capped like clampRopes" but the code differs: `Infinity → 0` (clampRopes maps it to MAX), no `Math.trunc` (clampRopes truncs), and the cap `Math.min(MAX_ROPES, …)` admits 5 although the comment's own invariant is `MAX_ROPES - 1`. Gameplay writers only produce integers 0–4 and `tests/tripresolution.test.js` pins the current crafted-record semantics, so the honest fix is a comment rewrite, not a behavior change.
+- [x] [Review][Patch] CSS contract leg greps hexes unscoped (`tests/ropehud.test.js:175-176`) — `assert.match(css, /#f4f0d8/)` passes if the hex lands on any selector; the leg never asserts the `.pip-held`/`.pip-ghost` rules (or the `#hud-ropes` rule) exist. Tighten to selector-scoped matches so the DESIGN.md-token guarantee is actually pinned.
+- [x] [Review][Patch] Test harness hygiene (`tests/ropehud.test.js`) — `restore()` never deletes `globalThis.__ropehudScript` / `__shellTestViews` (latent cross-harness contaminator if process isolation ever changes); `env.views.at(-1)` throws TypeError instead of a clean assertion failure if the shell rendered zero frames (`startRunning`, :144).
+- [x] [Review][Patch] Pip reset duplicated at both startRun sites (`js/shell.js:274-275`, `:305-306`) — `ropesEver = MIN_ROPES; pipsShown = '';` copy-pasted verbatim; AGENTS.md convention ("one shared handler per cross-cutting concern — no per-path duplication") calls for a tiny shared `resetPips()` closure called at both sites (spec's "reset at both startRun sites" is honored either way).
 - [x] [Review][Defer] `ropeLost` emits into a void — no JUICE_TIERS/VOICES entry, so a strip trip is audio-visually silent (`js/shell.js` JUICE_TIERS, `js/audio.js`) — deferred, pre-existing; already tracked in deferred-work.md (story 1.2 review); Epic 5 / Story 5.2 owns the cue.
 - [x] [Review][Defer] `updateHud()` sits outside the frame try/catch and now calls `replaceChildren` (`js/shell.js:393` vs `:451-456`) — a throw in the pip block would skip `requestAnimationFrame(frame)` and silently freeze the loop on pre-2020 browsers. Spec sanctions `replaceChildren` via NFR11 evergreen targets, and updateHud's position outside the try is pre-existing structure. Deferred, pre-existing.
