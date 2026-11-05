@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createRun, tickRun, ROPE_PERIOD } from '../js/game.js';
+import { createRun, tickRun, ROPE_PERIOD, ALT_PER_POINT } from '../js/game.js';
 import { CARDS } from '../js/upgrades.js';
 
 // UI polish (2026-11-05): three shipped fixes pinned in one file.
@@ -121,7 +121,7 @@ async function bootUxShell({ dom }) {
     '  let a = args;',
     '  if (s.forceRopes) a = [{ ...args[0], ropes: s.forceRopes }, ...args.slice(1)];',
     '  let out = real.tickRun(...a);',
-    '  if (s.forceScore !== undefined) out = { ...out, run: { ...out.run, score: s.forceScore } };',
+    '  if (s.forceScore !== undefined) out = { ...out, run: { ...out.run, score: s.forceScore, altitude: s.forceScore * real.ALT_PER_POINT } };',
     '  if (s.chooseOffer && !s.armed && out.run.status === "running") {',
     '    s.armed = true;',
     '    out = { ...out, run: { ...out.run, status: "choose", offer: s.chooseOffer } };',
@@ -186,28 +186,35 @@ function activeCards(env) {
   return strip(env).children; // live refs — cursor moves rebuild the strip
 }
 
-// ---------- score display (harness shape: no createElement → no overlay) ----------
+// ---------- altitude display (harness shape: no createElement → no overlay) ----------
 
-test('fractional score renders as an integer string in HUD, best, and the missed prompt (float-tail fix)', async () => {
+// Story 2.1 sanctioned re-contract: the pinned number is now ALTITUDE, not
+// score (same purpose: integer-string display, float-tail guard, storage
+// cleanliness). Expectations derive from ALT_PER_POINT × forceScore.
+test('fractional altitude renders as an integer string in HUD, best, and the missed prompt (float-tail fix)', async () => {
   const env = await bootUxShell({ dom: false });
   try {
     startRunning(env);
     env.script.forceScore = 2.2999999999999998; // the documented Wide Brim tail
+    const alt = 2.2999999999999998 * ALT_PER_POINT; // 4.5999… — the tail bites at ×2 too
     tick(env);
-    assert.match(env.hud['hud-score'].textContent, /^\d+$/, 'HUD score is an integer string');
-    assert.equal(env.hud['hud-score'].textContent, '2', '2.2999… displays as 2');
+    assert.match(env.hud['hud-score'].textContent, /^\d+$/, 'HUD altitude is an integer string');
+    assert.equal(env.hud['hud-score'].textContent, String(Math.round(alt)), 'the float tail displays rounded');
     assert.equal(env.views.at(-1).run.score, 2.2999999999999998,
       'the simulation record stays the exact float — only the display rounds');
-    assert.equal(env.hud['hud-best'].textContent, 'best 2');
+    assert.equal(env.views.at(-1).run.altitude, alt, 'altitude stays the exact float in the record');
+    assert.equal(env.hud['hud-best'].textContent, 'best ' + Math.round(alt));
 
-    // Trip with a 4.6 record: saved best and prompt both round, storage clean.
+    // Trip with a 4.6-score record (altitude 9.2): saved best and prompt both
+    // round, storage clean.
     env.script.forceRopes = 1;
     env.script.forceScore = 4.6;
+    const altOver = 4.6 * ALT_PER_POINT;
     for (let i = 0; i < 400 && env.views.at(-1).run.status === 'running'; i++) tick(env);
     assert.equal(env.views.at(-1).run.status, 'over', 'grounded, the rope eventually trips');
-    assert.equal(env.map.get('jumprope-best'), '5', 'storage holds the rounded integer');
-    assert.match(env.hud['hud-prompt'].textContent, /^Missed! Score 5$/);
-    assert.equal(env.hud['hud-best'].textContent, 'best 5');
+    assert.equal(env.map.get('jumprope-best'), String(Math.round(altOver)), 'storage holds the rounded integer');
+    assert.match(env.hud['hud-prompt'].textContent, new RegExp('^Missed! Score ' + Math.round(altOver) + '$'));
+    assert.equal(env.hud['hud-best'].textContent, 'best ' + Math.round(altOver));
   } finally { env.restore(); }
 });
 

@@ -10,21 +10,36 @@
 
 ## Deferred from: code review of story 1-2-trip-resolution-lose-the-fastest-rope-ride-the-i-frames (2026-11-02)
 
-- **`ropeLost` event cue wiring has no explicit owner** (`js/audio.js` VOICES, `js/shell.js` JUICE_TIERS, renderer rope-count visuals) — a strip trip is currently audio-visually silent. The pieces are split across 1.3 (rope-count HUD), 5.2 (rope-loss thud), 5.3 (i-frame juice), but no story lists the event→cue wiring itself; claim it in whichever of 1.3/5.2 lands first.
+- **`ropeLost` event cue wiring has no explicit owner** (`js/audio.js` VOICES, `js/shell.js` JUICE_TIERS, renderer rope-count visuals) — a strip trip is currently audio-visually silent. The pieces are split across 1.3 (rope-count HUD), 5.2 (rope-loss thud), 5.3 (i-frame juice), but no story lists the event→cue wiring itself; claim it in whichever of 1.3/5.2 lands first. — **RETRO 2026-11-05: owned by 5.2** (1.3 landed its visual-state cue; audio/juice wiring goes to 5.2's story text).
 - **AGENTS.md frozen-test rule lacks the sanctioned re-contract exception** — Story 1.2 pre-authorized re-contracting two interim legs in `tests/multirope.test.js`, which AGENTS.md's "existing test files stay byte-identical" wording does not describe. Amend the Conventions block when convenient (or confirm the wording is deliberately absolute and interim-fence edits need a different home).
 
 ## Deferred from: code review of story 1-3-rope-count-on-the-hud (2026-11-04)
 
-- **`ropeLost` still has no juice/audio consumer** (`js/shell.js` JUICE_TIERS, `js/audio.js` VOICES) — confirmed silent in 1.3's review; same item as the 1.2-review entry above. Story 1.3 deliberately claimed only the visual-state cue (ghost pip); 5.2 owns the thud and any cue-tier wiring.
-- **`updateHud()` runs outside the frame try/catch and now calls `replaceChildren`** (`js/shell.js:393` vs the try at `:451-456`) — a throw in the new pip block skips `requestAnimationFrame(frame)` and silently freezes the rAF loop; `replaceChildren` (Safari ≥ 14 / Chrome ≥ 86) is the first modern-only DOM API in the per-frame path. Spec sanctions the API via NFR11 evergreen targets and updateHud's position outside the try is pre-existing structure; if a defensive pass ever touches `frame()`, bring `updateHud()` inside the safety net.
+- **`ropeLost` still has no juice/audio consumer** (`js/shell.js` JUICE_TIERS, `js/audio.js` VOICES) — confirmed silent in 1.3's review; same item as the 1.2-review entry above. Story 1.3 deliberately claimed only the visual-state cue (ghost pip); 5.2 owns the thud and any cue-tier wiring. — **RETRO 2026-11-05: ownership fixed to 5.2**, see assignment pass below.
+- **`updateHud()` runs outside the frame try/catch and now calls `replaceChildren`** (`js/shell.js:393` vs the try at `:451-456`) — a throw in the new pip block skips `requestAnimationFrame(frame)` and silently freezes the rAF loop; `replaceChildren` (Safari ≥ 14 / Chrome ≥ 86) is the first modern-only DOM API in the per-frame path. Spec sanctions the API via NFR11 evergreen targets and updateHud's position outside the try is pre-existing structure; if a defensive pass ever touches `frame()`, bring `updateHud()` inside the safety net. — **CLAIMED by Story 2.1 Task 5** (retro 2026-11-05; 2.1 edits `updateHud()` anyway). — **CLOSED by Story 2.1 Task 5 (2026-11-05)**: `updateHud()` now runs inside `frame()`'s try and the catch path keeps scheduling `requestAnimationFrame(frame)` (`js/shell.js:583-589`).
 
 ## Deferred from: code review of story 1-4-near-miss-streak-under-multi-rope (2026-11-04)
 
 - **Near-miss rig duplicates physics constants; band guard self-referential** (`tests/nearmiss.test.js:23-33`) — `GRAVITY = 1800` / `MIN_HEIGHT = 18` inline literals duplicate non-exported sim constants, and the in-band guard validates against the same duplicated `FALL_PER_TICK` that positions the injection. A future gravity/threshold drift could silently move the injected "near band" while every guard still passes. Fix requires exporting the physics constants from `game.js`/`player.js`; consequence bounded (drift must exceed half the band to flip a result).
 
-
 ## Deferred from: code review of story 1-5-input-hygiene-v1-parity-proof (2026-11-04)
 
 - **AC1 pointer-up/pointercancel cells at N≥2 unlegged** (`tests/v1parity.test.js` shell section) — the normal-release (`release()`) and canvas `pointercancel` channels are pinned only at ropes-absent (`tests/polish.test.js:749`); the story's Design already owns the "shared handler, no per-state fork" reading and shell registers one handler per event, so no new coverage was required here. Revisit if a fork ever appears in `releaseEverything`/`release`.
 - **Live-browser smoke evidence is Debug-Log-only** (story 1.5 Debug Log, 2026-11-04) — the 16/16 route-intercept Playwright pass cannot be re-run headlessly without adding a dependency (forbidden); static counterparts are pinned by legs 2a-2c. Re-exercise on the next live-browser pass (e.g. Epic 5 audio lifecycle sweep).
+
+
+## Retro assignment pass (Epic 1 retrospective, 2026-11-05)
+
+- **`ropeLost` event→cue wiring (items at :13 and :18)** — OWNED by Story 5.2 per Epic 1 retro: 1.3 shipped the visual-state cue (ghost pip), so the remaining audio thud + JUICE_TIERS/VOICES wiring claims whichever of the two lands first = 5.2. Write it into 5.2's story text at creation.
+- **`updateHud()` outside the frame try/catch (item at :19)** — CLAIMED by Story 2.1, Task 5 (added to the story file 2026-11-05). Closes at 2.1.
+- **Physics-constant exports for `nearmiss`/`v1parity` rigs (item at :23)** — confirmed Epic 6 balance-pass territory; no change.
+- **AGENTS.md re-contract exception (item at :14)** — RESOLVED 2026-11-05: Conventions block amended (interim-fence exception, citing Story 1.2).
+
+
+## Deferred from: code review of story 2-1-score-is-altitude-one-number-everywhere (2026-11-05)
+
+- **`hud-best` climbs with proportional digits** (`js/shell.js:478`, no `#hud-best` rule in `css/style.css`) — during record-setting runs the best line recomputes every scored pass and width-jitters, the same defect the `#hud-score` `tabular-nums` line just fixed. Story 2.1's scope rule forbids `tabular-nums` on other slots; claim it in whichever polish story next touches the HUD row.
+- **Two writers to the same persisted best** (`js/shell.js:338` over-restart + `:556` trip) — v1 structure; the restart write is dead weight (the run record is frozen between the sites). Consolidate into one shared save path when Story 2.4 reworks run-over persistence, per the FR22 shared-handler rule.
+- **Invariant leg uses exact float equality** (`tests/altitude.test.js:104`) — `altitude === ALT_PER_POINT × score` is exact only because the placeholder `ALT_PER_POINT = 2` is a power of two; a non-power-of-two balance value will fail the leg with no product bug. Re-express with tolerance in Epic 6's balance pass.
+- **Shell test harness forked a third time** (`tests/altitude.test.js:115-203` vs `uxpolish.test.js:58-156`, `shell.test.js:30-105`) — ~90 lines of data-URL boot scaffolding repeated; extracting `tests/support/shell-harness.js` touches frozen files, so it needs a dedicated chore, not a story-sized change.
 

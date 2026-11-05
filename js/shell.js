@@ -335,7 +335,7 @@ export function startGame(canvas) {
           pickFill = 0;
         }
       } else if (run.status === 'over') {
-        best = Math.max(best, Math.round(run.score));
+        best = Math.max(best, Math.round(run.altitude));
         saveBest(localStorage, best);
         resetPips(); // permadeath-clean row for the restarted run
         ({ rope, player, run } = rearmCalloutGate(startRun()));
@@ -474,8 +474,8 @@ export function startGame(canvas) {
   }
 
   function updateHud() {
-    hudScore.textContent = String(Math.round(run.score));
-    hudBest.textContent = 'best ' + Math.round(Math.max(best, run.score));
+    hudScore.textContent = String(Math.round(run.altitude));
+    hudBest.textContent = 'best ' + Math.round(Math.max(best, run.altitude));
     const owned = run.owned ?? {};
     hudOwned.textContent = CARDS
       .filter(c => (owned[c.id] ?? 0) > 0)
@@ -493,7 +493,7 @@ export function startGame(canvas) {
         if (highlight && highlight.color) roleClass = 'role-' + highlight.color;
       }
     } else if (run.status === 'over') {
-      prompt = 'Missed! Score ' + Math.round(run.score);
+      prompt = 'Missed! Score ' + Math.round(run.altitude);
     } else if (run.status === 'idle') {
       prompt = 'press space / tap to start';
       if (audioDiag) prompt += ' (audio off)';
@@ -553,7 +553,7 @@ export function startGame(canvas) {
         // D-N02 single-channel rule: sim events are audio's only feed.
         if (audio) for (const ev of (out.events ?? [])) audio.handleEvent(ev);
         if (out.tripped) {
-          best = Math.max(best, Math.round(run.score));
+          best = Math.max(best, Math.round(run.altitude));
           saveBest(localStorage, best);
         }
         // D-N02: the events array is the ONLY juice trigger (the tripped
@@ -580,8 +580,8 @@ export function startGame(canvas) {
       }
       acc -= STEP;
     }
-    updateHud();
     try {
+      updateHud();
       scene.render({ run, rope, player, prevPhase, alpha: acc / STEP, best, now, juice: juiceSig, reducedMotion });
     } catch (err) {
       console.error('render failed:', err);

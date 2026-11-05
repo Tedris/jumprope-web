@@ -22,7 +22,8 @@ canvas {
   pointer-events: none;
   user-select: none;
 }
-#hud-score { font-size: 32px; }
+/* Story 2.1: the altitude readout is a climb — tabular digits stop it jittering (DESIGN.md Typography). */
+#hud-score { font-size: 32px; font-variant-numeric: tabular-nums; }
 #hud-prompt { white-space: pre-line; }
 #hud-owned { font-size: 20px; }
 /* Story 1.3 rope pips: solid/ghost glyphs are shape-reinforced, so the two

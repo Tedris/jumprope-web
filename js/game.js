@@ -20,6 +20,9 @@ export const NEAR_MARGIN = 0.5;
 export const MIN_ROPES = 1;
 export const MAX_ROPES = 5;
 
+// Story 2.1 (FR7): PLACEHOLDER — Epic 6 balance pass owns this value.
+export const ALT_PER_POINT = 2;
+
 export function clampRopes(count) {
   // +Infinity is "very many ropes" -> the maximum; NaN/nullish/strings -> the
   // minimum. (Number.isFinite is false for Infinity, so it needs its own arm.)
@@ -46,13 +49,14 @@ export function resumeRun(run) {
 }
 
 export function createRun() {
-  return { status: 'running', score: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, iFrames: 0 };
+  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, iFrames: 0 };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
   const nextRope = updateRope(rope, dt * run.effects.ropeMul);
   const nextPlayer = updatePlayer(player, dt, 1800 / run.effects.floatMul);
   let { score, skips, status, offer } = run;
+  let altitude = run.altitude ?? 0;
   let tripped = false;
   // D-N01: the forgiveness buffer decays on the phase clock, so a rope-speed
   // upgrade shortens the real-time window exactly as it shortens the period.
@@ -86,6 +90,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
     }
     if (clearsRope(nextPlayer.y, minHeight)) {
       score += run.effects.scoreMul;
+      altitude += ALT_PER_POINT * run.effects.scoreMul;
       skips += 1;
       events.push('skip');
       // D-N03: tight clearance under NEAR_MARGIN × minHeight above the
@@ -116,6 +121,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // pass — scored like a clean skip, near-miss by definition (D-N03), and
       // the buffer is consumed at the crossing.
       score += run.effects.scoreMul;
+      altitude += ALT_PER_POINT * run.effects.scoreMul;
       skips += 1;
       buffer = 0;
       streak += 1;
@@ -150,7 +156,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       break;
     }
   }
-  const nextRun = { ...run, score, skips, status, offer, buffer, streak, iFrames: iframesLeft };
+  const nextRun = { ...run, score, altitude, skips, status, offer, buffer, streak, iFrames: iframesLeft };
   if (strippedTo !== null) nextRun.ropes = strippedTo;
   return {
     run: nextRun,
