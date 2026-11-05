@@ -47,7 +47,7 @@ The rope's normalized 0–1 phase is the canonical clock driving scoring, geomet
 - Dependency injection for nondeterminism and I/O: rng passed as a parameter, storage objects injected (`loadBest(storage)`); `localStorage`/DOM/`performance.now()` live only in the shell
 - State updates via object spread (`{ ...run, score }`); plain POJOs, no classes
 - 2-space indentation; sparse comments (non-obvious fallbacks only); no `console.*` in pure modules
-- Frozen-test discipline: existing test files stay byte-identical; new behavior is pinned by new test files; test expectations derive from records/metadata, not hardcoded tables
+- Frozen-test discipline: existing test files stay byte-identical — **except** legs explicitly re-authorized in writing by the story text that ships the replacement behavior (interim fences only, e.g. Story 1.2 re-contracting Story 1.1's provisional trip legs); the diff must show no other existing-file changes. New behavior is pinned by new test files; test expectations derive from records/metadata, not hardcoded tables
 - One shared handler per cross-cutting concern (`releaseEverything()`, `resumeRun()`, `snapGridFor()`) — no per-path duplication
 - New factory contracts get a Node-side contract test in the same change; gesture/audio guards get red-green test legs when written, not at verification
 
@@ -64,4 +64,5 @@ Project management runs on [BMAD](https://bmadcode.com/) (installed under `_bmad
 ## Housekeeping
 
 - Run tests before committing: `node --test tests/`
+- When a story workflow ends with its status set to `done`, commit the full change set (code, tests, story/tracking artifacts) and push
 - `index.html` and `package.json` are deliberately near-frozen; touching them needs justification (the boundary fence tests grep for regressions around them)
