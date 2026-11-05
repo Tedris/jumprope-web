@@ -91,6 +91,11 @@ export function startGame(canvas) {
   let reentryAt = -LEAD_IN_MS;
   let flashUntil = 0;
   let flashName = '';
+  // Story 1.4: at most one CLOSE! callout per revolution. The gate counts
+  // wraps of the one canonical clock — a wrap is exactly phase < prevPhase
+  // (rope.js wraps as (phase - 1) + inc) — never a second timer (NFR8).
+  let revCount = 0;
+  let calloutRev = -1;
   let best = loadBest(localStorage);
   // Story 1.3 display bookkeeping, same status as `best`: max ropes ever
   // held this run (row width) and the last drawn solid/ghost signature.
@@ -98,6 +103,11 @@ export function startGame(canvas) {
   let pipsShown = '';
   // One shared reset for every new-run path (house rule: no per-path duplication).
   const resetPips = () => { ropesEver = MIN_ROPES; pipsShown = ''; };
+  // Story 1.4 (review fix): entering the lead-in — start/restart/resume/
+  // pick-confirm — restarts the canonical clock, so the CLOSE! gate re-arms.
+  // The snap to START_PHASE lands inside the handlers, invisible to the
+  // drain's wrap compare. One shared handler, no per-path duplication.
+  const rearmCalloutGate = (sim) => { revCount++; return sim; };
   let acc = 0;
   let stopUntil = 0;
   let juiceSig = null;
@@ -195,7 +205,7 @@ export function startGame(canvas) {
     if (!paused) return;
     paused = false;
     pausedByVis = false;
-    ({ rope, player, run } = resumeRun({ ...run, buffer: 0 }));
+    ({ rope, player, run } = rearmCalloutGate(resumeRun({ ...run, buffer: 0 })));
     reentryAt = performance.now(); // D-07 re-entry lock, same as the pick-confirm path
     holdFrom = null;
     pressIntent = null;
@@ -274,7 +284,7 @@ export function startGame(canvas) {
         }
       } else if (run.status === 'idle') {
         resetPips(); // a new run starts with a single solid pip
-        ({ rope, player, run } = startRun());
+        ({ rope, player, run } = rearmCalloutGate(startRun()));
       } else if (run.status === 'choose' && run.offer) {
         // D-01/D-02: press = cycle the cursor (wraps), and (re)arm the hold timer.
         pickIdx = (pickIdx + 1) % run.offer.length;
@@ -304,7 +314,7 @@ export function startGame(canvas) {
         best = Math.max(best, run.score);
         saveBest(localStorage, best);
         resetPips(); // permadeath-clean row for the restarted run
-        ({ rope, player, run } = startRun());
+        ({ rope, player, run } = rearmCalloutGate(startRun()));
       }
       releaseIntent = false;
     }
@@ -322,7 +332,7 @@ export function startGame(canvas) {
         audio?.handleEvent('pick');
         flashUntil = performance.now() + FLASH_MS;
         run = applyCard(run, picked);
-        ({ rope, player, run } = resumeRun(run));
+        ({ rope, player, run } = rearmCalloutGate(resumeRun(run)));
         reentryAt = performance.now();
         holdFrom = null;
         pickIdx = 0;
@@ -420,6 +430,7 @@ export function startGame(canvas) {
         const out = tickRun(run, rope, player, STEP, rng, pressFired ? true : null);
         pressFired = false;
         ({ run, rope, player } = out);
+        if (rope.phase < prevPhase) revCount++;
         // D-N02 single-channel rule: sim events are audio's only feed.
         if (audio) for (const ev of (out.events ?? [])) audio.handleEvent(ev);
         if (out.tripped) {
@@ -435,9 +446,12 @@ export function startGame(canvas) {
             stopUntil = Math.max(stopUntil, now + tier.hitstop);
             juiceSig = { at: now, shake: tier.shake, particles: tier.particles };
           }
-          if (e === 'nearMiss') {
+          if (e === 'nearMiss' && calloutRev !== revCount) {
             // D-N04: the CLOSE! callout rides the proven card-name flash
             // channel — no new DOM, streak count straight from the sim.
+            // Story 1.4: one callout per revolution; the ×N number may lag
+            // a streak incremented later in the same rev (cosmetic, decided).
+            calloutRev = revCount;
             flashName = 'CLOSE! \u00d7' + (run.streak ?? 1);
             flashUntil = now + FLASH_MS;
           }

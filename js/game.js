@@ -129,13 +129,15 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // first-live spans exactly one revolution (NFR8). Measured from the trip
       // tick, the next live crossing is never sooner than one revolution, but
       // a trip riding a later rope's edge runs its passes out sooner (pinned
-      // by tests/tripresolution.test.js). Streak is deliberately untouched:
-      // death zeroes it, and Story 1.4 owns streak policy under multi-rope.
+      // by tests/tripresolution.test.js). A strip BREAKS the consecutive
+      // chain: the streak zeroes here (Story 1.4's policy call — death also
+      // zeroes it, and the blank's harmless passes touch nothing).
       // The break is safe because feet windows are disjoint — at most one
       // rising edge per tick (pinned by tests/multirope.test.js) — so no
       // second crossing can hide behind it.
       strippedTo = ropeCount - 1;
       iframesLeft = strippedTo;
+      streak = 0;
       events.push('ropeLost');
       break;
     } else {

@@ -18,3 +18,7 @@
 - **`ropeLost` still has no juice/audio consumer** (`js/shell.js` JUICE_TIERS, `js/audio.js` VOICES) — confirmed silent in 1.3's review; same item as the 1.2-review entry above. Story 1.3 deliberately claimed only the visual-state cue (ghost pip); 5.2 owns the thud and any cue-tier wiring.
 - **`updateHud()` runs outside the frame try/catch and now calls `replaceChildren`** (`js/shell.js:393` vs the try at `:451-456`) — a throw in the new pip block skips `requestAnimationFrame(frame)` and silently freezes the rAF loop; `replaceChildren` (Safari ≥ 14 / Chrome ≥ 86) is the first modern-only DOM API in the per-frame path. Spec sanctions the API via NFR11 evergreen targets and updateHud's position outside the try is pre-existing structure; if a defensive pass ever touches `frame()`, bring `updateHud()` inside the safety net.
 
+## Deferred from: code review of story 1-4-near-miss-streak-under-multi-rope (2026-11-04)
+
+- **Near-miss rig duplicates physics constants; band guard self-referential** (`tests/nearmiss.test.js:23-33`) — `GRAVITY = 1800` / `MIN_HEIGHT = 18` inline literals duplicate non-exported sim constants, and the in-band guard validates against the same duplicated `FALL_PER_TICK` that positions the injection. A future gravity/threshold drift could silently move the injected "near band" while every guard still passes. Fix requires exporting the physics constants from `game.js`/`player.js`; consequence bounded (drift must exceed half the band to flip a result).
+
