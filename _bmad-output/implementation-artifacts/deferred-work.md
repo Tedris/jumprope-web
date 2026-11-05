@@ -22,3 +22,9 @@
 
 - **Near-miss rig duplicates physics constants; band guard self-referential** (`tests/nearmiss.test.js:23-33`) — `GRAVITY = 1800` / `MIN_HEIGHT = 18` inline literals duplicate non-exported sim constants, and the in-band guard validates against the same duplicated `FALL_PER_TICK` that positions the injection. A future gravity/threshold drift could silently move the injected "near band" while every guard still passes. Fix requires exporting the physics constants from `game.js`/`player.js`; consequence bounded (drift must exceed half the band to flip a result).
 
+
+## Deferred from: code review of story 1-5-input-hygiene-v1-parity-proof (2026-11-04)
+
+- **AC1 pointer-up/pointercancel cells at N≥2 unlegged** (`tests/v1parity.test.js` shell section) — the normal-release (`release()`) and canvas `pointercancel` channels are pinned only at ropes-absent (`tests/polish.test.js:749`); the story's Design already owns the "shared handler, no per-state fork" reading and shell registers one handler per event, so no new coverage was required here. Revisit if a fork ever appears in `releaseEverything`/`release`.
+- **Live-browser smoke evidence is Debug-Log-only** (story 1.5 Debug Log, 2026-11-04) — the 16/16 route-intercept Playwright pass cannot be re-run headlessly without adding a dependency (forbidden); static counterparts are pinned by legs 2a-2c. Re-exercise on the next live-browser pass (e.g. Epic 5 audio lifecycle sweep).
+
