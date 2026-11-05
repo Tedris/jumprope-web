@@ -492,7 +492,7 @@ export function startGame(canvas) {
         const highlight = run.offer[pickIdx];
         if (highlight && highlight.color) roleClass = 'role-' + highlight.color;
       }
-    } else if (run.status === 'over') {
+    } else if (run.status === 'over' && run.outcome !== 'summit') {
       prompt = 'Missed! Score ' + Math.round(run.altitude);
     } else if (run.status === 'idle') {
       prompt = 'press space / tap to start';
@@ -552,7 +552,7 @@ export function startGame(canvas) {
         if (rope.phase < prevPhase) revCount++;
         // D-N02 single-channel rule: sim events are audio's only feed.
         if (audio) for (const ev of (out.events ?? [])) audio.handleEvent(ev);
-        if (out.tripped) {
+        if (out.tripped || run.outcome === 'summit') {
           best = Math.max(best, Math.round(run.altitude));
           saveBest(localStorage, best);
         }

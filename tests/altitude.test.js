@@ -41,7 +41,7 @@ test('factory contract: createRun carries altitude 0 and ALT_PER_POINT is a fini
   const run = game.createRun();
   assert.equal(run.altitude, 0);
   assert.deepEqual(Object.keys(run).sort(), [
-    'altitude', 'buffer', 'effects', 'iFrames', 'offer', 'owned', 'ropes', 'score', 'skips', 'status', 'streak',
+    'altitude', 'area', 'baseAltitude', 'buffer', 'effects', 'iFrames', 'offer', 'outcome', 'owned', 'ropes', 'score', 'skips', 'status', 'streak',
   ], 'the createRun record-key set must stay explicit — altitude joins score');
 });
 

@@ -1,6 +1,7 @@
 import { updateRope, atFeetOffset } from './rope.js';
 import { jump, createPlayer, updatePlayer, clearsRope } from './player.js';
 import { CARDS, freshEffects, pickOffers, shouldOfferUpgrade, offerCount } from './upgrades.js';
+import { AREAS } from './areas.js';
 
 // Shell-side HUD reads the catalogue through game.js: tests/shell.test.js's
 // frozen bootShell harness only rewrites the game/rope/player/render3d
@@ -23,12 +24,21 @@ export const MAX_ROPES = 5;
 // Story 2.1 (FR7): PLACEHOLDER — Epic 6 balance pass owns this value.
 export const ALT_PER_POINT = 2;
 
+// Story 2.2 (FR9): crossing the top row's ceiling wins instead of ascending.
+export const SUMMIT_AREA = AREAS.length;
+
 export function clampRopes(count) {
   // +Infinity is "very many ropes" -> the maximum; NaN/nullish/strings -> the
   // minimum. (Number.isFinite is false for Infinity, so it needs its own arm.)
   const n = Number.isFinite(count) ? Math.trunc(count)
     : count === Infinity ? MAX_ROPES : MIN_ROPES;
   return Math.min(MAX_ROPES, Math.max(MIN_ROPES, n));
+}
+
+// Story 2.2 (FR6): strict `>` — a peak exactly at the ceiling has not broken
+// it (GDD "exceeds"). `area` is the 1-based ladder index.
+export function crossesCeiling(peakAltitude, area) {
+  return peakAltitude > AREAS[area - 1].ceiling;
 }
 
 // The one canonical lead-in (ARCH-02): both cold start and post-pick resume
@@ -49,7 +59,7 @@ export function resumeRun(run) {
 }
 
 export function createRun() {
-  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, iFrames: 0 };
+  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, iFrames: 0, area: 1, baseAltitude: 0, outcome: null };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
@@ -57,6 +67,11 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   const nextPlayer = updatePlayer(player, dt, 1800 / run.effects.floatMul);
   let { score, skips, status, offer } = run;
   let altitude = run.altitude ?? 0;
+  // Story 2.2: same ?? heal idiom as altitude — hand-built harness records
+  // (e.g. the uxpolish tickRun wrapper) lack the ascent fields.
+  let area = run.area ?? 1;
+  let baseAltitude = run.baseAltitude ?? 0;
+  let outcome = run.outcome ?? null;
   let tripped = false;
   // D-N01: the forgiveness buffer decays on the phase clock, so a rope-speed
   // upgrade shortens the real-time window exactly as it shortens the period.
@@ -150,13 +165,33 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // Last rope: the v1 death, verbatim. tripped stays fatal-only so the
       // shell's saveBest/juice handling needs no changes.
       status = 'over';
+      outcome = 'tripped';
       tripped = true;
       streak = 0;
       events.push('trip');
       break;
     }
   }
-  const nextRun = { ...run, score, altitude, skips, status, offer, buffer, streak, iFrames: iframesLeft };
+  // Story 2.2 (FR6/FR26): the jump peak is global altitude + arc height,
+  // sampled on the post-step position — no separate timeline (NFR8). One
+  // plain if per tick, never a while (Story 4.1's one-ascend interlock);
+  // dead ticks are excluded (trip > win), i-frame ticks are suppressed
+  // (Story 4.5), and a summit peak wins instead of incrementing, clearing
+  // any same-tick offer — a run cannot await a pick and be terminally won.
+  const peak = altitude + nextPlayer.y;
+  if ((status === 'running' || status === 'choose') && iframesLeft === 0 && crossesCeiling(peak, area)) {
+    if (area === SUMMIT_AREA) {
+      status = 'over';
+      outcome = 'summit';
+      offer = null;
+      events.push('win');
+    } else {
+      baseAltitude = AREAS[area - 1].ceiling;
+      area += 1;
+      events.push('ascend');
+    }
+  }
+  const nextRun = { ...run, score, altitude, skips, status, offer, buffer, streak, iFrames: iframesLeft, area, baseAltitude, outcome };
   if (strippedTo !== null) nextRun.ropes = strippedTo;
   return {
     run: nextRun,
