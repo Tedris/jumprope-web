@@ -75,6 +75,15 @@ export function startGame(canvas) {
   // from fixed 4-key hud maps, so this id resolves to undefined there.
   const hudRopes = document.getElementById('hud-ropes');
 
+  // UI polish (2026-11-05): the offer renders as SELECTABLE cards with
+  // descriptions and swipe-to-cycle, when a real DOM exists. The whole layer
+  // is gated on createElement + the #hud anchor, so the frozen Node harnesses
+  // (fixed getElementById maps, no createElement) keep the text-prompt channel
+  // byte-identical. Every card gesture feeds the SAME pick vars as the
+  // Space/canvas cycle path — releaseEverything/enterPause hygiene unchanged.
+  const hudRoot = typeof document.createElement === 'function' ? document.getElementById('hud') : null;
+  const cards = hudRoot && typeof hudRoot.appendChild === 'function' ? setupCards(hudRoot) : null;
+
   let rope = createRope(ROPE_PERIOD);
   let player = createPlayer();
   let run = { ...createRun(), status: 'idle' };
@@ -130,9 +139,8 @@ export function startGame(canvas) {
   }
   let last = performance.now();
 
-  function press() {
-    if (paused) return; // input is locked behind the freeze frame (D-12/Pitfall 4)
-    // D-N08: the ONLY AudioContext-creation site is this first gesture; every
+  function unlockAudio() {
+    // D-N08: the ONLY AudioContext-creation site is the first gesture; every
     // later gesture only revives a suspended context. A constructor throw
     // leaves the game running with a diagnostic, never blocked.
     if (audio) {
@@ -147,6 +155,11 @@ export function startGame(canvas) {
         audio.gesture();
       }
     }
+  }
+
+  function press() {
+    if (paused) return; // input is locked behind the freeze frame (D-12/Pitfall 4)
+    unlockAudio();
     if (pressIntent === null) pressIntent = performance.now();
   }
 
@@ -240,6 +253,17 @@ export function startGame(canvas) {
       return;
     }
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(); }
+    // Card picker parity: arrows cycle the cursor at choose and (re)arm the
+    // hold-confirm, exactly like the Space/canvas cycle path (no new gesture).
+    if (run.status === 'choose' && run.offer && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
+      e.preventDefault();
+      if (!e.repeat) {
+        const n = run.offer.length;
+        pickIdx = (pickIdx + (e.code === 'ArrowRight' ? 1 : n - 1)) % n;
+        pickPressedAt = performance.now();
+        pickDone = false;
+      }
+    }
   });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
   // UI-03 (D-10): the existing resize listener re-derives the band/letterbox;
@@ -311,7 +335,7 @@ export function startGame(canvas) {
           pickFill = 0;
         }
       } else if (run.status === 'over') {
-        best = Math.max(best, run.score);
+        best = Math.max(best, Math.round(run.score));
         saveBest(localStorage, best);
         resetPips(); // permadeath-clean row for the restarted run
         ({ rope, player, run } = rearmCalloutGate(startRun()));
@@ -357,24 +381,119 @@ export function startGame(canvas) {
     return line;
   }
 
+  // Card overlay layer: builds one .hud-card per offer entry (icon, name,
+  // description, owned/cap, fill bar). Tap a card = select + (re)arm the
+  // hold-confirm; hold to fill = confirm via tickPick (unchanged); horizontal
+  // swipe anywhere on the strip cycles the cursor and CLEARS the fill (it
+  // never confirms). All writes go through the shared pick vars, so blur /
+  // pointercancel / hidden-tab hygiene routes are untouched.
+  function setupCards(root) {
+    const wrap = document.createElement('div');
+    wrap.className = 'hud-cards';
+    root.appendChild(wrap);
+    const els = [];
+    let sig = '';
+    const swipe = { x: null, moved: false };
+    const SWIPE_PX = 28;
+    wrap.addEventListener('pointerdown', e => { swipe.x = e.clientX; swipe.moved = false; });
+    wrap.addEventListener('pointermove', e => {
+      if (swipe.x === null || run.status !== 'choose' || !run.offer) return;
+      const dx = e.clientX - swipe.x;
+      if (Math.abs(dx) > SWIPE_PX) {
+        swipe.moved = true;
+        swipe.x = e.clientX;
+        const n = run.offer.length;
+        pickIdx = (pickIdx + (dx < 0 ? 1 : n - 1)) % n;
+        pickPressedAt = null;
+        pickFill = 0;
+      }
+    });
+    const endSwipe = () => { swipe.x = null; };
+    wrap.addEventListener('pointerup', endSwipe);
+    wrap.addEventListener('pointercancel', endSwipe);
+
+    function makeCard(card, i) {
+      const el = document.createElement('div');
+      el.className = 'hud-card';
+      const role = ' role-' + (card.color ?? 'slate');
+      const icon = document.createElement('div');
+      icon.className = 'card-icon' + role;
+      icon.textContent = card.icon ?? '';
+      const name = document.createElement('div');
+      name.className = 'card-name' + role;
+      name.textContent = card.name;
+      const desc = document.createElement('div');
+      desc.className = 'card-desc';
+      desc.textContent = card.desc ?? '';
+      const cap = card.cap ?? Number.POSITIVE_INFINITY;
+      const held = (run.owned ?? {})[card.id] ?? 0;
+      const read = document.createElement('div');
+      read.className = 'card-owned';
+      read.textContent = Number.isFinite(cap) ? ' ×' + held + '/' + cap : ' ×' + held;
+      const fill = document.createElement('div');
+      fill.className = 'card-fill';
+      const bar = document.createElement('div');
+      bar.className = 'card-fill-bar';
+      bar.style.width = '0%';
+      fill.appendChild(bar);
+      for (const child of [icon, name, desc, read, fill]) el.appendChild(child);
+      el.addEventListener('pointerdown', e => {
+        if (run.status !== 'choose' || !run.offer) return;
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        unlockAudio();
+        pickIdx = i;
+        pickPressedAt = performance.now();
+        pickDone = false;
+      });
+      el.addEventListener('pointerup', () => { if (!swipe.moved) release(); });
+      el.addEventListener('pointercancel', releaseEverything);
+      return { el, bar };
+    }
+
+    return {
+      render() {
+        if (run.status !== 'choose' || !run.offer) {
+          if (sig !== '') { sig = ''; els.length = 0; wrap.replaceChildren(); }
+          return;
+        }
+        const next = run.offer.map(c => c.id).join(',') + '|' + pickIdx
+          + '|' + JSON.stringify(run.owned ?? {});
+        if (next !== sig) {
+          sig = next;
+          els.length = 0;
+          const built = run.offer.map(makeCard);
+          els.push(...built);
+          wrap.replaceChildren(...built.map(b => b.el));
+        }
+        for (let i = 0; i < els.length; i++) {
+          els[i].el.className = 'hud-card' + (i === pickIdx ? ' selected' : '');
+          els[i].bar.style.width = (i === pickIdx ? Math.round(pickFill * 100) : 0) + '%';
+        }
+      },
+    };
+  }
+
   function updateHud() {
-    hudScore.textContent = String(run.score);
-    hudBest.textContent = 'best ' + Math.max(best, run.score);
+    hudScore.textContent = String(Math.round(run.score));
+    hudBest.textContent = 'best ' + Math.round(Math.max(best, run.score));
     const owned = run.owned ?? {};
     hudOwned.textContent = CARDS
       .filter(c => (owned[c.id] ?? 0) > 0)
       .map(c => c.icon.repeat(owned[c.id]))
       .join(' ');
+    if (cards) cards.render();
     let prompt = '';
     let roleClass = '';
     if (paused) {
       prompt = 'paused — press P to resume';
     } else if (run.status === 'choose' && run.offer) {
-      prompt = run.offer.map((card, i) => offerLine(card, i === pickIdx)).join('\n');
-      const highlight = run.offer[pickIdx];
-      if (highlight && highlight.color) roleClass = 'role-' + highlight.color;
+      if (!cards) {
+        prompt = run.offer.map((card, i) => offerLine(card, i === pickIdx)).join('\n');
+        const highlight = run.offer[pickIdx];
+        if (highlight && highlight.color) roleClass = 'role-' + highlight.color;
+      }
     } else if (run.status === 'over') {
-      prompt = 'Missed! Score ' + run.score;
+      prompt = 'Missed! Score ' + Math.round(run.score);
     } else if (run.status === 'idle') {
       prompt = 'press space / tap to start';
       if (audioDiag) prompt += ' (audio off)';
@@ -434,7 +553,7 @@ export function startGame(canvas) {
         // D-N02 single-channel rule: sim events are audio's only feed.
         if (audio) for (const ev of (out.events ?? [])) audio.handleEvent(ev);
         if (out.tripped) {
-          best = Math.max(best, run.score);
+          best = Math.max(best, Math.round(run.score));
           saveBest(localStorage, best);
         }
         // D-N02: the events array is the ONLY juice trigger (the tripped

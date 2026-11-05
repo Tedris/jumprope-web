@@ -37,3 +37,47 @@ canvas {
 .role-amber { color: #ffcf6e; }
 .role-mint { color: #9fe8c0; }
 .role-ember { color: #ff8f5e; }
+/* UI polish (2026-11-05): the offer card strip. Built by the shell only when
+   a real DOM exists; role-* tints reuse the CARD-02 palette. The strip sits
+   under the gameplay band; cards are the first pointer-interactive HUD nodes
+   (#hud keeps pointer-events: none), sized for thumbs (44px+ targets). */
+.hud-cards {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+  padding: 0 12px;
+  pointer-events: none; /* the gaps must not eat canvas taps; cards re-enable */
+  user-select: none;
+}
+.hud-card {
+  pointer-events: auto;
+  touch-action: none; /* swipes are ours, not the browser's scroll */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 108px;
+  max-width: 168px;
+  padding: 10px 12px 8px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid #4d4a3e;
+  color: #f4f0d8;
+  font: 12px sans-serif;
+  cursor: pointer;
+}
+.hud-card.selected {
+  border-color: #f4f0d8;
+  background: rgba(42, 52, 64, 0.85);
+}
+.card-icon { font-size: 22px; line-height: 1; }
+.card-name { font-size: 14px; font-weight: bold; }
+.card-desc { color: #b8b4a0; }
+.card-owned { font-size: 11px; color: #9aa7b4; }
+.card-fill { width: 100%; height: 6px; background: #4d4a3e; }
+.card-fill-bar { height: 100%; width: 0%; background: #f4f0d8; }

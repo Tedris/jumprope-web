@@ -460,6 +460,12 @@ export function createScene(canvas) {
       legR.rotation.x = airborne ? 0.4 : 0;
     }
 
+    // UI polish (2026-11-05): the rope rides the character — the pivot
+    // inherits the rig's vertical, so jump/fall carry the handles and the
+    // arc with the body (running: mapped sim height; idle: the breath bob;
+    // over: settles back to 0). One write site, all statuses.
+    ropePivot.position.y = HANDLE_HEIGHT + rig.position.y;
+
     for (let k = 0; k < scarf.length; k++) {
       scarf[k].rotation.x = Math.sin(beat - k * 0.4) * 0.5;   // scarf trails a beat behind (D-15)
     }
