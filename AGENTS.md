@@ -8,6 +8,8 @@ A browser-based, one-button jump-rope roguelike in the spirit of *Scarlet Skips*
 
 **Core Value:** One button, one rope, one perfect rhythm loop — the jump-timing feel must be joyful before anything else works.
 
+**Thesis (v2):** an incremental in disguise — the game opens as a humble demake and escalates (upgrades, then tech trees, then more) until players can't quite believe where the gameplay went; surprise-by-escalation is the product. Authoritative wording in `_bmad-output/planning-artifacts/prd.md`.
+
 ### Constraints
 
 - **Tech stack**: Three.js via CDN for rendering only — keeps deployment static-file-only, no build step

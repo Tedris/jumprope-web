@@ -14,6 +14,12 @@ punctuated by pick-two upgrade cards.
 **Core value:** One button, one rope, one perfect rhythm loop — the jump-timing
 feel must be joyful before anything else works.
 
+**Thesis (v2): an incremental in disguise.** Jumprope opens as a humble
+one-button rope-jump demake and escalates — upgrades, tech trees, more and
+more — until the player can't quite believe where the gameplay has gone.
+Surprise-by-escalation is the product; the demake is the disguise, not the
+genre. (Adopted 2026-11-05; source: brainstorming session log.)
+
 ## Goals
 
 - One-button hold-to-jump with variable jump height, joyful timing feel.
@@ -24,8 +30,9 @@ feel must be joyful before anything else works.
 
 ## Non-Goals
 
-- Between-run meta progression (unlocks, persistent currency) — deferred to v2
-  (META-01).
+- Between-run meta progression (unlocks, persistent currency) — v2 (META-01).
+  Under the disguise thesis this is the *planned peel*: the mask lifts in
+  designed beats, not a blanket deferral.
 - Beat-locked soundtrack / rhythm-synced rope phase — the rope stays the free
   canonical clock.
 - Multiplayer, leaderboards, accounts — static web delivery.

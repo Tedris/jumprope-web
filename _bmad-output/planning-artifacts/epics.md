@@ -101,7 +101,12 @@ From Architecture (technical requirements that impact epic/story creation):
 
 ### UX Design Requirements
 
-No standalone UX design document exists for this project. UX-relevant requirements are carried in the GDD (Controls and Input, HUD notes) and are captured above as FR4, FR8, FR13, FR14, FR16, FR22–FR23. If a UX spec is later produced, re-validate this section.
+- UX-relevant requirements are carried in the GDD (Controls and Input, HUD
+  notes) and captured above as FR4, FR8, FR13, FR14, FR16, FR22–FR23. The
+  visual/interaction spec lives at
+  [`ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md`](../ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md)
+  (HUD slots, prompt voice, role colors); re-validate this section against it
+  when new screens (e.g. Epic 7 candidates) are planned.
 
 ### FR Coverage Map
 
@@ -181,6 +186,22 @@ The new states feel as good as the core loop: ascent stinger, win fanfare, rope-
 The summit is reachable in 3–5 minutes: the headless-sim policy-bot gate replaces every placeholder tunable (ceiling ladder, altitude-per-skip, area multipliers), offer pacing (CARD-09) is evaluated, and docs tell the v2 story.
 
 **FRs covered:** FR7 (real tunables), NFR9; CARD-09 offer-pacing evaluation; docs
+
+### Epic 7 (candidate): The Peel
+
+The game admits what it is: between-run progression (META-01) as in-game
+fiction — the tech tree the disguise was hiding. Unlocks presented in the PS1
+voice; persistence grows past best-score (`loadBest` seam in `js/shell.js`).
+Plotted post-v2; requires its own requirements pass before stories.
+(Source: 2026-11-05 sprint-change-proposal; PRD thesis.)
+
+### Epic 8 (candidate): Player Fuel
+
+Depth from outside the roadmap: data-only mods (JSON manifests) and palette
+skins first; `.glb` model skins behind a spike (joint-name contract with the
+`render3d.js` rig). Serves surprise-by-escalation without touching the sim
+core's purity rules. Plotted post-v2; spike-gated.
+(Source: 2026-11-05 sprint-change-proposal; PRD thesis.)
 
 ## Epic 1: Ropes as Health
 
@@ -499,6 +520,10 @@ So that HP purchases carry insurance and trip decisions gain a second layer.
 As a ceiling-chasing builder,
 I want one extra jump available mid-air per ground contact,
 So that peak height becomes a skill expression of splitting the button press.
+
+**Thesis note (2026-11-05):** under the disguise thesis this is the first
+*designed* surprise beat — the hidden-depth discovery the player makes about
+their own build, authored rather than stumbled into.
 
 **Acceptance Criteria:**
 
