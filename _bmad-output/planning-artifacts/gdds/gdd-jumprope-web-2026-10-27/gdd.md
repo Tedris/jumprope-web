@@ -84,6 +84,13 @@ Core Gameplay). v1.0's open v2 candidates (CARD-08 rule-changing cards, CARD-09
 offer pacing, META-01 meta progression) remain, but this GDD gives them a
 direction: the ascent ladder.
 
+Homage posture (**adopted 2026-11-06**): the reference stays **structural** —
+one button, ropes as risk, pick-one-of-N, one climbing number — and never a
+quoted card name, card text, or copied effect wording from Scarlet Skips. Our
+cards keep their own voice (`Spare Rope`, `Steel Cord`, `Second Wind`); their
+published wording ("add a jump-rope") is research input, not copy to reuse.
+Same principle as the no-beat-lock line above: spirit, not letter.
+
 ---
 
 ## Core Gameplay
@@ -170,7 +177,12 @@ constant blank in real time regardless of rope count). During i-frames no rope
 scores and none can trip — a true blank on the clock. A trip strips the
 **fastest** rope (decided default: preserves the gentlest remaining state).
 Ropes are simultaneously the health bar, the multiplier, and the difficulty
-dial.
+dial — **confirmed 2026-11-06:** rope count *is* the climb-rate multiplier,
+measured linear at 1.00 / 1.97 / 2.92 / 3.84 / 4.73 × the one-rope rate for
+N = 1…5. `extrarope` therefore buys survival and throttle in a single pick and
+is deliberately the loudest card in the catalogue; its brakes are timing load
+(N windows per revolution, a miss costing a rope *and* a blank revolution) and
+the offer-frequency thermostat — never a score penalty (Catalogue rules 2).
 
 **Height & ascent (NEW — v2 core).** Altitude **is** score, at a fixed 2 u per
 point: `altitude += 2 × this pass's score` — point-generating cards climb,
@@ -223,6 +235,26 @@ Target additions (rule-beyond-multiplier; numbers first-pass, to be balanced):
 players farming peak height; Spare Rope is the only direct HP gain and its
 offer frequency is the run's difficulty thermostat; Wind-Up remains the risk
 rare, now deadlier *and* more rewarding under multi-rope.
+
+**Catalogue rules (adopted 2026-11-06).** These bind every row above and every
+row added later:
+
+1. **One axis, one card.** No two cards may sell the same axis at two strengths
+   unless the weaker is an explicit cap-extension tier and reads as one. The v1
+   table breaks this on three axes — hang time (`float`/`feather`), pass score
+   (`multi`/`tally`), forgiveness (`window`/`widebrim`) — which lands two
+   same-axis cards in one offer on 16% of pick-of-2 draws and 47% of pick-of-3
+   draws (20k seeded draws through the real `pickOffers`). Launch Heels joins
+   the hang/peak axis, taking pick-of-3 to 39%.
+2. **No upgrade reduces the score.** Hard rule, implicit costs included — score
+   *is* altitude (FR5), so a points cut and a slower rope are both climb cuts.
+   Measured over a trip-free 10 s headless window, policy bot, neutral baseline
+   16 u: Golden Handle +100%, Wind-Up +125%, Lucky Tally +15%, Heavy Rope −13%,
+   **Wide Brim −25%**; Cloud Shoes (+15% peak), Featherweight (+5% peak) and
+   Wide Stance move climb *rate* not at all — they buy ceiling headroom and
+   clearance. Two cards violate the rule today: `widebrim` (literal subtraction)
+   and `slowrope` (rate loss). Re-cost in Epic 3, numbers set by the Story 2.5
+   harness.
 
 **Controls and Input.**
 
@@ -290,13 +322,16 @@ rare, now deadlier *and* more rewarding under multi-rope.
 - **Synergies (load-bearing, for balance watch):** ropes × rope-speed
   (exponential pass frequency — Wind-Up + 5 ropes is the "panic" build);
   jump/float stack → ceiling-break pacing; High Jump × Second Wind → max peak.
-  Wide Brim is the designed trap pick (score now, suffer later).
+  Trap picks are off-design (Catalogue rules 2): no card pays in score.
 - **Build variety goal:** every run's build is legible in one sentence ("I was
   fast-rope/low-rope", "I was climb build"). Dead-pick filtering keeps offers
   always meaningful.
-- **Curse/risk mechanics:** Wind-Up Handle (speed for points) and Wide Brim
-  (forgiveness for points) are the only negatives; multi-rope converts the
-  whole late game into risk-management.
+- **Risk mechanics (re-costed 2026-11-06):** risk stays, the currency changes —
+  nothing pays in score. Wind-Up Handle keeps paying score *for* speed (its cost
+  is tripping); Wide Brim swaps `−0.25 pt/pass` for a hang-time or rope-speed
+  cost; Heavy Rope must buy its forgiveness without losing climb rate. Story 2.5
+  measures the neutral baseline the re-cost must clear. multi-rope still converts
+  the late game into risk-management.
 
 ### Character Selection
 
@@ -454,6 +489,11 @@ server; anything stored stays in the browser):
 - Summit reach: skilled-but-not-perfect testers reach the summit within ~5
   runs once epics 4–6 land; policy-bot summit rate in the 5–20% band.
 - Card pick rates show no dead card (every card picked ≥30% when offered).
+- No dominated duplicate: no card is strictly beaten by another card on the
+  same axis (Story 2.5 climb-value report; same-axis offer collisions trending
+  toward zero).
+- No score-negative pick: every card's measured climb rate clears the no-pick
+  baseline — literal subtractions and slower-rope rate losses alike.
 
 ---
 

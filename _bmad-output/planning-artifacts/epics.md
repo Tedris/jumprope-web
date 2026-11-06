@@ -90,6 +90,8 @@ From Architecture (technical requirements that impact epic/story creation):
 - Pure functional core / imperative shell: sim modules (`game.js`, `rope.js`, `player.js`, `upgrades.js`, `interpolate.js`) never touch DOM, `Date`, `Math.random`, or storage; never mutate; enforce via `tests/boundary.test.js` import-graph fence — no new mechanic may leak render authority into game state.
 - The shell passes a one-way immutable view payload to `render3d.js`; multi-rope, area, and charge state must flow through that same payload.
 - Effects stay pure endofunctions over an effects record; `ropeMul` capped per-card so stacked speed cards stay inside the rope-wrap bound by construction — new rope/charge/double-jump state must respect this pattern.
+- **Catalogue rule — one axis, one card** (adopted 2026-11-06): two cards may not offer the same effect axis at two strengths, unless the weaker one is an explicit cap-extension tier and reads as one. Measured on the shipped catalogue: 16% of pick-of-2 and 47% of pick-of-3 draws put two same-axis cards in one offer (`js/upgrades.js` — float/feather, multi/tally, window/widebrim); Launch Heels widens the peak-height axis to 39% at pick-of-3.
+- **Catalogue rule — no upgrade reduces the score** (adopted 2026-11-06): hard rule, all cards, implicit costs included. Since Story 2.1 `score += scoreMul` *is* altitude (`js/game.js:110-111`), a points cut is a climb cut. Two shipped cards violate it: Wide Brim (`scoreMul −0.25` → −25% climb rate) and Heavy Rope (`ropeMul ×0.9` → −13% climb rate). Re-cost in Epic 3, before Story 3.1 locks FR11's legacy-8 freeze; values measured by the Story 2.5 harness.
 - Invalid states are data (`status: 'over'`, `tripped: true`), never thrown errors — new win/lose/ascent states follow this.
 - Cross-cutting singletons: one shared handler per concern (`releaseEverything()`, `resumeRun()`, `snapGridFor()`) — pause/resume and input paths for new states must reuse them, not duplicate.
 - rng injected as a parameter (e.g. `tickRun`'s 5th arg); randomness (card draws only) deterministic under test.
@@ -441,11 +443,19 @@ So that every tuning decision from here on is measured, not guessed.
 **When** the harness sweeps values
 **Then** results are deterministic under seeded rng and the standard `node --test tests/` suite stays green in under 10 s with the gate included (NFR4)
 
+**Given** the harness run against the real `CARDS` catalogue with the policy bot
+**When** it reports per-card climb value (altitude gained over a fixed trip-free horizon, at 1 pick and at cap) plus peak-height delta
+**Then** it names every card dominated by another card on the same axis, and every card whose climb value is at or below the no-pick baseline — a rule report, not just numbers (catalogue rules; input to the FR11 gate)
+
+**Given** seeded offer draws over the catalogue
+**When** the harness counts same-axis collisions (two cards from one axis in one offer)
+**Then** it reports the collision rate for the pool, so a duplicate-axis fix is verified by that number falling (baseline: 16% at pick-of-2, 47% at pick-of-3)
+
 **And** the harness is positioned for Epic 6 to reuse as the balance master-dial (summit reach rate 5–20% band) without rework
 
 ## Epic 3: Rule-Changing Cards
 
-Upgrade picks change the rules, not just numbers: Spare Rope, Steel Cord charges, Second Wind double jump, Launch Heels — with offer filtering, number-key picking, and an owned-card HUD that shows state, not just multipliers. Legacy 8 cards are pinned unchanged.
+Upgrade picks change the rules, not just numbers: Spare Rope, Steel Cord charges, Second Wind double jump, Launch Heels — with offer filtering, number-key picking, and an owned-card HUD that shows state, not just multipliers. Legacy 8 cards are pinned unchanged, subject to the two catalogue rules in Additional Requirements: Story 2.5's rule report gates FR11's freeze (Story 3.1 gate note).
 
 **FRs covered:** FR10, FR11, FR12, FR13, FR14 · **NFRs:** NFR4, NFR5, NFR7
 
@@ -471,6 +481,10 @@ So that builds can diverge in kind, not just in degree.
 
 **And** catalogue metadata remains the single source of truth — test expectations derive from the records, not hardcoded tables (NFR5)
 
+**And** state-aware filtering gets real plumbing: `isAvailable(card, owned)` and `pickOffers(pool, owned, count, rng)` see only `owned` (`js/upgrades.js:40-49`) and the sim call site passes no run state (`js/game.js:128`) — the optional state argument must keep `tests/headless-sim.test.js:113` and the `pickTwo` shim (`js/upgrades.js:65-68`) link-compatible (FR10)
+
+**And** gate (2026-11-06): FR11's legacy-8 freeze is conditioned on the two catalogue rules. Story 2.5's rule report must first clear or re-cost Wide Brim and Heavy Rope (`sprint-change-proposal-2026-11-06.md`); a rule-driven re-cost is a sanctioned FR11 amendment, not a regression, and the affected frozen legs are re-authorized by the story that ships it.
+
 ### Story 3.2: Spare Rope & Launch Heels — the simple effects
 
 As a builder,
@@ -480,8 +494,8 @@ So that HP and climb builds have their foundational picks.
 **Acceptance Criteria:**
 
 **Given** a pick of Spare Rope while holding fewer than 5 ropes
-**When** `applyUpgrade` resolves
-**Then** rope count increases by 1 immediately, all ropes on the shared phase clock at even offsets, and the new rope is live from the next phase tick (FR12)
+**When** `applyCard` resolves as a whole-record patch (ADR-2 — `card.apply` receives only `run.effects` today (`js/game.js:218-225`), so this story pays the migration `game-architecture.md:209` already authorized; the card must stay shape-safe because `tests/headless-sim.test.js:144-148` calls `card.apply(freshEffects())` on every card)
+**Then** rope count increases by 1 immediately — the **clamped** value written (`clampRopes`, `js/game.js:33-39`) — all ropes on the shared phase clock at even offsets, and the new rope is live from the next phase tick (FR12)
 
 **Given** Spare Rope is somehow applied at 5 ropes (defensive)
 **When** the transition resolves
@@ -491,7 +505,9 @@ So that HP and climb builds have their foundational picks.
 **When** subsequent jumps launch
 **Then** launch velocity is multiplied by 1.10 per owned copy (up to 3), stacking multiplicatively with hold-height and hang-time effects — the jump *timing* contract (no coyote time, instant-grounded landing) is untouched (FR12, FR17 protected)
 
-**And** effects are implemented as pure endofunctions over the effects record following the `*Mul` convention, with red-green legs for stack order and cap limits (NFR5)
+**And** multiplier-shaped effects (Launch Heels) stay pure endofunctions over the effects record following the `*Mul` convention; run-shaped cards (Spare Rope) patch the whole record instead — the two shapes coexist by ADR-2, and the "pure endofunction" clause binds only the multiplier subset (the v1-style wording this story replaces)
+
+**And** `card.role` keeps one of the five shipped role strings (`tests/catalogue.test.js:39-40` deep-equals the exact set) — the GDD's "HP"/"mobility" labels are prose, not field values — and `card.color` maps to an existing `role-*` CSS class (`js/shell.js:447`), mint per the UX assumption for rope cards (NFR5)
 
 ### Story 3.3: Steel Cord — charges that survive one trip
 
