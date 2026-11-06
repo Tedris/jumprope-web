@@ -7,6 +7,9 @@ import { AREAS } from './areas.js';
 // frozen bootShell harness only rewrites the game/rope/player/render3d
 // specifiers, so shell.js must not gain a direct './upgrades.js' import.
 export { CARDS } from './upgrades.js';
+// Story 2.3 (FR8): the ceiling marker reads the ladder through the same
+// harness-rewritten channel — shell must not import areas.js directly.
+export { AREAS } from './areas.js';
 
 export const START_PHASE = 0.33;
 export const ROPE_PERIOD = 1.3;

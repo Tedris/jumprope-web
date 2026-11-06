@@ -1,4 +1,4 @@
-import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES } from './game.js';
+import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
@@ -83,6 +83,15 @@ export function startGame(canvas) {
   // Space/canvas cycle path — releaseEverything/enterPause hygiene unchanged.
   const hudRoot = typeof document.createElement === 'function' ? document.getElementById('hud') : null;
   const cards = hudRoot && typeof hudRoot.appendChild === 'function' ? setupCards(hudRoot) : null;
+
+  // Story 2.3 (FR8): the ceiling marker — runtime span on the cards-gating
+  // idiom, so the frozen DOM-less harnesses never see a new node.
+  const markerEl = hudRoot && (() => {
+    const el = document.createElement('span');
+    el.className = 'hud-marker';
+    hudRoot.appendChild(el);
+    return el;
+  })();
 
   let rope = createRope(ROPE_PERIOD);
   let player = createPlayer();
@@ -473,6 +482,16 @@ export function startGame(canvas) {
     };
   }
 
+  // Story 2.3 (FR8): distance-to-ceiling is the SAME sum tickRun judges
+  // (altitude + player.y vs the area ceiling) — display math on the one-way
+  // payload; no new clock, no new record field, no renderer truth.
+  function markerLine(run, player) {
+    if (run.status !== 'running') return '';
+    const area = run.area ?? 1;
+    const dist = Math.max(0, Math.ceil(AREAS[area - 1].ceiling - run.altitude - player.y));
+    return (area === SUMMIT_AREA ? 'summit ' : 'ceiling ') + dist + ' \u2191';
+  }
+
   function updateHud() {
     hudScore.textContent = String(Math.round(run.altitude));
     hudBest.textContent = 'best ' + Math.round(Math.max(best, run.altitude));
@@ -482,6 +501,7 @@ export function startGame(canvas) {
       .map(c => c.icon.repeat(owned[c.id]))
       .join(' ');
     if (cards) cards.render();
+    if (markerEl) markerEl.textContent = markerLine(run, player);
     let prompt = '';
     let roleClass = '';
     if (paused) {

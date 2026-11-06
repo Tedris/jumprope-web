@@ -82,3 +82,7 @@ canvas {
 .card-owned { font-size: 11px; color: #9aa7b4; }
 .card-fill { width: 100%; height: 6px; background: #4d4a3e; }
 .card-fill-bar { height: 100%; width: 0%; background: #f4f0d8; }
+
+/* Story 2.3 (FR8): the ceiling marker line — DESIGN.md 20px marker voice,
+   in-flow inside the #hud column so the letterbox path carries it (NFR7). */
+.hud-marker { font-size: 20px; }
