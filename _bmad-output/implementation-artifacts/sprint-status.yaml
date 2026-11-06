@@ -1,5 +1,5 @@
 # generated: 2026-10-28
-# last_updated: 2026-11-05
+# last_updated: 2026-11-06
 # project: jumprope-web
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-10-28
-last_updated: 2026-11-05
+last_updated: 2026-11-06
 project: jumprope-web
 project_key: NOKEY
 tracking_system: file-system
@@ -56,7 +56,7 @@ development_status:
   2-1-score-is-altitude-one-number-everywhere: done
   2-2-jump-peak-vs-ceiling-and-the-summit-win: done
   2-3-the-ceiling-marker-telegraph-the-moon-jump: done
-  2-4-win-loss-presentation-with-true-permadeath: review
+  2-4-win-loss-presentation-with-true-permadeath: done
   2-5-ascent-economy-balance-harness: backlog
   epic-2-retrospective: optional
 

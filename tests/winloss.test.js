@@ -85,7 +85,6 @@ async function bootWinlossShell({ dom = true, best } = {}) {
     requestAnimationFrame: globalThis.requestAnimationFrame,
     localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
     performance: Object.getOwnPropertyDescriptor(globalThis, 'performance'),
-    __wlScript: globalThis.__wlScript,
     consoleError: console.error,
   };
   globalThis.document = documentStub;
@@ -316,9 +315,17 @@ test('a fresh press-release over the over screen restarts exactly once', async (
     env.handlers.window.keyup({ code: 'Space' });
     tick(env, 100);
     assert.equal(env.views.at(-1).run.status, 'running', 'fresh press restarts');
-    for (let i = 0; i < 4; i++) tick(env);
+    // Witness against a silent second startRun: the lead-in hop's vy falls
+    // monotonically while airborne (flight ~444 ms outlasts this window);
+    // a second start would re-fire it at 400.
+    let vy = env.views.at(-1).player.vy;
+    for (let i = 0; i < 4; i++) {
+      tick(env);
+      assert.ok(env.views.at(-1).player.vy < vy, 'no silent second startRun');
+      vy = env.views.at(-1).player.vy;
+    }
     const r = env.views.at(-1).run;
-    assert.equal(r.status, 'running', 'still the one restarted run (no silent second startRun)');
+    assert.equal(r.status, 'running', 'still the one restarted run');
     assert.ok(!/Missed|Summit/.test(env.hud['hud-prompt'].textContent), 'the over copy is gone for good');
   } finally { env.restore(); }
 });
@@ -332,6 +339,27 @@ test('blur on the over screen restarts nothing', async () => {
     env.handlers.window.blur();
     for (let i = 0; i < 4; i++) tick(env);
     assert.equal(env.views.at(-1).run.status, 'over', 'focus loss never restarts a dead run (T-05-07)');
+  } finally { env.restore(); }
+});
+
+test('a hold charged before the death cannot jump the restarted run', async () => {
+  const env = await bootWinlossShell();
+  try {
+    startRunning(env);
+    landFirst(env);
+    env.handlers.window.keydown({ code: 'Space', repeat: false, preventDefault() {} });
+    for (let i = 0; i < 400 && env.views.at(-1).run.status === 'running'; i++) tick(env);
+    assert.equal(env.views.at(-1).run.status, 'over', 'the run tripped while the key was held');
+    env.handlers.window.keyup({ code: 'Space' });
+    env.handlers.window.keydown({ code: 'Space', repeat: false, preventDefault() {} });
+    env.handlers.window.keyup({ code: 'Space' });
+    tick(env, 100);
+    assert.equal(env.views.at(-1).run.status, 'running', 'the fresh press restarted');
+    const vy = env.views.at(-1).player.vy;
+    env.handlers.window.blur();
+    tick(env);
+    assert.ok(env.views.at(-1).player.vy <= vy,
+      'blur fires no phantom jump — the pre-death hold died with the run');
   } finally { env.restore(); }
 });
 

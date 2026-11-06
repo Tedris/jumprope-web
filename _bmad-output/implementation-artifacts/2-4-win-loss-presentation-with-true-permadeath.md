@@ -4,7 +4,7 @@ baseline_commit: d4c19136533410b1624b34ce1b7c313d5f96aa43
 
 # Story 2.4: Win & loss presentation with true permadeath
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -46,6 +46,13 @@ So that the run's ending lands as an event and I know exactly what to beat next 
   - [x] Sim event leg (Node-side, no shell): craft a tick that crosses the 10th skip AND breaks the summit ceiling together (run `{ area: 5, altitude: AREAS[4].ceiling + 2, skips: 9, status: 'running', ... }`, rope crafted to cross on this tick — copy phase-craft from tests/ascent.test.js / tests/altitude.test.js) → events include `'win'`, do NOT include `'offer'`.
 - [x] Task 4: `tests/ascent.test.js` — re-contract the interim fence (AC: 1)
   - [x] AUTHORIZED FENCE EDITS (both legs are interim fences this story replaces): (1) tests/ascent.test.js:405-406 asserts `''` with the comment "interim: empty win prompt — story 2.4 owns the Summit. copy" → replace exactly those two lines to assert `/^Summit\. Altitude \d+ best \d+$/`. (2) tests/uxpolish.test.js:216 pins `^Missed! Score N$` — the copy this story replaces → change that one assertion to `/^Missed! Altitude \d+( best \d+)?$/`. No other change to these frozen files may appear in the diff.
+
+### Review Findings
+
+- [x] [Review][Patch] FIXED — Stale jump-hold survives the restart — phantom full-power jump on the next focus loss [js/shell.js:141-145] — `startFreshRun` doesn't clear `holdFrom`/`pressIntent`: die with the key held → press+release restart → `blur()` fires `jump()` from the pre-death hold (probe: vy 220→510, altitude still 0). Leaks state across the run boundary, against the AC3 contract; predates this story (repro's on d4c1913 too) but the fix is one line in this story's own helper + a regression leg in tests/winloss.test.js.
+- [x] [Review][Patch] FIXED — Loss-copy fence no longer pins the altitude value [tests/uxpolish.test.js:216] — the re-contracted `/^Missed! Altitude \d+( best \d+)?$/` matches any integer; the leg's stated contract is "fractional altitude renders as an integer in the missed line". Tightened to the value-exact tolerant form (`Math.round(altOver)` interpolated).
+- [x] [Review][Patch] FIXED — "restarts exactly once" leg cannot detect a double `startRun` [tests/winloss.test.js:436-451] — now witnessed by the lead-in hop's strictly falling vy across the post-restart window: a silent second start re-fires it to 400.
+- [x] [Review][Patch] FIXED — Dead harness snapshot key [tests/winloss.test.js:215] — dropped `saved.__wlScript`; `restore()` deletes the global directly.
 
 ## Dev Notes
 
@@ -101,7 +108,7 @@ lane-qwen38-ultra/qwen (omp agent session, 2026-11-05)
 ### Completion Notes List
 - `js/shell.js`: `bestAtStart`/`restartArmed` locals; `startFreshRun()` at both start sites; over press branch arms restart, release branch gated; prompt ladder split into summit (amber, always best tail) vs loss (bone, new-best tail only).
 - `js/game.js`: summit tick splices the ghost `'offer'` cue out of the const events array (deferred-work claim, closed).
-- `tests/winloss.test.js` NEW: 10 legs — copy pair, new-best control, permadeath via loss AND win, keyboard/pointer/blur hygiene, sim-channel pin. 270/270 full suite.
+- `tests/winloss.test.js` NEW: 11 legs — copy pair, new-best control, permadeath via loss AND win, keyboard/pointer/blur hygiene, phantom-jump hold-leak regression, sim-channel pin. 271/271 full suite.
 - Frozen discipline held: only the two AUTHORIZED fence legs touched (verified via `git diff d4c1913 -- tests/`); no CSS/index.html/audio changes.
 - Deferred-work.md: the win-tick 'offer' claim is now FIXED — strike it on the next docs touch.
 
@@ -109,10 +116,11 @@ lane-qwen38-ultra/qwen (omp agent session, 2026-11-05)
 
 - js/game.js (modified — summit-tick offer-event splice + comment)
 - js/shell.js (modified — bestAtStart/restartArmed, startFreshRun, press-armed restart, win/loss prompt ladder)
-- tests/winloss.test.js (new — 10 legs, dual-shape harness)
+- tests/winloss.test.js (new — 11 legs, dual-shape harness)
 - tests/ascent.test.js (authorized fence re-contract at :405-406 ONLY)
 - tests/uxpolish.test.js (authorized fence re-contract at :216 ONLY)
 
 ### Change Log
 
 - 2026-11-05: Story 2.4 implemented — win/loss presentation (Summit./Missed! Altitude copy, amber win, new-best tail), press-armed permadeath restart, ghost-offer channel claim closed; 10 new legs + 2 authorized re-contracts, 270/270 green. Status → review.
+- 2026-11-06: Code review (3 adversarial layers): 4 patches applied — phantom-jump hold leak cleared in startFreshRun (+1 regression leg, red-green proven), uxpolish loss fence made value-exact, restart-once leg given a vy-monotonic witness, dead harness key dropped. 2 dismissed (auto-repeat filtered at js/shell.js:281; harness idiom copy per Task 3). 271/271 green. Status → done.

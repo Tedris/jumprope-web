@@ -138,8 +138,12 @@ export function startGame(canvas) {
   // drain's wrap compare. One shared handler, no per-path duplication.
   const rearmCalloutGate = (sim) => { revCount++; return sim; };
   // The one permadeath start: fresh baseline record, pips reset, best snapshot.
+  // A hold charged in the dying run must not cross the boundary — a stale
+  // holdFrom lets releaseEverything fire a phantom jump inside the fresh run.
   function startFreshRun() {
     bestAtStart = best;
+    holdFrom = null;
+    pressIntent = null;
     resetPips();
     ({ rope, player, run } = rearmCalloutGate(startRun()));
   }
