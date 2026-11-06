@@ -50,3 +50,7 @@
 - **i-frame-suppressed summit peak is not banked** (`js/game.js` ceiling-check gate `iframesLeft === 0`) — the check is level-triggered, so the win re-fires on a later live tick; live play is bounded (the blank drains ≤ 1 revolution and `altitude` alone crossing re-fires regardless of arc), but a crafted crossing-starved record with `iFrames: 1` resolves forever. Story 4.5 must pin the deferral semantics in its i-frame interlock text.
 - **Fourth bootShell fork captures `console.error` without asserting it** (`tests/ascent.test.js` `bootAscentShell`) — the `errors` array is collected and discarded, so any render-path `console.error` on the summit legs passes unnoticed; same ~90-line harness duplication as the extraction chore at :44 — fold the assertion in when the shared `tests/support/shell-harness.js` lands.
 
+## Deferred from: code review of story 2-3-the-ceiling-marker-telegraph-the-moon-jump (2026-11-05)
+
+- **Marker pins `ceiling 0 ↑` while i-frames suppress the ascend** (`js/shell.js` markerLine vs `js/game.js` ceiling-check gate) — during a rope-stripped blank with ≥2 ropes, the telegraph promises the ceiling for up to ~1.3 s per remaining i-frame and the sim refuses to break it; the suppression is intentional (Story 4.5 interlock), so the fix is a marker-side blocked-at-ceiling arm (dim/blink the line while `iframesLeft > 0` and dist is 0). Claim in Epic 4/5's ascent-polish pass alongside the 4.5 deferral pin.
+

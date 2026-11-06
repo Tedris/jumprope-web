@@ -85,13 +85,20 @@ export function startGame(canvas) {
   const cards = hudRoot && typeof hudRoot.appendChild === 'function' ? setupCards(hudRoot) : null;
 
   // Story 2.3 (FR8): the ceiling marker — runtime span on the cards-gating
-  // idiom, so the frozen DOM-less harnesses never see a new node.
-  const markerEl = hudRoot && (() => {
+  // idiom, so the frozen DOM-less harnesses never see a new node. DESIGN's HUD
+  // order puts the marker between the rope pips and the owned line, hence the
+  // insertBefore path; it is capability-probed so appendChild-only stubs
+  // (frozen harnesses) keep booting via the old placement.
+  const markerEl = hudRoot && typeof hudRoot.appendChild === 'function' ? (() => {
     const el = document.createElement('span');
     el.className = 'hud-marker';
-    hudRoot.appendChild(el);
+    if (typeof hudRoot.insertBefore === 'function') {
+      hudRoot.insertBefore(el, hudOwned ?? null);
+    } else {
+      hudRoot.appendChild(el);
+    }
     return el;
-  })();
+  })() : null;
 
   let rope = createRope(ROPE_PERIOD);
   let player = createPlayer();
@@ -487,7 +494,10 @@ export function startGame(canvas) {
   // payload; no new clock, no new record field, no renderer truth.
   function markerLine(run, player) {
     if (run.status !== 'running') return '';
-    const area = run.area ?? 1;
+    // story area ?? 1 heal covers only nullish; crafted out-of-domain areas are
+    // data, clamped at read like clampRopes — a throw here would skip
+    // scene.render on every subsequent frame.
+    const area = Math.min(Math.max(Math.round(Number.isFinite(run.area) ? run.area : 1), 1), AREAS.length);
     const dist = Math.max(0, Math.ceil(AREAS[area - 1].ceiling - run.altitude - player.y));
     return (area === SUMMIT_AREA ? 'summit ' : 'ceiling ') + dist + ' \u2191';
   }

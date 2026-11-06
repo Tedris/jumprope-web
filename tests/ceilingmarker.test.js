@@ -34,6 +34,7 @@ function makeDom() {
       get className() { return this._cn; },
       set className(v) { this._cn = v; },
       appendChild(c) { this.children.push(c); return c; },
+      insertBefore(c, ref) { const i = this.children.indexOf(ref); if (i < 0) this.children.push(c); else this.children.splice(i, 0, c); return c; },
       replaceChildren(...cs) { this.children = cs; },
       addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); },
       fire(type, ev = {}) { for (const fn of this.listeners[type] ?? []) fn(ev); },
@@ -47,19 +48,23 @@ function makeDom() {
 async function bootCeilingShell({ dom }) {
   const frames = [];
   const handlers = { window: {}, canvas: {} };
+  const { created, mk } = makeDom();
   const hudEls = {
-    'hud-score': { textContent: '' },
-    'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' },
-    'hud-owned': { textContent: '' },
+    'hud-score': mk('span'),
+    'hud-best': mk('span'),
+    'hud-prompt': mk('span'),
+    'hud-owned': mk('span'),
   };
   const canvas = {
     width: 0, height: 0, style: {},
     addEventListener: (type, fn) => { handlers.canvas[type] = fn; },
   };
-  const { created, mk } = makeDom();
   const hudRoot = mk('div');
   if (dom) hudEls['hud-ropes'] = mk('span');
+  // Seed index.html's real #hud children so the marker's insertBefore slot
+  // (pips → marker → owned, DESIGN HUD order) is observable.
+  for (const el of [hudEls['hud-score'], hudEls['hud-best'], hudEls['hud-ropes'],
+    hudEls['hud-prompt'], hudEls['hud-owned']]) if (el) hudRoot.appendChild(el);
   const documentStub = dom
     ? {
         hidden: false,
@@ -73,7 +78,7 @@ async function bootCeilingShell({ dom }) {
     getItem: k => (map.has(k) ? map.get(k) : null),
     setItem: (k, v) => { map.set(k, v); },
   };
-  const script = { forceScore: undefined, forceArea: null, chooseOffer: null, armed: false };
+  const script = { forceScore: undefined, forceArea: null, forceAreaOut: null, chooseOffer: null, armed: false };
   globalThis.__cmScript = script;
   const views = [];
   globalThis.__shellTestViews = views;
@@ -108,9 +113,11 @@ async function bootCeilingShell({ dom }) {
     'export const tickRun = (...args) => {',
     '  const s = globalThis.__cmScript;',
     '  let a = args;',
-    '  if (s.forceArea) a = [{ ...args[0], area: s.forceArea }, ...args.slice(1)];',
+    '  if (s.forceArea !== null) a = [{ ...args[0], area: s.forceArea }, ...args.slice(1)];',
+    '  if (s.forceAreaOut !== null) a = [{ ...args[0], area: Math.min(Math.max(Math.round(Number.isFinite(s.forceAreaOut) ? s.forceAreaOut : 1), 1), real.AREAS.length) }, ...args.slice(1)];',
     '  let out = real.tickRun(...a);',
     '  if (s.forceScore !== undefined) out = { ...out, run: { ...out.run, score: s.forceScore, altitude: s.forceScore * real.ALT_PER_POINT } };',
+    '  if (s.forceAreaOut !== null) out = { ...out, run: { ...out.run, area: s.forceAreaOut } };',
     '  if (s.chooseOffer && !s.armed && out.run.status === "running") {',
     '    s.armed = true;',
     '    out = { ...out, run: { ...out.run, status: "choose", offer: s.chooseOffer } };',
@@ -157,7 +164,9 @@ function startRunning(env) {
 
 // startRun()'s leadIn ships a PRE-LAUNCHED hop (game.js leadIn: player =
 // jump(createPlayer(), 0.1)) — strict-number legs assert only after that hop
-// lands; the first rope pass arrives at ~0.87 s, so the wait never trips.
+// lands. The first rope pass is the rising edge at (0.45−0.33)×1.3 ≈ 0.156 s
+// and it is survived AIRBORNE (hop y ≈ 40 > minHeight 18), not because it
+// arrives late.
 function landFirst(env) {
   for (let i = 0; i < 30 && !env.views.at(-1).player.grounded; i++) tick(env);
   assert.equal(env.views.at(-1).player.grounded, true, 'the start hop landed');
@@ -207,6 +216,24 @@ test('marker flips its target when the area flips (ladder derivation, one step)'
   } finally { env.restore(); }
 });
 
+// The flip leg above stamps area from the harness; this leg watches the SIM
+// ascend — an altitude pinned a hair over the ceiling breaks it at the next
+// rope crossing (strict-`>` semantics, Story 2.2) — and the marker follows.
+test('a physical ascend flips the marker target end-to-end', async () => {
+  const env = await bootCeilingShell({ dom: true });
+  try {
+    startRunning(env);
+    landFirst(env);
+    env.script.forceScore = (AREAS[0].ceiling + 2) / ALT_PER_POINT;
+    for (let i = 0; i < 30 && env.views.at(-1).run.area === 1; i++) tick(env);
+    const { run, player } = env.views.at(-1);
+    assert.equal(run.area, 2, 'the real sim crossed the ceiling (no forceArea involved)');
+    assert.equal(marker(env).textContent,
+      'ceiling ' + Math.max(0, Math.ceil(AREAS[1].ceiling - run.altitude - player.y)) + ' ↑',
+      'the marker target followed the sim into the next area');
+  } finally { env.restore(); }
+});
+
 test('at the ceiling the distance clamps to zero without faking an ascent', async () => {
   const env = await bootCeilingShell({ dom: true });
   try {
@@ -214,6 +241,10 @@ test('at the ceiling the distance clamps to zero without faking an ascent', asyn
     env.script.forceArea = 1;
     landFirst(env); // grounded first: an airborne peak at-ceiling would legally ascend
     env.script.forceScore = AREAS[0].ceiling / ALT_PER_POINT; // peak EXACTLY at the ceiling
+    // Tick twice: the wrapper stamps altitude on the OUTPUT, so only from
+    // tick 2 does the sim's own INPUT carry the ceiling altitude while the
+    // crossing check runs — the strict-`>` claim needs the sim to see it.
+    tick(env);
     tick(env);
     assert.equal(marker(env).textContent, 'ceiling 0 ↑', 'clamped floor of the distance formula');
     assert.equal(env.views.at(-1).run.status, 'running', 'strict > means at-ceiling is not an ascent');
@@ -239,19 +270,23 @@ test('marker counts down through the jump arc from payload alone', async () => {
     let minDist = start;
     let prevY = null;
     let prevD = start;
+    let dropped = false;
     for (let i = 0; i < 10; i++) {
       tick(env);
       const { player, run } = env.views.at(-1);
+      assert.equal(run.status, 'running', `frame ${i}: mid-arc — a trip here would skew the countdown`);
       const d = markerDist(env);
       assert.equal(d, Math.max(0, Math.ceil(AREAS[0].ceiling - run.altitude - player.y)),
         `frame ${i}: the marker IS the payload formula — no renderer/sim truth added`);
       if (prevY !== null && player.y > prevY) {
-        assert.ok(d < prevD, `frame ${i}: climbing means the number dropped`);
+        assert.ok(d <= prevD, `frame ${i}: climbing never raises the number`);
+        if (d < prevD) dropped = true;
       }
       minDist = Math.min(minDist, d);
       prevY = player.y;
       prevD = d;
     }
+    assert.ok(dropped, 'the climb strictly dropped the number at least once');
     assert.ok(minDist < start, 'the climb visibly counted down toward the ceiling');
   } finally { env.restore(); }
 });
@@ -286,6 +321,7 @@ test('idle, choose, and over records leave the marker blank', async () => {
 
     env.handlers.window.keydown({ code: 'Space', repeat: false, preventDefault() {} });
     tick(env); // running
+    assert.notEqual(marker(env).textContent, '', 'running first: makes the blank asserts below falsifiable');
     env.script.chooseOffer = [CARDS[0], CARDS[1]];
     tick(env); // choose via the wrapper
     assert.equal(env.views.at(-1).run.status, 'choose');
@@ -302,7 +338,37 @@ test('idle, choose, and over records leave the marker blank', async () => {
   } finally { env2.restore(); }
 });
 
-// ---------- AC4: frozen-harness shape — no createElement, no layer ----------
+// ---------- HUD slot 3 (DESIGN order: pips → marker → owned) ----------
+
+test('the marker sits between the rope pips and the owned line', async () => {
+  const env = await bootCeilingShell({ dom: true });
+  try {
+    const kids = env.hudRoot.children;
+    const i = kids.indexOf(marker(env));
+    assert.ok(i > kids.indexOf(env.hud['hud-ropes']), 'marker below the rope pips');
+    assert.ok(i < kids.indexOf(env.hud['hud-owned']), 'marker above the owned line');
+  } finally { env.restore(); }
+});
+
+test('a crafted out-of-domain area clamps at read instead of throwing', async () => {
+  // markerLine's `?? 1` only heals nullish; the clamp (clampRopes doctrine)
+  // must survive 0/NaN/past-the-end — an updateHud throw would freeze
+  // scene.render every subsequent frame. The payload carries the crafted
+  // value; real.tickRun gets a clamped stand-in (its own guard defers to 4.1).
+  for (const [area, row] of [[0, 1], [9, AREAS.length], [2.5, 3], [NaN, 1]]) {
+    const env = await bootCeilingShell({ dom: true });
+    try {
+      startRunning(env);
+      env.script.forceAreaOut = area; // payload-only: the sim has no domain guard until 4.1
+      env.script.forceScore = 40 / ALT_PER_POINT;
+      for (let i = 0; i < 8; i++) tick(env); // land on t=450, the first sim tick
+      const { run, player } = env.views.at(-1);
+      assert.equal(markerDist(env),
+        Math.max(0, Math.ceil(AREAS[row - 1].ceiling - run.altitude - player.y)),
+        `crafted area ${area} clamps into the ladder marker-side`);
+    } finally { env.restore(); }
+  }
+});
 
 test('without createElement the marker layer never exists and nothing throws', async () => {
   const env = await bootCeilingShell({ dom: false });

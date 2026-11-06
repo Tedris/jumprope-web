@@ -85,4 +85,5 @@ canvas {
 
 /* Story 2.3 (FR8): the ceiling marker line — DESIGN.md 20px marker voice,
    in-flow inside the #hud column so the letterbox path carries it (NFR7). */
-.hud-marker { font-size: 20px; }
+/* DESIGN token `marker` (#8fd3ff) — HUD slot 3 identity, readiness M-1. */
+.hud-marker { font-size: 20px; color: #8fd3ff; }

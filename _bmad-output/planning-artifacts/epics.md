@@ -104,7 +104,7 @@ From Architecture (technical requirements that impact epic/story creation):
 - UX-relevant requirements are carried in the GDD (Controls and Input, HUD
   notes) and captured above as FR4, FR8, FR13, FR14, FR16, FR22–FR23. The
   visual/interaction spec lives at
-  [`ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md`](../ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md)
+  [`ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md`](ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md)
   (HUD slots, prompt voice, role colors); re-validate this section against it
   when new screens (e.g. Epic 7 candidates) are planned.
 

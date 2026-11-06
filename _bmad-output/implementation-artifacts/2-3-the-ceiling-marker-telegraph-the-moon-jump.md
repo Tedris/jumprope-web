@@ -3,7 +3,7 @@ baseline_commit: ef4880a2e47d8f8273f8b42171db85d35dfeb2f5
 ---
 # Story 2.3: The ceiling marker — telegraph the moon-jump
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -36,6 +36,22 @@ so that every big jump is a deliberate swing at a visible target.
   - [x] Summit leg: `area = SUMMIT_AREA` → `summit …` prefix; area 4 → `ceiling …` prefix (contrast pair).
   - [x] Status legs: idle / choose / over records → marker text is `''`.
   - [x] Frozen-harness leg: boot under the 4-key fixed hud map WITHOUT createElement → no throw, no marker node (proved by this new file booting both variants).
+
+
+### Review Findings
+
+- [x] [Review][Patch] Marker lands in HUD slot 6, spec says slot 3 — appendChild puts it below hud-owned; DESIGN.md HUD order is altitude → pips → marker → owned. Fix: `hudRoot.insertBefore(el, document.getElementById('hud-owned'))` (insertBefore(el, null) ≡ appendChild in stubs; index.html untouched) [js/shell.js:89] — FIXED: insertBefore with capability probe (frozen stubs lack insertBefore → appendChild fallback); placement leg boots a seeded #hud and asserts pips < marker < owned.
+- [x] [Review][Patch] Marker ships default bone color; DESIGN `marker` token #8fd3ff was assigned to this story by readiness item M-1 (Epic-5 deferral cited covers the break moment, not the HUD token) [css/style.css:.hud-marker] — FIXED: `color: #8fd3ff` on `.hud-marker`.
+- [x] [Review][Patch] Marker creation skips the `typeof hudRoot.appendChild === 'function'` capability check that the cards idiom two lines above uses — hud-root-without-appendChild stub throws at module eval and kills boot [js/shell.js:87-95] — FIXED: gate mirrors the cards line.
+- [x] [Review][Patch] `markerLine` throws on crafted out-of-domain `run.area` (0/2.5/6/NaN — `??` heals only nullish); throw inside updateHud precedes scene.render → 3D view freezes every frame. `?? 1` heal claim in Dev Notes is false as written. Fix: clamp-at-read like clampRopes [js/shell.js:488-493] — FIXED: round+clamp into 1..AREAS.length (NaN→1); new crafted-area leg (payload-side stamp; the SIM-side guard stays deferred to 4.1 per deferred-work).
+- [x] [Review][Patch] Clamp leg is vacuous for its sim claim — harness stamps altitude on the OUTPUT after real tickRun judged the crossing on the INPUT (~40); sim never evaluates peak==ceiling. Fix: tick once more with forceScore live (grounded → stable pin) so the crossing check sees ceiling-altitude [tests/ceilingmarker.test.js clamp leg] — FIXED: two pinned ticks; tick 2's INPUT carries the ceiling altitude into the crossing check.
+- [x] [Review][Patch] Countdown leg asserts strictly-decreasing dist where the task specifies non-increasing; near-apex <1u frames make d flat → red on any physics retune. Fix: non-increasing every frame + ≥1 strictly-dropped frame [tests/ceilingmarker.test.js AC2 leg] — FIXED, plus per-frame status 'running' guard.
+- [x] [Review][Patch] Task 3's ascend-tick target flip is compositional (forceArea stamp + ascent.test.js), not end-to-end — no leg observes a sim ascend flipping the marker. Fix: physical leg — ground at ceiling−50 via score pin, repeat 0.5s-hold hops until area flips in the real output, assert marker reads AREAS[1] target [tests/ceilingmarker.test.js new leg] — FIXED differently: pinned a hair OVER the ceiling (altitude-only crossing, no hop-timing coupling — a scripted-hop variant can trip on grounded passes); area flips in the real sim output.
+- [x] [Review][Patch] Idle-blank assertion is unfalsifiable — marker never had content in that env; prove non-empty while running first, then blank on choose [tests/ceilingmarker.test.js status leg] — FIXED.
+- [x] [Review][Patch] landFirst comment misstates the first rope pass (~0.87 s is the phase-wrap; the rising edge is (0.45−0.33)×1.3 ≈ 0.156 s and it passes safely because the lead-in hop is airborne over it) [tests/ceilingmarker.test.js:158-160] — FIXED.
+- [x] [Review][Patch] Countdown loop has no per-frame status precondition — a mid-loop trip surfaces as a formula-mismatch message; assert status 'running' each frame [tests/ceilingmarker.test.js AC2 leg] — FIXED.
+- [x] [Review][Patch] Dangling DESIGN.md references: story References cites `_bmad-output/ux-designs/...`; real path is `_bmad-output/planning-artifacts/ux-designs/...` (epics.md:107 `../ux-designs/` link also resolves one level too high) [story References; epics.md:107] — FIXED both.
+- [x] [Review][Defer] Marker pins `ceiling 0 ↑` while i-frames suppress the ascend (rope-stripped, ≥2 ropes: up to ~1.3 s per remaining i-frame of unkept telegraph) — sim-side deferral is intentional (Story 4.5 interlock); marker has no blocked-at-ceiling arm. Deferred to Epic 4/5 polish [js/shell.js:491 vs js/game.js:179-195]
 
 ## Dev Notes
 
@@ -99,7 +115,7 @@ No `project-context.md` exists; binding rules come from `AGENTS.md` + `architect
 
 - [Source: _bmad-output/planning-artifacts/epics.md#Story 2.3 :384-403] — ACs verbatim
 - [Source: _bmad-output/planning-artifacts/epics.md#FR8/NFR7 :36, :79] + FR Coverage Map :120 (Epic 5 polishes the moment)
-- [Source: _bmad-output/ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md#HUD :86] — marker line spec, lowercase voice, 20px
+- [Source: _bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md#HUD :86] — marker line spec, lowercase voice, 20px, marker color token
 - [Source: _bmad-output/planning-artifacts/architecture.md] + game-architecture.md:67 (ascent surfaces, one-way payload)
 - [Source: js/areas.js, js/game.js:4-28, js/shell.js:84-85, :372-382, :476-530] — substrate as shipped
 
@@ -113,6 +129,7 @@ lane-qwen38-ultra/qwen (omp agent session, 2026-11-05)
 - Red phase: `tests/ceilingmarker.test.js` failed at link (AREAS absent from game.js exports), all other suites green (250 pass).
 - Strict-number legs initially reddened +30u: diagnosis (instrumented wrapper in a scratch copy — repos untouched) proved `startRun()`/`leadIn()` ship a PRE-LAUNCHED hop (`player = jump(createPlayer(), 0.1)`, vy 400, peak ≈44u). Not a bug — shipped since the v1 lead-in; legs now land the hop first (`landFirst`). The clamp leg additionally forces at-ceiling altitude only AFTER landing, since an airborne peak above the ceiling would legitimately ascend.
 - 7/7 marker legs green; full suite 257/257 in <9 s.
+- Review round (three adversarial layers): clamp-leg vacuity traced to the wrapper stamping altitude on tickRun's OUTPUT; crafted-area leg reddened in the SIM (`crossesCeiling` reads `AREAS[area-1]` EVERY tick, not just on crossings — game.js:185) → leg stamps payload-only with a clamped stand-in into real tickRun; wrapper `forceArea` truthiness silently skipped 0/NaN stamps → `!== null`.
 
 ### Completion Notes List
 - `js/game.js`: one-line `export { AREAS } from './areas.js';` re-export (CARDS-channel idiom); zero behavior change.
@@ -121,6 +138,7 @@ lane-qwen38-ultra/qwen (omp agent session, 2026-11-05)
 - `tests/ceilingmarker.test.js` NEW, 7 legs; derivation-only expectations from AREAS; both harness shapes (DOM / DOM-less) booted.
 - Ascent-flip coverage note: the target flip is pinned by the dedicated derivation leg (area field → next ladder row); the physical ascend tick itself stays pinned by the untouched `tests/ascent.test.js` — no duplication.
 - Discovery logged for future stories: every run starts with the leadIn hop; shell-side tests asserting grounded player state must land it first.
+- Review round: 11 patch findings fixed (HUD slot-3 placement via probed insertBefore, marker color token, capability gate, marker-side area clamp, three leg-strength fixes, comment arithmetic, doc paths); +3 legs (physical ascend, placement, crafted-area) → 10 legs, 260/260. 1 deferred (i-frame blocked-at-ceiling display → Epic 4/5, in deferred-work).
 
 ### File List
 
@@ -132,3 +150,4 @@ lane-qwen38-ultra/qwen (omp agent session, 2026-11-05)
 ### Change Log
 
 - 2026-11-05: Story 2.3 implemented — ceiling marker HUD line (distance-to-ceiling, summit-branded), red-green with `tests/ceilingmarker.test.js` (7 legs), leadIn start-hop discovery folded into leg design, 257/250→257/257 green. Status → review.
+- 2026-11-05: Adversarial code review (blind/edge/auditor layers) — 12 findings: 11 patched (placement, color, hardening, leg strength, docs), 1 deferred; 260/260 green. Status → done.
