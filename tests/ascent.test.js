@@ -402,8 +402,8 @@ test('shell: the summit win saves best-altitude on the win tick, shows no Missed
     // (b) a summit run never reads the loss copy
     assert.ok(!env.hud['hud-prompt'].textContent.includes('Missed'),
       'the over-prompt is gated on outcome');
-    assert.equal(env.hud['hud-prompt'].textContent, '',
-      'interim: empty win prompt — story 2.4 owns the Summit. copy');
+    assert.match(env.hud['hud-prompt'].textContent, /^Summit\. Altitude \d+ best \d+$/,
+      'story 2.4 ships the Summit. copy in the prompt slot');
     // (c) the EXISTING over-restart branch restarts it (FR22: zero new handlers)
     env.handlers.window.keydown({ code: 'Space', repeat: false, preventDefault() {} });
     env.handlers.window.keyup({ code: 'Space' });

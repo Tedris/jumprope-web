@@ -1,6 +1,10 @@
+---
+baseline_commit: d4c19136533410b1624b34ce1b7c313d5f96aa43
+---
+
 # Story 2.4: Win & loss presentation with true permadeath
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -26,22 +30,22 @@ So that the run's ending lands as an event and I know exactly what to beat next 
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: `js/game.js` — summit tick strips the `'offer'` event (AC: 1) — CLAIM from deferred-work.md ("Summit win leaves the same-tick 'offer' event")
-  - [ ] In the summit branch (js/game.js:186-190) remove `'offer'` from the tick's events IN PLACE: `const oi = events.indexOf('offer'); if (oi !== -1) events.splice(oi, 1);` — `events` is a `const` array (js/game.js:93), so never reassign it. Rationale: the win already nulls the offer FIELD; `'offer'` is voice-less today (tests/audio.test.js:164 pins silence for unknown events) — this is events-channel hygiene so Story 5.1's new voices cannot inherit a false cue on the win tick. Add a pointer comment to the summit branch.
-- [ ] Task 2: `js/shell.js` — run-end presentation + press-armed restart (AC: 1, 2, 3, 4)
-  - [ ] `startFreshRun()` helper: captures `bestAtStart = best`, calls `resetPips()`, assigns `({ rope, player, run } = rearmCalloutGate(startRun()))`. Use at BOTH start sites: the idle-press branch (js/shell.js:325-327) and the over-restart branch (js/shell.js:353-358). `bestAtStart` initializes to the boot-loaded `best`.
-  - [ ] Press-armed restart: in `consumeIntents` pressIntent chain add `else if (run.status === 'over') { restartArmed = true; }`; the over branch under `releaseIntent` restarts ONLY when `restartArmed` (then clears it). Keep the existing `best = Math.max(...)` + `saveBest` lines in that branch. No new event listeners (FR22: shared handlers only).
-  - [ ] Prompt ladder (js/shell.js:515-534): split the over branch — `run.outcome === 'summit'` → `'Summit. Altitude ' + N + ' best ' + best` with `roleClass = 'role-amber'`; other over → `'Missed! Altitude ' + N` + tail `' best ' + N` when `Math.round(run.altitude) > bestAtStart`. Loss keeps `roleClass ''`.
-- [ ] Task 3: `tests/winloss.test.js` — NEW (AC: 1, 2, 3, 4)
-  - [ ] Harness copy idiom (ceilingmarker/uxpolish: createElement-capable DOM stub, bootShell via data-URL, game.js wrapper with `forceArea`/`forceScore`/`forceOwned`/`chooseOffer` stamps). Add `forceOwned` (output-side `owned` stamp) for the permadeath leg. Remember: stamps land on the OUTPUT — the sim's INPUT only carries them from the NEXT tick; wrapper conditionals must use `!== null`/`!== undefined`, never truthiness.
-  - [ ] Loss leg: trip to death grounded → prompt `Missed! Altitude N` exact-form, no role class, `hud-best` shows round(max(best, N)).
-  - [ ] New-best leg: pre-seed `localStorage` best BELOW the run's altitude → loss line ends with ` best N`; control sub-case with best ABOVE → no tail.
-  - [ ] Win leg: `forceArea = SUMMIT_AREA` + `forceScore = (AREAS[4].ceiling + 2) / ALT_PER_POINT` after landing the lead-in hop → over/summit → `Summit. Altitude N best B`, `hud-prompt` className `role-amber`.
-  - [ ] Permadeath legs: stamp owned cards via `forceOwned`, trip to death, restart via keydown+keyup+tick → assert every baseline field (`ropes === 1`, `owned` deep-equals `{}`, `effects` deep-equals `freshEffects()` from `../js/upgrades.js`, `area === 1`, `baseAltitude === 0`, `altitude === 0`, `score === 0`, `offer === null`) AND storage keys unchanged (best persisted, no run-state keys written). Repeat the full assertion set after a WIN-path restart (reuse the win leg's boot) — AC3 says "either end state".
-  - [ ] Hygiene legs: (a) keydown during running, trip the run WHILE HELD (no keyup), then keyup → status stays `over`, no restart; (b) fresh keydown+keyup over the over screen → running again (single restart; the trailing release does not re-fire); (c) blur on the over screen restarts nothing; (d) POINTER mirror of (a): canvas `pointerdown` held across the trip, then `pointerup` → no restart (same gated paths via js/shell.js:247-248 — pin it, don't assume it).
-  - [ ] Sim event leg (Node-side, no shell): craft a tick that crosses the 10th skip AND breaks the summit ceiling together (run `{ area: 5, altitude: AREAS[4].ceiling + 2, skips: 9, status: 'running', ... }`, rope crafted to cross on this tick — copy phase-craft from tests/ascent.test.js / tests/altitude.test.js) → events include `'win'`, do NOT include `'offer'`.
-- [ ] Task 4: `tests/ascent.test.js` — re-contract the interim fence (AC: 1)
-  - [ ] AUTHORIZED FENCE EDITS (both legs are interim fences this story replaces): (1) tests/ascent.test.js:405-406 asserts `''` with the comment "interim: empty win prompt — story 2.4 owns the Summit. copy" → replace exactly those two lines to assert `/^Summit\. Altitude \d+ best \d+$/`. (2) tests/uxpolish.test.js:216 pins `^Missed! Score N$` — the copy this story replaces → change that one assertion to `/^Missed! Altitude \d+( best \d+)?$/`. No other change to these frozen files may appear in the diff.
+- [x] Task 1: `js/game.js` — summit tick strips the `'offer'` event (AC: 1) — CLAIM from deferred-work.md ("Summit win leaves the same-tick 'offer' event")
+  - [x] In the summit branch (js/game.js:186-190) remove `'offer'` from the tick's events IN PLACE: `const oi = events.indexOf('offer'); if (oi !== -1) events.splice(oi, 1);` — `events` is a `const` array (js/game.js:93), so never reassign it. Rationale: the win already nulls the offer FIELD; `'offer'` is voice-less today (tests/audio.test.js:164 pins silence for unknown events) — this is events-channel hygiene so Story 5.1's new voices cannot inherit a false cue on the win tick. Add a pointer comment to the summit branch.
+- [x] Task 2: `js/shell.js` — run-end presentation + press-armed restart (AC: 1, 2, 3, 4)
+  - [x] `startFreshRun()` helper: captures `bestAtStart = best`, calls `resetPips()`, assigns `({ rope, player, run } = rearmCalloutGate(startRun()))`. Use at BOTH start sites: the idle-press branch (js/shell.js:325-327) and the over-restart branch (js/shell.js:353-358). `bestAtStart` initializes to the boot-loaded `best`.
+  - [x] Press-armed restart: in `consumeIntents` pressIntent chain add `else if (run.status === 'over') { restartArmed = true; }`; the over branch under `releaseIntent` restarts ONLY when `restartArmed` (then clears it). Keep the existing `best = Math.max(...)` + `saveBest` lines in that branch. No new event listeners (FR22: shared handlers only).
+  - [x] Prompt ladder (js/shell.js:515-534): split the over branch — `run.outcome === 'summit'` → `'Summit. Altitude ' + N + ' best ' + best` with `roleClass = 'role-amber'`; other over → `'Missed! Altitude ' + N` + tail `' best ' + N` when `Math.round(run.altitude) > bestAtStart`. Loss keeps `roleClass ''`.
+- [x] Task 3: `tests/winloss.test.js` — NEW (AC: 1, 2, 3, 4)
+  - [x] Harness copy idiom (ceilingmarker/uxpolish: createElement-capable DOM stub, bootShell via data-URL, game.js wrapper with `forceArea`/`forceScore`/`forceOwned`/`chooseOffer` stamps). Add `forceOwned` (output-side `owned` stamp) for the permadeath leg. Remember: stamps land on the OUTPUT — the sim's INPUT only carries them from the NEXT tick; wrapper conditionals must use `!== null`/`!== undefined`, never truthiness.
+  - [x] Loss leg: trip to death grounded → prompt `Missed! Altitude N` exact-form, no role class, `hud-best` shows round(max(best, N)).
+  - [x] New-best leg: pre-seed `localStorage` best BELOW the run's altitude → loss line ends with ` best N`; control sub-case with best ABOVE → no tail.
+  - [x] Win leg: `forceArea = SUMMIT_AREA` + `forceScore = (AREAS[4].ceiling + 2) / ALT_PER_POINT` after landing the lead-in hop → over/summit → `Summit. Altitude N best B`, `hud-prompt` className `role-amber`.
+  - [x] Permadeath legs: stamp owned cards via `forceOwned`, trip to death, restart via keydown+keyup+tick → assert every baseline field (`ropes === 1`, `owned` deep-equals `{}`, `effects` deep-equals `freshEffects()` from `../js/upgrades.js`, `area === 1`, `baseAltitude === 0`, `altitude === 0`, `score === 0`, `offer === null`) AND storage keys unchanged (best persisted, no run-state keys written). Repeat the full assertion set after a WIN-path restart (reuse the win leg's boot) — AC3 says "either end state".
+  - [x] Hygiene legs: (a) keydown during running, trip the run WHILE HELD (no keyup), then keyup → status stays `over`, no restart; (b) fresh keydown+keyup over the over screen → running again (single restart; the trailing release does not re-fire); (c) blur on the over screen restarts nothing; (d) POINTER mirror of (a): canvas `pointerdown` held across the trip, then `pointerup` → no restart (same gated paths via js/shell.js:247-248 — pin it, don't assume it).
+  - [x] Sim event leg (Node-side, no shell): craft a tick that crosses the 10th skip AND breaks the summit ceiling together (run `{ area: 5, altitude: AREAS[4].ceiling + 2, skips: 9, status: 'running', ... }`, rope crafted to cross on this tick — copy phase-craft from tests/ascent.test.js / tests/altitude.test.js) → events include `'win'`, do NOT include `'offer'`.
+- [x] Task 4: `tests/ascent.test.js` — re-contract the interim fence (AC: 1)
+  - [x] AUTHORIZED FENCE EDITS (both legs are interim fences this story replaces): (1) tests/ascent.test.js:405-406 asserts `''` with the comment "interim: empty win prompt — story 2.4 owns the Summit. copy" → replace exactly those two lines to assert `/^Summit\. Altitude \d+ best \d+$/`. (2) tests/uxpolish.test.js:216 pins `^Missed! Score N$` — the copy this story replaces → change that one assertion to `/^Missed! Altitude \d+( best \d+)?$/`. No other change to these frozen files may appear in the diff.
 
 ## Dev Notes
 
@@ -87,12 +91,28 @@ So that the run's ending lands as an event and I know exactly what to beat next 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+lane-qwen38-ultra/qwen (omp agent session, 2026-11-05)
 
 ### Debug Log References
+- Red phase: 9/10 winloss legs red pre-implementation (blur pin green by design); green at 10/10 after Task 1+2.
+- Test-side timing discovery: the trip's 80 ms hitstop defers the drain, so the post-restart window accumulates ~150 ms of acc — a restarted run is ~180 ms old by the first post-restart frame, past its ~156 ms lead-in pass. The "restarts exactly once" leg asserts presentation-state, not skip-count (skip-count on that window is timing-dependent).
+- Leg authoring traps hit and fixed: wrapper OUTPUT stamps (forceOwned/forceScore/forceArea) must be CLEARED before restart assertions or they restamp the fresh record; the crafted win-tick player must be airborne (y=20) or trip-beats-win turns the leg into a loss.
 
 ### Completion Notes List
+- `js/shell.js`: `bestAtStart`/`restartArmed` locals; `startFreshRun()` at both start sites; over press branch arms restart, release branch gated; prompt ladder split into summit (amber, always best tail) vs loss (bone, new-best tail only).
+- `js/game.js`: summit tick splices the ghost `'offer'` cue out of the const events array (deferred-work claim, closed).
+- `tests/winloss.test.js` NEW: 10 legs — copy pair, new-best control, permadeath via loss AND win, keyboard/pointer/blur hygiene, sim-channel pin. 270/270 full suite.
+- Frozen discipline held: only the two AUTHORIZED fence legs touched (verified via `git diff d4c1913 -- tests/`); no CSS/index.html/audio changes.
+- Deferred-work.md: the win-tick 'offer' claim is now FIXED — strike it on the next docs touch.
 
 ### File List
 
+- js/game.js (modified — summit-tick offer-event splice + comment)
+- js/shell.js (modified — bestAtStart/restartArmed, startFreshRun, press-armed restart, win/loss prompt ladder)
+- tests/winloss.test.js (new — 10 legs, dual-shape harness)
+- tests/ascent.test.js (authorized fence re-contract at :405-406 ONLY)
+- tests/uxpolish.test.js (authorized fence re-contract at :216 ONLY)
+
 ### Change Log
+
+- 2026-11-05: Story 2.4 implemented — win/loss presentation (Summit./Missed! Altitude copy, amber win, new-best tail), press-armed permadeath restart, ghost-offer channel claim closed; 10 new legs + 2 authorized re-contracts, 270/270 green. Status → review.

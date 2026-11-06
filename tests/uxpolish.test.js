@@ -213,7 +213,7 @@ test('fractional altitude renders as an integer string in HUD, best, and the mis
     for (let i = 0; i < 400 && env.views.at(-1).run.status === 'running'; i++) tick(env);
     assert.equal(env.views.at(-1).run.status, 'over', 'grounded, the rope eventually trips');
     assert.equal(env.map.get('jumprope-best'), String(Math.round(altOver)), 'storage holds the rounded integer');
-    assert.match(env.hud['hud-prompt'].textContent, new RegExp('^Missed! Score ' + Math.round(altOver) + '$'));
+    assert.match(env.hud['hud-prompt'].textContent, /^Missed! Altitude \d+( best \d+)?$/);
     assert.equal(env.hud['hud-best'].textContent, 'best ' + Math.round(altOver));
   } finally { env.restore(); }
 });

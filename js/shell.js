@@ -122,6 +122,10 @@ export function startGame(canvas) {
   let revCount = 0;
   let calloutRev = -1;
   let best = loadBest(localStorage);
+  // Story 2.4 (FR26): run-start best snapshot (drives the "new best" tail)
+  // and the restart arming flag — shell-local by design, never in the record.
+  let bestAtStart = best;
+  let restartArmed = false;
   // Story 1.3 display bookkeeping, same status as `best`: max ropes ever
   // held this run (row width) and the last drawn solid/ghost signature.
   let ropesEver = MIN_ROPES;
@@ -133,6 +137,12 @@ export function startGame(canvas) {
   // The snap to START_PHASE lands inside the handlers, invisible to the
   // drain's wrap compare. One shared handler, no per-path duplication.
   const rearmCalloutGate = (sim) => { revCount++; return sim; };
+  // The one permadeath start: fresh baseline record, pips reset, best snapshot.
+  function startFreshRun() {
+    bestAtStart = best;
+    resetPips();
+    ({ rope, player, run } = rearmCalloutGate(startRun()));
+  }
   let acc = 0;
   let stopUntil = 0;
   let juiceSig = null;
@@ -323,13 +333,14 @@ export function startGame(canvas) {
           holdFrom = pressIntent;
         }
       } else if (run.status === 'idle') {
-        resetPips(); // a new run starts with a single solid pip
-        ({ rope, player, run } = rearmCalloutGate(startRun()));
+        startFreshRun(); // a new run starts clean, best snapshot included
       } else if (run.status === 'choose' && run.offer) {
         // D-01/D-02: press = cycle the cursor (wraps), and (re)arm the hold timer.
         pickIdx = (pickIdx + 1) % run.offer.length;
         pickPressedAt = performance.now();
         pickDone = false;
+      } else if (run.status === 'over') {
+        restartArmed = true; // Story 2.4 (FR22): restart needs a press begun PAST the death
       }
       pressIntent = null;
     }
@@ -350,11 +361,13 @@ export function startGame(canvas) {
           pickPressedAt = null; // early release = cancel; the cursor stays
           pickFill = 0;
         }
-      } else if (run.status === 'over') {
+      } else if (run.status === 'over' && restartArmed) {
+        // Story 2.4 (AC4): a release alone — e.g. a key held across the death
+        // — must never launch the new run; only a press begun while over arms it.
+        restartArmed = false;
         best = Math.max(best, Math.round(run.altitude));
         saveBest(localStorage, best);
-        resetPips(); // permadeath-clean row for the restarted run
-        ({ rope, player, run } = rearmCalloutGate(startRun()));
+        startFreshRun(); // permadeath-clean row for the restarted run
       }
       releaseIntent = false;
     }
@@ -522,8 +535,12 @@ export function startGame(canvas) {
         const highlight = run.offer[pickIdx];
         if (highlight && highlight.color) roleClass = 'role-' + highlight.color;
       }
-    } else if (run.status === 'over' && run.outcome !== 'summit') {
-      prompt = 'Missed! Score ' + Math.round(run.altitude);
+    } else if (run.status === 'over' && run.outcome === 'summit') {
+      prompt = 'Summit. Altitude ' + Math.round(run.altitude) + ' best ' + Math.round(Math.max(best, run.altitude));
+      roleClass = 'role-amber';
+    } else if (run.status === 'over') {
+      prompt = 'Missed! Altitude ' + Math.round(run.altitude);
+      if (Math.round(run.altitude) > bestAtStart) prompt += ' best ' + Math.round(run.altitude);
     } else if (run.status === 'idle') {
       prompt = 'press space / tap to start';
       if (audioDiag) prompt += ' (audio off)';

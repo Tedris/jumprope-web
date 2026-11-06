@@ -187,6 +187,11 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       status = 'over';
       outcome = 'summit';
       offer = null;
+      // Story 2.4 (FR26): the offer FIELD never renders, so its channel cue
+      // goes too — Story 5.1 must not inherit a phantom pick announcement on
+      // the win tick (deferred-work claim). events is const: splice in place.
+      const oi = events.indexOf('offer');
+      if (oi !== -1) events.splice(oi, 1);
       events.push('win');
     } else {
       baseAltitude = AREAS[area - 1].ceiling;
