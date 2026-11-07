@@ -9,8 +9,10 @@ check below is impossible, that is a bug in the repo, not in the agent.
 1. **One gate command.** `./run_tests.sh` (or npm/pytest/cargo equivalent)
    runs everything and exits non-zero on any failure. Prose ACs don't exist.
 2. **Parseable PASS line.** The gate prints `N/M passed` — countable, diffable.
-3. **The gate is sacred.** tests/, the gate script, and CI config are in
-   `NIGHT_PROTECT`; a worker touching them is instant red.
+3. **The gate is sacred.** `tests/`, the gate script, and CI config are
+   protected paths; a worker touching them is instant red. (The night-era
+   `NIGHT_PROTECT` variable is retired with the night kit; its path list
+   survives read-only in `docs/archive/night/tools/night/night.conf`.)
 4. **AGENTS.md names the commands.** build / test / verify / run-headless /
    probe-state, plus a do-not-touch list. Agents read this first.
 5. **Headless by default.** GUI is a thin shell over a logic core that runs
@@ -23,14 +25,15 @@ check below is impossible, that is a bug in the repo, not in the agent.
    script can PRINT a mechanism's real values before an assertion is trusted
    (green-gate-but-wrong-design is the classic false pass).
 8. **CI runs the same oracle**, from a clean checkout, never on the dev box.
-9. **Framework artifacts carry verify.** GSD plans have `<verify>` with a
-   runnable command; BMAD ACs each have a command line. If writing the
+9. **Framework artifacts carry verify.** GSD plans had `<verify>` command
+   lines (GSD retired; BMAD ACs carry the command line). If writing the
    command is impossible, the story/plan isn't well-formed yet.
 10. **Runs isolated.** Pinned ports, scratch dirs, worktree-safe — no
     ambient host services or absolute-path fixtures.
 
-## Morning flow consequence
+## Unattended-run consequence
 
-Night agents ship only what the oracle confirms; `verification: pending`
-and `review` are the highest status an unattended run may write. A human (or
-a morning fresh-context reviewer on a different model) promotes to done.
+Unattended work (the BMAD `dev-story` → `code-review` flow) ships only what
+the oracle confirms; `verification: pending` and `review` are the highest
+status an unattended run may write. A human (or a fresh-context reviewer on a
+different model) promotes to done.

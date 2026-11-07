@@ -62,9 +62,18 @@ Project management runs on [BMAD](https://bmadcode.com/) (installed under `_bmad
 - **Agents (gds)**: `gds-agent-game-designer` (Samus), `gds-agent-game-architect` (Cloud), `gds-agent-game-dev` (Link), `gds-agent-game-solo-dev` (Indie), `gds-agent-tech-writer` (Paige) — plus game workflows: `gds-create-game-brief`, `gds-gdd`, `gds-ux`, `gds-create-epics-and-stories`, `gds-sprint-planning`, `gds-dev-story`, `gds-playtest-plan`, `gds-retrospective`
 - **Typical cycle**: `bmad-prd` → `gds-gdd` (game design) → `gds-create-epics-and-stories` → `gds-sprint-planning` → `gds-dev-story` per story → `gds-retrospective`
 - **Legacy GSD artifacts**: archived read-only under `docs/archive/gsd/` — do not extend; consult for history (v1.0 phase detail, retrospectives, decisions)
+- **Legacy night-loop kit**: archived read-only under `docs/archive/night/` — superseded by the BMAD workflow above; do not revive
+
+## Commands
+
+- build: none — static files ship as-is; no build step, no bundler
+- test / verify: `./run_tests.sh` (the one gate: runs `node --test tests/`, prints `N/M passed`, exits non-zero on failure)
+- serve: any static HTTP server, e.g. `python3 -m http.server` (ES modules require HTTP, not `file://`)
+- probe-state: the sim core imports under bare Node — `node -e "import('./js/game.js').then(m => ...)"`; no display needed
+- do-not-touch: `tests/`, `run_tests.sh`, `.github/` (sacred gate paths) and the near-frozen `package.json`, `index.html`
 
 ## Housekeeping
 
-- Run tests before committing: `node --test tests/`
+- Run tests before committing: `./run_tests.sh` (the one gate — runs `node --test tests/`, prints `N/M passed`, exits non-zero on failure)
 - When a story workflow ends with its status set to `done`, commit the full change set (code, tests, story/tracking artifacts) and push
-- `index.html` and `package.json` are deliberately near-frozen; touching them needs justification (the boundary fence tests grep for regressions around them)
+- `index.html` and `package.json` are deliberately near-frozen; touching them needs justification. This is a rule, not a test fence: no test reads `package.json`, and only `tests/ropehud.test.js:167`/`tests/ceilingmarker.test.js:64` read `index.html` (to seed the HUD DOM, not to fence it); `tests/boundary.test.js` fences the sim import graph

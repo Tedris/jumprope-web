@@ -1,0 +1,20 @@
+# Same oracle as the local gate, from a clean checkout (VERIFY-CONTRACT rule 8).
+# Zero dependencies: no install step and no cache input — there is no lockfile.
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      - run: ./run_tests.sh
