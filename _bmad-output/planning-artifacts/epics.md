@@ -67,6 +67,7 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 - FR27: Procedural WebAudio SFX on a master bus, gesture-gated AudioContext, persisted mute/volume; audio follows gameplay — nothing may beat-lock the rope. *(v1, unchanged)*
 - FR28: New procedural voices: ascent stinger and win fanfare; rope-loss thud adapted for multi-rope; last-rope tension audio treatment (mix decision in Epic 5).
 - FR29: `audio/track.ogg` (TRACK-1) remains content-deferred; the mechanism degrades to silence. *(v1, unchanged)*
+- FR30: The pause menu presents an audio-config surface — Resume, a volume control, and a sound on/off toggle — reflecting and driving the existing `audio.js` seams (`setVolume`/`toggleMute`) and persisting through the existing storage seam (FR24/FR27). Keyboard shortcuts stay functional and stay in sync. *(Added 2026-11-07, readiness-audit D-006: mechanism shipped in v1 but was keyboard-only — the config surface is the gap.)*
 
 ### NonFunctional Requirements
 
@@ -141,6 +142,7 @@ FR26: Epic 2 - win/lose presentation states (data, not errors)
 FR27: Epic 5 - audio contract protected (no beat-lock)
 FR28: Epic 5 - ascent stinger, win fanfare, rope-loss thud, last-rope mix
 FR29: Epic 5 - TRACK-1 stays deferred/degrades to silence (regression pin)
+FR30: Epic 5 - pause-menu audio config surface (Story 5.7; land early — mechanism already shipped)
 
 NFR1–NFR3: All gameplay epics - performance budget held per epic; NFR3 verified at final validation
 NFR4/NFR5: Every story - frozen-test discipline + red-green legs; boundary fence per epic
@@ -167,7 +169,7 @@ Skips convert into height: score *is* altitude at 2 u/pt on one HUD number and o
 
 ### Epic 3: Rule-Changing Cards
 
-Upgrade picks change the rules, not just numbers: Spare Rope, Steel Cord charges, Second Wind double jump, Launch Heels — with offer filtering, number-key picking, and an owned-card HUD that shows state, not just multipliers. Legacy 8 cards are pinned unchanged.
+Upgrade picks change the rules, not just numbers: Spare Rope, Steel Cord charges, Second Wind double jump, Launch Heels — with offer filtering, number-key picking, and an owned-card HUD that shows state, not just multipliers. Legacy 8 cards are pinned unchanged. Opening chore Story 3.0 (repo hygiene, added by the 2026-11-07 readiness audit) lands before Story 3.2.
 
 **FRs covered:** FR10, FR11, FR12, FR13, FR14
 
@@ -179,9 +181,9 @@ The climb has geography: five altitude tiers (palette + fog/horizon + rope-perio
 
 ### Epic 5: Feel & Fidelity
 
-The new states feel as good as the core loop: ascent stinger, win fanfare, rope-loss thud, last-rope tension treatment, i-frame juice, and reduced-motion/audio correctness for every new state. (Fold-in candidate: WR-02 one-line debt fix.)
+The new states feel as good as the core loop: ascent stinger, win fanfare, rope-loss thud, last-rope tension treatment, i-frame juice, and reduced-motion/audio correctness for every new state. (Fold-in candidate: WR-02 one-line debt fix.) Story 5.6 ships the TRACK-1 music file — the mechanism is already shipped and pinned; only the content is missing. Story 5.7 (land early) adds the pause-menu audio config surface the v1 keyboard-only shortcuts never exposed.
 
-**FRs covered:** FR8 (polish), FR16 (audio/juice layer), FR23, FR27, FR28, FR29
+**FRs covered:** FR8 (polish), FR16 (audio/juice layer), FR23, FR27, FR28, FR29, FR30
 
 ### Epic 6: Balance & Prove
 
@@ -189,12 +191,13 @@ The summit is reachable in 3–5 minutes: the headless-sim policy-bot gate repla
 
 **FRs covered:** FR7 (real tunables), NFR9; CARD-09 offer-pacing evaluation; docs
 
-### Epic 7 (candidate): The Peel
+### Epic 7: The Peel (pinned milestone after epics 3–6)
 
 The game admits what it is: between-run progression (META-01) as in-game
 fiction — the tech tree the disguise was hiding. Unlocks presented in the PS1
 voice; persistence grows past best-score (`loadBest` seam in `js/shell.js`).
-Plotted post-v2; requires its own requirements pass before stories.
+Pinned 2026-11-07 (readiness-audit decision D-004) as the milestone immediately
+following the v2 summit gate; requires its own requirements pass before stories.
 (Source: 2026-11-05 sprint-change-proposal; PRD thesis.)
 
 ### Epic 8 (candidate): Player Fuel
@@ -459,6 +462,26 @@ Upgrade picks change the rules, not just numbers: Spare Rope, Steel Cord charges
 
 **FRs covered:** FR10, FR11, FR12, FR13, FR14 · **NFRs:** NFR4, NFR5, NFR7
 
+### Story 3.0: Repo hygiene — VERIFY-CONTRACT in force (chore, lands before 3.2)
+
+As an unattended agent,
+I want the repo to obey VERIFY-CONTRACT.md as written,
+So that the gate, CI, and file map are trustworthy without a human in the loop. (Added by the 2026-11-07 readiness audit, decision D-003.)
+
+**Acceptance Criteria:**
+
+**Given** any checkout
+**When** `./run_tests.sh` runs
+**Then** it runs `node --test tests/`, exits non-zero on any failure, and the AGENTS.md/VERIFY-CONTRACT command names match the script that exists (rule 1)
+
+**Given** a push to origin
+**When** CI runs
+**Then** a GitHub Actions workflow runs the same gate from a clean checkout, not on the dev box (rule 8) — the repo currently has no CI config
+
+**Given** the night-loop era files (`NIGHT.md`, `JOURNAL.md`, `BLOCKED.md`, `tools/night/`)
+**When** this story lands
+**Then** they move to `docs/archive/night/` with a pointer line in AGENTS.md — superseded by BMAD, retired not deleted (audit finding 4)
+
 ### Story 3.1: Four new cards in the catalogue
 
 As a builder,
@@ -697,7 +720,7 @@ So that the final push reads clearly and fairly.
 
 The new states feel as good as the core loop: ascent stinger, win fanfare, rope-loss thud, last-rope tension treatment, i-frame juice, and reduced-motion/audio correctness for every new state. (Includes the WR-02 one-line debt fix.)
 
-**FRs covered:** FR8 (polish), FR16 (audio/juice layer), FR23, FR27, FR28, FR29 · **NFRs:** NFR1, NFR4, NFR5
+**FRs covered:** FR8 (polish), FR16 (audio/juice layer), FR23, FR27, FR28, FR29, FR30 (config surface) · **NFRs:** NFR1, NFR4, NFR5
 
 ### Story 5.1: Ascent stinger & win fanfare
 
@@ -800,6 +823,58 @@ So that a year from now nobody 'fixes' a lifecycle bug that was actually protect
 **Then** it degrades to silence with no errors — behavior pinned unchanged (FR29)
 
 **And** the sim import graph remains audio-free — `tests/boundary.test.js` green with any new event-channel wiring (NFR4)
+
+### Story 5.6: TRACK-1 — the music content
+
+As a player,
+I want the demake to carry one looping music track,
+So that the PS1 fiction is complete and the mix has a floor under the procedural voices. (Added by the 2026-11-07 readiness audit, decision D-002; closes the PRD's TRACK-1 open item.)
+
+**Acceptance Criteria:**
+
+**Given** the shipped, test-pinned play mechanism (`audio/track.ogg` URL, gesture-unlock and volume paths — zero mechanism-code changes)
+**When** the game plays with the file present
+**Then** the track loops seamlessly on the master bus, honors persisted volume/mute, and never starts pre-gesture-unlock (FR29)
+
+**Given** the delivered `audio/track.ogg`
+**When** it is checked
+**Then** Ogg Vorbis, seamless at the loop point, ≤ 3 MB (static-host budget), loudness-coherent with the existing procedural voices
+
+**Given** story kickoff
+**When** the sourcing route is picked — generated vs supplied
+**Then** it is decided explicitly as its own step before any generation run; nothing blocks on it meanwhile
+
+**Given** the music/sound *direction* is undecided as of 2026-11-07 (D-006)
+**When** story kickoff runs
+**Then** the direction (identity/genre of the track, and any sound-style implications for the Epic 5 voices) is settled first — the story may not proceed to content on an undecided direction
+
+**And** the absent-file silence legs (`track.ogg` fallback pins) stay byte-identical green
+
+### Story 5.7: Pause menu — the audio config surface
+
+As a player,
+I want pausing to open a menu where I can set volume and turn sound on or off,
+So that the mix is controllable without knowing hidden key shortcuts. (Added by the readiness audit 2026-11-07, decision D-006; the config UI should have shipped with the v1 audio layer — the mechanism is complete, only the surface is missing.)
+
+**Acceptance Criteria:**
+
+**Given** a paused run (P/Esc or tab-hide)
+**When** the freeze frame holds
+**Then** a menu presents Resume plus a volume control and a sound on/off toggle, initialized from the live persisted settings at open (FR30, FR27)
+
+**Given** the volume control or the sound toggle
+**When** the player uses it
+**Then** it calls the existing seams only — `audio.setVolume` / `audio.toggleMute` — persisting through the existing storage path; no new audio plumbing and no second persistence path (FR24; shared-handler rule)
+
+**Given** the menu is open
+**When** the player clicks or keys anything
+**Then** no jump arms, no run starts, and nothing resumes until Resume is chosen — the freeze-frame input lock holds behind the menu (FR22 handler hygiene, D-12 lineage)
+
+**Given** the keyboard shortcuts (`Mute` key, `-`/`=`) fire while the menu is open
+**When** settings change
+**Then** the menu controls re-render in sync with the new state — one source of truth, no drift (FR30)
+
+**And** the panel lands inside the existing letterbox resize path (NFR7), stays shell-only and static-file-only (NFR6), the sim import graph is unchanged (`tests/boundary.test.js` green), and the panel is built so a later idle-screen entry point can reuse it without rework (reuse sanctioned, not required here)
 
 ## Epic 6: Balance & Prove
 

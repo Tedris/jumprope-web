@@ -30,15 +30,27 @@ genre. (Adopted 2026-11-05; source: brainstorming session log.)
 
 ## Non-Goals
 
-- Between-run meta progression (unlocks, persistent currency) — v2 (META-01).
-  Under the disguise thesis this is the *planned peel*: the mask lifts in
-  designed beats, not a blanket deferral.
+- **Between-run meta progression (unlocks, persistent currency)** — the
+  planned peel under the disguise thesis, now **pinned as Epic 7 (The Peel),
+  the milestone immediately after the v2 epics 3–6** (2026-11-07, readiness
+  audit D-004; was META-01 "v2 candidate").
 - Beat-locked soundtrack / rhythm-synced rope phase — the rope stays the free
   canonical clock.
 - Multiplayer, leaderboards, accounts — static web delivery.
 - Native/mobile packaging — static web is the delivery target.
 - Faithful reproduction of Scarlet Skips' cards, story, or characters — spirit,
   not letter.
+
+## Current State — v2 in progress (as of 2026-11-07)
+
+v1.0 shipped 2026-10-22 (details below, kept for provenance). v2 delta runs on
+BMAD epics: **Epic 1 (Ropes as HP) done, Epic 2 (Altitude & the Win) done
+2026-11-06** (5/5 stories, incl. the 2.5 balance harness); **Epic 3 in
+progress** — Story 3.1 at review, 3.2–3.5 backlog; Epics 4–6 backlog with the
+Story 6.1 policy-bot summit gate as the v2 exit criterion. Gate: 303/303 Node
+tests green (readiness audit 2026-11-07,
+[`docs/kickoff/readiness-audit-2026-11-07/`](../../docs/kickoff/readiness-audit-2026-11-07/)).
+Next milestone after epics 3–6: **Epic 7, The Peel (META-01)** — pinned.
 
 ## Current State — v1.0 Shipped (2026-10-22)
 
@@ -73,11 +85,18 @@ genre. (Adopted 2026-11-05; source: brainstorming session log.)
 
 | ID | Item | Status |
 |----|------|--------|
-| TRACK-1 | Looping music track file at `audio/track.ogg` | Mechanism shipped and test-pinned (Phase 4); content deferred at UAT (backlog Phase 999.1) |
-| WR-02 | Reduced-motion idle pose still animates arms/scarf off wall-clock `beat` (`js/render3d.js:387`) | Known debt — one-line fix |
-| CARD-08 | Rules-beyond-multipliers cards | v2 candidate, spike-gated |
-| CARD-09 | Escalating offer pacing | v2 candidate |
-| META-01 | Between-run meta progression | v2 candidate |
+| TRACK-1 | Looping music track file at `audio/track.ogg` | **Owned** — Story 5.6 (Epic 5); mechanism shipped, story ships the file (2026-11-07, D-002) |
+| WR-02 | Reduced-motion idle pose still animates arms/scarf off wall-clock `beat` (`js/render3d.js:387`) | **Owned** — Story 5.4 (Epic 5), folded in as its named fix |
+| CARD-08 | Rules-beyond-multipliers cards | **Promoted** — shipping as Epic 3 (FR12 rule-changing cards) |
+| CARD-09 | Escalating offer pacing | Owned — Story 6.3 verdict inside Epic 6 |
+| META-01 | Between-run meta progression | **Pinned** — Epic 7 (The Peel), the milestone after epics 3–6 (2026-11-07, D-004) |
+
+## Next-Milestone Questions — answered 2026-11-07 (readiness audit)
+
+- v2 candidate promotion: CARD-08 → Epic 3 (in flight); CARD-09 → Epic 6
+  verdict story; META-01 → pinned as Epic 7, next milestone after the summit gate.
+- TRACK-1 became a milestone task: Story 5.6.
+- WR-02 is folded into Story 5.4, not standalone housekeeping.
 
 ## Constraints
 
@@ -104,6 +123,5 @@ genre. (Adopted 2026-11-05; source: brainstorming session log.)
 
 ## Next-Milestone Questions (for PM/analyst agents)
 
-- Which v2 candidates to promote (CARD-08/09, META-01), and in what order?
-- Does TRACK-1 (music content) stay a backlog item or become a milestone task?
-- Is WR-02 fixed as housekeeping or folded into the next touch of `render3d.js`?
+Answered 2026-11-07 — see "Next-Milestone Questions — answered" above and
+`docs/kickoff/readiness-audit-2026-11-07/decisions.md` (D-002…D-004).

@@ -1,0 +1,22 @@
+# Readiness scorecard — brownfield audit 2026-11-07
+# Mode: brownfield / next_milestone (user-confirmed, D-001)
+# Gate rule: no dimension at 0, >=5 of 7 at 2, all must_answer resolved.
+
+status: ready            # gate passed with D-002..D-005 resolved (was 1 short: assets)
+situation: next_milestone
+evidence_basis: files + commits + live test run (303/303 green, 2026-11-07, working tree incl. Story 3.1 WIP)
+
+dimensions:
+  vision:          { score: 2, evidence: "AGENTS.md Project block; prd.md Product Vision + v2 disguise thesis (adopted 2026-11-05, brainstorm-sourced)" }
+  users_platform:  { score: 2, evidence: "prd.md Goals/Constraints: browser-only, static files, no build/server/accounts; shape matches repo (no server component)" }
+  scope_v1:        { score: 2, evidence: "epics.md FR1-FR29 + v1 shipped line in prd.md Current State; Non-Goals list present (refreshed for v2 by D-005)" }
+  core_flow:       { score: 2, evidence: "GDD gdd.md + epics.md: one-button loop, rope-phase canonical clock, skip->offer->pick-one, altitude=score, ropes-as-HP, one-way ascent" }
+  stack_framework: { score: 2, evidence: "AGENTS.md Technology Stack; tests/boundary.test.js import-graph fence enforces the documented architecture against the code" }
+  assets:          { score: 2, evidence: "Procedural art/audio by decision; TRACK-1 gap now owned by Story 5.6 (D-002) — was 1 (parked, no owner) at audit time" }
+  success_slice:   { score: 2, evidence: "Story 6.1 policy-bot summit gate + balance master-dial = checkable v2 'it works when'; every story carries a gate command; 303/303 green at audit" }
+
+must_answer:
+  - "TRACK-1 owner/plan -> D-002 resolved (Story 5.6, Epic 5)"
+  - "VERIFY-CONTRACT drift (no run_tests.sh, no CI) + dead night-loop files -> D-003 resolved (Story 3.0 chore)"
+  - "PRD lags epics 1-2; out-of-scope stale -> D-004/D-005 resolved (PRD patched; META-01 pinned to Epic 7)"
+  - "Story 3.1 review round uncommitted -> land-pending: commit as review round; keep planning-doc commits separate per deferred-work land rule"
