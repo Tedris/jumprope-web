@@ -3,7 +3,7 @@ baseline_commit: 7759ddfe58733a4924209ef377a23f13c2fdecb3
 ---
 # Story 3.2: Spare Rope & Launch Heels — the simple effects
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -57,7 +57,7 @@ So that HP and climb builds have their foundational picks.
   - [x] `tests/rulecards.test.js:42-49` — the inert-apply leg narrows to `['reinforce','doublejump']` (the still-unlanded cards); extrarope/highjump effects are pinned by the new file. Title/comment updated.
   - [x] `tests/pickflow.test.js:146,221-224` — `NEUTRAL_EFFECTS` literal gains `launchMul: 1` (parity with `upgrades.test.js:6`); the confirm-leg loop iterates `Object.keys(NEUTRAL_EFFECTS)` instead of `Object.entries(want)`. REQUIRED, not cosmetic: with a rotating first offer the current `Object.entries(want)` form hits `ropes` for an `extrarope` pick (NaN → flaky RED) and silently skips `launchMul` for a `highjump` pick. Value-exactness kept: all five effect fields are compared, now including launchMul.
   - [x] `tests/balance.test.js:202` — analytic `peakFactor` becomes `fx.floatMul * fx.launchMul ** 2` (peak = v²/2g, g = 1800/floatMul). Band logic `:203-208` untouched; this is the formula fix the harness jumper change (Task 6 harness item) makes mandatory.
-  - [x] `tests/balance.test.js:322-344` — AXIS guard: exemption becomes MARKER-driven, not behavior-detected (`deferred-work.md:85` consumed): run-shaped (`card.shape === 'run'`) ⇒ assert its apply touches NO effect field, then exempt; every other card keeps the strict Decided-3 check AND must now write ≥1 effect field (an inert effects-shape card fails loudly). `highjump`'s strict check passes via axis `launchMul` ∈ written fields.
+  - [x] `tests/balance.test.js:322-344` — AXIS guard: exemption becomes MARKER-driven, not behavior-detected (`deferred-work.md:85` consumed): run-shaped (`card.shape === 'run'`) ⇒ assert its apply touches NO effect field, then exempt; every other card keeps the strict Decided-3 check AND must now write ≥1 effect field (an inert effects-shape card fails loudly). `highjump`'s strict check passes via axis `launchMul` ∈ written fields. **[Review 2026-11-07, ratified]** The "≥1 effect field" clause binds cards whose axis names a live effect field; sentinel run-field axes (`charged`/`airJumps`, 3.3/3.4) stay exempt until their cards land — the literal reading would RED the still-inert `reinforce`/`doublejump` pinned by frozen `rulecards.test.js:41-48`.
   - [x] Everything else in `tests/` byte-identical — including `tests/headless-sim.test.js`, `tests/multirope.test.js:46`, `tests/v1parity.test.js`, `tests/winloss.test.js:190`, `tests/feelcap.test.js` (verified green-by-derivation in Dev Notes).
   - [x] `tests/support/balance-harness.js:92-93` (support file, not a fence) — jumper becomes `player = jump(player, policy.hold, run.effects.launchMul ?? 1);`. NOTE for the File List: runBot's *offer* honesty needs no change — its picks come through `tickRun`'s own state-aware draw (`js/game.js:131-132`), so once `ropes` varies live, the bot's pool is automatically the real one. `collisionReport:294` stays stateless — its exact-enumeration twin (`tests/balance.test.js:284-297`) is the state-less reference the 3.1 baselines were pinned against; narrowing that item is a 6.1/6.3 decision (record in deferred-work).
 - [x] Task 6: New tests — `tests/simpleeffects.test.js` (red-green, AC: all)
@@ -80,6 +80,18 @@ So that HP and climb builds have their foundational picks.
   - [x] Static smoke: serve the folder, load a run, pick Spare Rope if offered — HUD rope pips (1.3) grow with no DOM change; note the known limitation that extra ropes stay INVISIBLE in 3D until Story 5.3 (`deferred-work.md:71`) and no Chromium exists for linux/arm64 here (3.1's Debug Log precedent) — the shell seam is covered by the frozen bootShell harness legs; a live-browser pass is Epic 5's.
   - [x] `deferred-work.md`: :70 RESOLVED (ADR-2 paid); :83 PARTIAL (ropes arm live + witnessed here; `charged` arm stays 3.3's); :84 narrowed (runBot honest via tickRun; collision-model statelessness → 6.1/6.3); :85 CONSUMED (marker-driven AXIS tightening + fifth key landed together).
   - [x] File List includes `sprint-status.yaml` (Epic 1 retro Lesson 4).
+
+
+### Review Findings
+
+- [x] [Review][Decision] AXIS tightening implemented narrower than Task 5's literal wording — an unmarked effects-shape card whose `AXIS` entry is a sentinel run-field (`charged`, `airJumps`) stays behavior-detected-exempt (`tests/balance.test.js:336-341`); "must write ≥1 effect field" binds only cards whose axis names a live effect field. The literal rule would fail the still-inert `reinforce`/`doublejump` pinned at `rulecards.test.js:41-48` — ratify the narrower reading (record interpretation) or amend the Task 5 sentence. — **Ratified 2026-11-07: narrower reading stands, Task 5 line annotated above.**
+- [x] [Review][Defer] Spare Rope becomes permanently undealable once the owned cap (4) is reached, even after strips leave live ropes below 5 — the owned-cap hide arm (`js/upgrades.js:36,66`) fires before the `stateCap` arm at the deal site (`js/game.js:131-132`) and strips never decrement `owned` (`js/game.js:166`). Made reachable by this story (live `ropes`); shop-recovery vs. cap-as-total-lifetime is an Epic 6 balance call, currently recorded nowhere. — **Deferred to Epic 6: rope-economy recovery is a 6.1/6.3 balance call owned by the summit-rate dial; recorded in deferred-work.**
+- [x] [Review][Patch] Leg 9 picks `highjump` 4× over its `cap: 3` — the loop's 3 applies plus an `applyCard` nested in the `resumeRun(...)` argument (`tests/simpleeffects.test.js:210-212`); leg title says "at cap" but the record ends at `owned.highjump === 4`. — fixed 2026-11-07.
+- [x] [Review][Patch] Card-block comment still describes 3.2's effects as future work — "inert endofunction … until each effect lands (3.2 launchMul/ropes, …)" (`js/upgrades.js:33-34`) is now false for `extrarope`/`highjump`; should read "(3.3 charges, 3.4 mid-air jump)". — fixed 2026-11-07.
+- [x] [Review][Patch] Leg 10 post-loop fixup cannot do its job — `applyCard` alone never writes `status` (D-06), so if the 1000th tick ends in `choose`, the "never stalls" assertion fails by construction (`tests/simpleeffects.test.js:245-246`); mirror the in-loop `applyCard` + `resumeRun` pair. — fixed 2026-11-07.
+- [x] [Review][Patch] Landmine 6's "the one shipped literal" claim is false — `tests/feel.test.js:166` ships a second hand-typed 4-key effects record (story :111). No functional impact (never fed to `highjump.apply`; `tickRun` reads no `launchMul`); story-doc wording fix. — fixed 2026-11-07.
+- [x] [Review][Patch] runBot "offer honesty" ledger claim lacks the jumper-policy caveat — the single-window scripted jumper (`tests/support/balance-harness.js:70`, phase ∈ [0.2, 0.35]) strips back to 1 rope within ~1 revolution of a Spare Rope pick, so `headless-sim.test.js:126-136` passes via attrition and Epic 6 rope metrics would measure evaporated picks (deferred-work :83-84 wording). — fixed 2026-11-07.
+- [x] [Review][Defer] Run-shaped apply leaks run fields into the effects record through the `stackedEffects` composition idiom (`tests/support/balance-harness.js:218-222`) — inert today (no consumer enumerates `run.effects` keys), but 3.3/3.4 ship the same idiom; deferred, covered by Task 7's blind-spot restatement (`deferred-work.md:69`).
 
 ## Dev Notes
 
@@ -108,7 +120,7 @@ So that HP and climb builds have their foundational picks.
 3. Do NOT import `game.js` from `upgrades.js`, add a 6th role/color, add CSS, or add a sixth effect key — `launchMul` is the only new field and mint already ships (`css/style.css:39`).
 4. Do NOT multiply the lead-in hop (`leadIn`/`resumeRun`) — three frozen legs pin it (Task 3).
 5. Do NOT touch `js/render3d.js`, `index.html`, `package.json`, `js/rope.js`, `js/areas.js`. Extra ropes stay 3D-invisible until 5.3; that is owned elsewhere.
-6. `highjump.apply` reads `s.launchMul` bare — any rig-local effects record MUST be `{ ...freshEffects(), ... }`, never a hand-typed 4-key literal (the one shipped literal is `pickflow.test.js:146`, re-contracted in Task 5).
+6. `highjump.apply` reads `s.launchMul` bare — any rig-local effects record MUST be `{ ...freshEffects(), ... }`, never a hand-typed 4-key literal. Shipped hand-typed literals: `pickflow.test.js:146` (re-contracted in Task 5) and `feel.test.js:166` (feeds `tickRun` only, never a card `apply` — stays byte-identical under AC5; inventory corrected by code review 2026-11-07).
 7. Spare Rope dominance is EXPECTED (climb ≈ +1 rope's worth; `deferred-work.md:69`, research §5.1) — counterweight is 6.1's summit band. If a balance leg starts flagging `extrarope` as reduceClimb/dominated, your data drifted, not the rule.
 8. `applyUpgrade` must keep its name/export — `tests/feelcap.test.js:675` greps it in the D-N09 fence.
 9. No `console.*` in `js/` pure modules; no mutation anywhere; spreads only (AGENTS.md conventions).

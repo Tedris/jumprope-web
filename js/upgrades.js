@@ -30,8 +30,8 @@ export const CARDS = [
     role: 'margin', color: 'mint', rarity: 'uncommon', cap: 2,
     apply: s => ({ ...s, windowMul: s.windowMul * 1.2, floatMul: s.floatMul * 0.9 }) },
   // FR12 rule-changers (Story 3.1): card presence only — apply stays the inert
-  // endofunction until each effect lands (3.2 launchMul/ropes, 3.3 charges,
-  // 3.4 mid-air jump). stateCap = plain-data dead-pick thresholds (FR10).
+  // endofunction until each effect lands (3.3 charges, 3.4 mid-air jump).
+  // stateCap = plain-data dead-pick thresholds (FR10).
   { id: 'extrarope', name: 'Spare Rope', desc: '+1 rope (max 5)', icon: '∥',
     role: 'foundation', color: 'mint', rarity: 'uncommon', cap: 4,
     stateCap: { ropes: 5 },        // 5 held = dead pick (equals game.js MAX_ROPES)

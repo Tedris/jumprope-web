@@ -209,7 +209,7 @@ test('timing contract at cap: grounded iff y === 0, zero jump events, lead-in un
   }
   let heels3 = game.startRun().run;
   for (let i = 0; i < 3; i++) heels3 = game.applyCard(heels3, highjump);
-  const resumed = game.resumeRun(game.applyCard(heels3, highjump));
+  const resumed = game.resumeRun(heels3); // exactly cap picks — no 4th apply
   assert.equal(resumed.player.vy, jumpVelocity(0.1),
     'the canonical lead-in hop is never multiplied (ARCH-02, D-c)');
 });
@@ -242,7 +242,7 @@ test('draw replay over 200 seeds is unchanged, and a stacked 1000-tick run never
     ({ run, rope, player } = out);
     if (run.status === 'over') break; // a trip or the summit is a legitimate end
   }
-  if (run.status === 'choose') run = game.applyCard(run, run.offer[picks++ % run.offer.length]);
+  if (run.status === 'choose') run = game.resumeRun(game.applyCard(run, run.offer[picks++ % run.offer.length])).run; // applyCard never writes status (D-06) — mirror the in-loop pair
   assert.notEqual(run.status, 'choose', 'the run completes or dies by trip/win — never stalls');
   assert.ok(run.skips > 0, 'the stacked build was actually skipping');
 });
