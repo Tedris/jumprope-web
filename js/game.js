@@ -125,7 +125,11 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // Buffer-forgiven passes below are v1-frozen and skip this check — a
       // forgiven 10th defers the offer to the next cleared crossing.
       if (shouldOfferUpgrade(skips)) {
-        const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng);
+        // FR10 state-aware dead-pick filter (Story 3.1): ropeCount is the
+        // clamped count from the crossings loop; charged: 0 is the honest
+        // current value — Story 3.3 extends this object with real charges.
+        const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng,
+          { ropes: ropeCount, charged: 0 });
         // Pitfall 6: an exhausted pool must never freeze the run in choose.
         if (offers.length > 0) {
           status = 'choose';

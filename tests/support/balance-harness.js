@@ -23,6 +23,15 @@ export const AXIS = Object.freeze({
   widebrim: 'windowMul',
   slowrope: 'ropeMul',
   windup: 'ropeMul',
+  // Story 3.1: inert rule-changers map to the field names their future
+  // effects will write (game-architecture.md:601) — launchMul follows the
+  // *Mul convention; ropes/charged/airJumps are plain run-state names. The
+  // guard leg exempts the inert class; collision math treats them as
+  // axis-singletons.
+  extrarope: 'ropes',
+  reinforce: 'charged',
+  doublejump: 'airJumps',
+  highjump: 'launchMul',
 });
 
 // Deterministic seeded rng (Decided 9): collision draw i gets its own

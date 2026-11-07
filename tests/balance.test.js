@@ -302,7 +302,11 @@ test('same-axis collision rate: seeded draws track the exact weighted enumeratio
     const empirical = harness.collisionReport({ draws: 20000, pick, seed: 0 });
     assert.ok(Math.abs(empirical.rate - exact) <= 0.015,
       `pick-of-${pick}: empirical ${empirical.rate} within sampling band of exact ${exact}`);
-    const baseline = pick === 2 ? 0.16 : 0.46;
+    // Story 3.1 re-contract: exact weighted enumeration over the 12-card /
+    // sentinel-axis pool is 7.07% / 20.54% (was 16.25% / 46.20% on 8 cards) —
+    // the four inert rule-changers are axis-singletons, so same-axis
+    // collisions drop ("trending to zero", deferred-work :61 outcome).
+    const baseline = pick === 2 ? 0.07 : 0.21;
     assert.ok(Math.abs(exact - baseline) <= 0.01,
       `pick-of-${pick}: exact ${exact} reproduces the proposal baseline ~${baseline}`);
   }
@@ -310,7 +314,12 @@ test('same-axis collision rate: seeded draws track the exact weighted enumeratio
 
 // --- Task 3: AXIS guard leg (Decided 3) ---
 
-test('AXIS covers every card and same-axis cards share a touched effect field', () => {
+// Story 3.1 amendment (deferred-work :74 contract, permanently implemented):
+// every card must be MAPPED; cards whose apply writes no effect field (the
+// run-shaped/inert class — the 3.1 rule-changers awaiting 3.2-3.4 effects)
+// are exempt from the "axis is a field apply writes" and group co-write
+// checks. Effect-writing (legacy) cards keep the strict Decided-3 check.
+test('AXIS covers every card; effect-writing cards keep the strict axis contract', () => {
   const touchedFields = (card) => {
     const base = freshEffects();
     const applied = card.apply(base);
@@ -319,7 +328,9 @@ test('AXIS covers every card and same-axis cards share a touched effect field', 
   const groups = new Map();
   for (const card of CARDS) {
     assert.ok(card.id in harness.AXIS, `${card.id} must be mapped in AXIS`);
-    assert.ok(touchedFields(card).includes(harness.AXIS[card.id]),
+    const touched = touchedFields(card);
+    if (touched.length === 0) continue; // inert class — sentinel axis, exempt (Story 3.1)
+    assert.ok(touched.includes(harness.AXIS[card.id]),
       `${card.id}: axis ${harness.AXIS[card.id]} is a field its apply closure actually writes`);
     if (!groups.has(harness.AXIS[card.id])) groups.set(harness.AXIS[card.id], []);
     groups.get(harness.AXIS[card.id]).push(card);
