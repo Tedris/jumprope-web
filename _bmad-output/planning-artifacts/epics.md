@@ -97,10 +97,10 @@ From Architecture (technical requirements that impact epic/story creation):
 - Cross-cutting singletons: one shared handler per concern (`releaseEverything()`, `resumeRun()`, `snapGridFor()`) — pause/resume and input paths for new states must reuse them, not duplicate.
 - rng injected as a parameter (e.g. `tickRun`'s 5th arg); randomness (card draws only) deterministic under test.
 - Every new factory return contract gets a Node-side contract test in the same change; gesture/audio guards get red-green test legs when written.
-- Tests via `node --test tests/` (Node ≥ 18, `node:test` + `node:assert/strict`); balance gate reuses the 1000-tick headless-sim technique.
+- Tests via the one gate `./run_tests.sh` (Node's built-in runner under the hood — `node --test tests/`, Node ≥ 18, `node:test` + `node:assert/strict`); balance gate reuses the 1000-tick headless-sim technique.
 - Known debt WR-02 (reduced-motion idle pose animates off wall-clock `beat`, `js/render3d.js:387`) — one-line fix; decide whether folded into an Epic 5 story or housekeeping.
 - Conventions from AGENTS.md: named exports, `create*`/`update*` factories returning new objects, POJOs only, `*Mul` suffix on multiplier fields, 2-space indent, no `console.*` in pure modules.
-- Frozen-test + boundary discipline also greps around `index.html` / `package.json` — those files are near-frozen; touching them needs justification.
+- Near-frozen rule (corrected by Story 3.0): `index.html` / `package.json` are near-frozen by rule, not by fence test — no test reads `package.json`; `index.html` is covered only by `tests/ropehud.test.js`'s `#hud` contract leg; `tests/boundary.test.js` fences the sim import graph. Touching them needs justification.
 
 ### UX Design Requirements
 

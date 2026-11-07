@@ -80,7 +80,8 @@ test-reachable sim graph).
 - Plain ES modules, no build step, no npm deps (`package.json` is
   `{ type: "module" }` only); Three.js via importmap-pinned CDN, render shell
   only.
-- Tests: `node --test tests/` (Node ≥ 18, `node:test` + `node:assert/strict`);
+- Tests: the one gate `./run_tests.sh` — Node's built-in runner under the hood
+  (`node --test tests/`, Node ≥ 18, `node:test` + `node:assert/strict`);
   deterministic via seeded rng injection; includes the 1000-tick headless-sim
   balance gate.
 - Serve with any static HTTP server (`npx serve .` / `python3 -m http.server`).

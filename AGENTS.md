@@ -22,7 +22,7 @@ A browser-based, one-button jump-rope roguelike in the spirit of *Scarlet Skips*
 - JavaScript (ES Modules, `type: "module"`) — app code in `js/*.js`, tests in `tests/*.js`; no TypeScript, no build step, no bundler
 - Zero npm dependencies (`package.json` is `{ name, private, type: "module" }` only); Three.js via importmap-pinned CDN (`three@0.186.1`), used only by `js/render3d.js`
 - Browser: ES modules, WebGL (Three.js) + 2D canvas UI, `requestAnimationFrame`, Pointer/Keyboard Events, WebAudio, `localStorage`
-- Tests: Node.js built-in runner — `node --test tests/` (Node ≥ 18, `node:assert/strict`); deterministic via seeded-rng injection
+- Tests: the one gate `./run_tests.sh` — Node's built-in runner under the hood (`node --test tests/`, Node ≥ 18, `node:assert/strict`); deterministic via seeded-rng injection
 - Serve with any static HTTP server (ES modules require HTTP, not `file://`), e.g. `npx serve .` or `python3 -m http.server`
 - Tunables are inline constants (physics step `STEP = 1/120`, gravity `1800`, rope period `1.3s`); no environment variables or config files
 
@@ -68,7 +68,7 @@ Project management runs on [BMAD](https://bmadcode.com/) (installed under `_bmad
 
 - build: none — static files ship as-is; no build step, no bundler
 - test / verify: `./run_tests.sh` (the one gate: runs `node --test tests/`, prints `N/M passed`, exits non-zero on failure)
-- serve: any static HTTP server, e.g. `python3 -m http.server` (ES modules require HTTP, not `file://`)
+- run-headless (serve): any static HTTP server, e.g. `python3 -m http.server` (ES modules require HTTP, not `file://`)
 - probe-state: the sim core imports under bare Node — `node -e "import('./js/game.js').then(m => ...)"`; no display needed
 - do-not-touch: `tests/`, `run_tests.sh`, `.github/` (sacred gate paths) and the near-frozen `package.json`, `index.html`
 
@@ -76,4 +76,4 @@ Project management runs on [BMAD](https://bmadcode.com/) (installed under `_bmad
 
 - Run tests before committing: `./run_tests.sh` (the one gate — runs `node --test tests/`, prints `N/M passed`, exits non-zero on failure)
 - When a story workflow ends with its status set to `done`, commit the full change set (code, tests, story/tracking artifacts) and push
-- `index.html` and `package.json` are deliberately near-frozen; touching them needs justification. This is a rule, not a test fence: no test reads `package.json`, and only `tests/ropehud.test.js:167`/`tests/ceilingmarker.test.js:64` read `index.html` (to seed the HUD DOM, not to fence it); `tests/boundary.test.js` fences the sim import graph
+- `index.html` and `package.json` are deliberately near-frozen; touching them needs justification. This is a rule, not a test fence: no test reads `package.json`; `index.html` is checked only by `tests/ropehud.test.js`'s `#hud` contract leg (DOM-shape fence); `tests/boundary.test.js` fences the sim import graph

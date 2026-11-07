@@ -3,7 +3,7 @@ baseline_commit: 259b42f
 ---
 # Story 3.0: Repo hygiene — VERIFY-CONTRACT in force (chore, lands before 3.2)
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,7 +22,7 @@ This is a **chore story**: zero product/game behavior changes. It touches exactl
    b. exits non-zero on any test failure, zero when green (node's exit code, not grep's);
    c. prints a parseable PASS line `N/M passed` (N = passed, M = total) after the run, in both green and red cases;
    d. the command names in `AGENTS.md` and `VERIFY-CONTRACT.md` rule 1 point at this one existing script — no second gate name anywhere (package.json gains NO `scripts` entry; it stays `{name, private, type}` byte-identical).
-   **Verify:** `./run_tests.sh; echo rc=$?` → `304/304 passed`, `rc=0`; `grep -c run_tests.sh AGENTS.md VERIFY-CONTRACT.md` → ≥1 each; `git ls-files -s run_tests.sh` → `100755`.
+   **Verify:** `./run_tests.sh; echo rc=$?` → `308/308 passed`, `rc=0` (304 baseline + 4 hygiene legs; review fix — was stale `304/304`); `grep -c run_tests.sh AGENTS.md VERIFY-CONTRACT.md` → ≥1 each; `git ls-files -s run_tests.sh` → `100755`.
 2. (AC2, rule 8) A GitHub Actions workflow (`.github/workflows/*.yml`) runs **the same gate** (`./run_tests.sh`) from a clean checkout on `ubuntu-latest` — never on the dev box. The repo currently has no CI config at all. Trigger: `push` + `pull_request`. No npm install step (zero dependencies).
    **Verify:** `grep -l run_tests.sh .github/workflows/*.yml` → match; workflow references no package manager.
 3. (AC3, audit finding 4) The night-loop era files `NIGHT.md`, `JOURNAL.md`, `BLOCKED.md`, `tools/night/` are moved (retired, not deleted — `git mv`, content byte-identical inside) to `docs/archive/night/`, mirroring the repo-root layout (see Task 3 for exact destinations), and `AGENTS.md` carries a pointer line — same voice as the existing GSD legacy line (`AGENTS.md:64`).
@@ -59,11 +59,28 @@ This is a **chore story**: zero product/game behavior changes. It touches exactl
   - [x] Red-green: land the legs FIRST, observe all RED for the right reasons; then Tasks 1–4 turn them green. Mutation-check each leg once (Epic-1 retro A3: e.g. point (c) at a nonexistent script name → must kill).
   - [x] New file ONLY — existing `tests/*.test.js` stay byte-identical (frozen-test discipline, `AGENTS.md:52`; the gate itself is sacred, rule 3). Prove with `git diff 259b42f -- tests/` → the sole diff is the untracked-to-tracked `tests/hygiene.test.js`.
 - [x] Task 6: Verification and bookkeeping
-  - [x] `./run_tests.sh` fully green: `304/304 passed` (baseline 304 @ 8.4 s + ~4 static fence legs; budget < 10 s, report if over, NEVER trim a frozen leg).
+  - [x] `./run_tests.sh` fully green: `308/308 passed` (baseline 304 @ 8.4 s + 4 static fence legs; budget < 10 s, report if over, NEVER trim a frozen leg. Review fix: witness updated from stale `304/304`).
   - [x] Red-case evidence: run once with a deliberately failing scratch copy (e.g. `bash -c 'sed s/pass/failx/ ...'` is forbidden — instead: `node --test --test-reporter=tap tests/nonexistent-dir-tmp/ ; echo` through the script's parse path, or temporarily point the script at a fixture dir via an env override if you added one). Simplest sanctioned route: assert parse logic in the Debug Log by feeding the parser a captured TAP summary containing `# fail 1` and showing the printed line + non-zero branch. Paste output.
   - [x] CI is not self-verifiable locally (no `act` — dependency forbidden; arm64 host has no Chromium for driven checks either, `3-1` precedent). Evidence = workflow YAML + the identical gate command proven green locally + confirmation `git ls-files -s run_tests.sh` = 100755 (clean checkout runs it). If the remote accepts pushes, the first Actions run after landing is the acceptance witness — record its URL in the Debug Log if reachable.
   - [x] Static smoke: `python3 -m http.server`, load `index.html`, run starts (nothing moved that `index.html` references — expected zero-diff; run it anyway as the standing chore check).
   - [x] File List includes `sprint-status.yaml` (Epic 1 retro Lesson 4).
+
+
+### Review Findings
+
+- [x] [Review][Decision] Actions pins float on major tags — RESOLVED 2026-11-07: keep `@v5` major tags (spec-documented boring pin; not worth SHA churn).
+- [x] [Review][Patch] Rename `serve:` → `run-headless:` in AGENTS.md Commands block — `AGENTS.md:71`; rule 4's vocabulary (VERIFY-CONTRACT.md:16) names run-headless, and the doc currently drops the token. (Resolved from D2.) — applied: `run-headless (serve):`
+- [x] [Review][Patch] AGENTS.md near-frozen claim still wrong about `index.html` readers — `AGENTS.md:79`; `tests/ropehud.test.js:166-172` IS a fence (contract leg parsing index.html's `#hud` block); `tests/ceilingmarker.test.js:64` is a comment, not a read. — applied: claim restated (ropehud contract leg is the only index.html reader; no ceilingmarker read)
+- [x] [Review][Patch] Story carries contradictory 304 vs 308 gate witness — AC1 Verify + Task 6 first bullet expect `304/304` (pre-Task-5 baseline); landed suite is 308 (Debug Log). The story's own acceptance command can never show green as written. — applied: AC1 Verify + Task 6 → `308/308`
+- [x] [Review][Patch] Gate prints vacuous `0/0 passed` when the TAP summary is absent — `run_tests.sh:15-18`; node rc=0 with no parseable suite (e.g. moved/empty `tests/`) reads as green to a line-parser. — applied: no-summary guard, stderr note + exit 1
+- [x] [Review][Patch] Hygiene leg (a) passes on prose — `tests/hygiene.test.js:25`; `/node --test/` matches a comment; the full oracle line incl. `--test-reporter=tap` is unpinned, so doc-vs-gate reporter drift stays green. — applied: full oracle-line regex pinned
+- [x] [Review][Patch] CI fence half-covers the namespace — `tests/hygiene.test.js:32-38`; `.yaml` workflows are skipped by the filter; `/npm (install|ci)/` misses `npm i|add`, `yarn`, `pnpm`. — applied: `.ya?ml` + token set
+- [x] [Review][Patch] Retirement fence under-checks — `tests/hygiene.test.js:50-55`; `!existsSync('tools')` is broader than AC3's `tools/night` and fails on leftover untracked dirs; only NIGHT.md's presence in the archive is asserted, so deleting JOURNAL/BLOCKED/night.conf silently rots the rule-3 archive pointer (VERIFY-CONTRACT.md:15). — applied: root check → `tools/night`; archive asserts NIGHT/JOURNAL/BLOCKED/night.conf
+- [x] [Review][Patch] File List omits the story artifact itself — File List section; Task 6 makes File List completeness an acceptance item. — applied
+- [x] [Review][Patch] epics.md restates the retracted grep-fence claim — `_bmad-output/planning-artifacts/epics.md:103` ("discipline also greps around index.html/package.json") contradicts the corrected AGENTS.md:79; same reconciliation seam, missed site. — applied: corrected near-frozen wording
+- [x] [Review][Patch] Docs name a runnable command outside the gate — `AGENTS.md:25`, `epics.md:100`, `architecture.md:83` present bare `node --test tests/`; AC1d "no second gate name anywhere" + leg (c) only greps for presence, so an agent reading the top of AGENTS.md bypasses the PASS-line gate. — applied: all three name the gate
+- [x] [Review][Defer] CI exercises only Node 26 — `.github/workflows/test.yml:19`; documented floor Node ≥ 18 never exercised; no engines/.nvmrc — deferred, pre-existing toolchain gap, spec-documented pin
+- [x] [Review][Defer] Unfiltered `on: push` double-runs on tag pushes and PR-head pushes — `.github/workflows/test.yml:5-7`; spec Task 2 chose no branch filters (silent-skip trap); cost is duplicate minutes, not correctness — deferred, accepted design
 
 ## Dev Notes
 
@@ -159,8 +176,12 @@ omp (lane-qwen38-ultra/qwen), 2026-11-07
 - `VERIFY-CONTRACT.md` — modified (rule 3 pointer, morning-flow wording, rule 9 GSD annotation)
 - `tests/hygiene.test.js` — new (static doc/oracle fence legs)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — modified (story status)
+- `_bmad-output/implementation-artifacts/3-0-repo-hygiene-verify-contract.md` — new (this story artifact; review round adds the Findings section)
+- `_bmad-output/planning-artifacts/epics.md` — modified (review round: :100 gate naming, :103 near-frozen claim fix)
+- `_bmad-output/planning-artifacts/architecture.md` — modified (review round: :83 gate naming)
 
 ## Change Log
 
 - 2026-11-07 — Story 3.0 created: D-003 scope locked (gate script, CI oracle, night-file retirement, doc reconciliation); audit planning write-back landed separately at 259b42f; status ready-for-dev.
 - 2026-11-07 — Story 3.0 implemented: run_tests.sh gate (308/308, rc-correct, 755), .github/workflows/test.yml (Actions run 42412617078 green), night kit → docs/archive/night/ via git mv, AGENTS.md/VERIFY-CONTRACT reconciled, tests/hygiene.test.js fences (red-green + mutation-checked); status review.
+- 2026-11-07 — Story 3.0 code review (3 parallel layers: blind/edge/auditor): 2 decisions (keep @v5 pins; run-headless rename), 10 patches applied (near-frozen claim fix, 308 witness, gate no-summary guard, hygiene legs a/b/d tightened, epics/architecture/AGENTS gate naming + fence-claim reconciliation), 2 deferred (Node floor, push triggers), 22 dismissed.
