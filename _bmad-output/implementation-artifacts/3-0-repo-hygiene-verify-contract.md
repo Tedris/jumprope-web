@@ -3,7 +3,7 @@ baseline_commit: 259b42f
 ---
 # Story 3.0: Repo hygiene — VERIFY-CONTRACT in force (chore, lands before 3.2)
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -32,38 +32,38 @@ This is a **chore story**: zero product/game behavior changes. It touches exactl
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: `./run_tests.sh` gate script (AC: 1)
-  - [ ] Create `run_tests.sh` at repo root: `#!/usr/bin/env bash`, `set -u`; run node's test runner through `tee` or capture so BOTH the human-readable log and the `N/M passed` summary survive; print node's own output unmodified first, then the `N/M passed` line; `exit` with node's exit code (capture `${PIPESTATUS[0]}` / `$?` before anything else — the classic gate bug is grepping the pipeline and exiting on grep's status).
-  - [ ] Parse counts from the **TAP reporter** (`node --test --test-reporter=tap tests/`): summary lines `# pass 304` / `# tests 304` / `# fail 0` are ASCII and locale-stable. The default spec reporter's `ℹ` lines are unicode-prefixed — do not grep those. `M` = `# tests`; `N` = `# pass`. If `# fail` > 0 the script still prints the line, then exits non-zero.
-  - [ ] `chmod +x run_tests.sh`; stage so git records mode 100755 (`git ls-files -s` shows it; a `644` gate is red in CI on the first `./run_tests.sh` invocation).
-  - [ ] No npm script, no Makefile, no second wrapper — one gate name (rule 1). Keep `package.json` byte-identical.
-- [ ] Task 2: CI workflow (AC: 2)
-  - [ ] New `.github/workflows/test.yml`: `on: {push: ..., pull_request: ...}`; job on `ubuntu-latest`; `permissions: {contents: read}`; steps: checkout, `actions/setup-node` with `node-version: 26`, then `run: ./run_tests.sh`. **No** `npm install`/`npm ci` (zero deps — a lockfile-less `npm ci` fails the build) and **no** `cache: 'npm'` in setup-node (no lockfile to hash; omit the input).
-  - [ ] Action versions (researched 2026-11-07): `actions/checkout` — v5.1.0 is the confirmed-good July-2026 major (a v6/v7 line exists by now; either newer major also works, but v5 is the boring pin); `actions/setup-node` v5.x (v5.0.0+, breaking change was cache handling — irrelevant without `cache:`). Node 26: dev box runs v26.8.1 and Node 26 became Active LTS 2026-10-28; the suite's floor is Node ≥ 18 (`AGENTS.md:25`).
-  - [ ] Do not rely on branch-filtering (`master` is the current branch; plain `on: push` avoids a wrong-branch silent-skip trap).
-- [ ] Task 3: Retire the night-loop files (AC: 3)
-  - [ ] `git mv NIGHT.md JOURNAL.md BLOCKED.md docs/archive/night/` and `git mkdir + git mv tools/night docs/archive/night/tools/night` — mirror the root layout so cross-references inside the archived files (`tools/night/briefs/...` cited from NIGHT.md:5) stay repairable by prefixing `docs/archive/night/`. `docs/archive/` already hosts `gsd/` the same way (read-only legacy).
-  - [ ] Contents stay byte-identical — these are historical records (GSD-04-xx results, 2026-10-22). No edits inside them, no timestamp fixes, no path rewrites.
-  - [ ] After the move `tools/` is empty and disappears from git; the root has no `NIGHT.md`/`JOURNAL.md`/`BLOCKED.md`.
-  - [ ] Do NOT touch `.night/` — untracked, already gitignored (`.gitignore` `.night/` line), local scratch logs only. Keep the ignore line.
-  - [ ] `AGENTS.md` Workflow section: add one legacy-pointer bullet under the GSD one (`:64`): night-loop kit archived read-only under `docs/archive/night/`, superseded by the BMAD workflow.
-- [ ] Task 4: Doc reconciliation (AC: 1, 4)
-  - [ ] `VERIFY-CONTRACT.md` rule 3: replace the `NIGHT_PROTECT`-variable sentence with the requirement itself — "`tests/`, the gate script, and CI config are protected paths; a worker touching them is instant red" — plus one clause noting the night-era path list survives in `docs/archive/night/tools/night/night.conf`.
-  - [ ] `VERIFY-CONTRACT.md` "Morning flow consequence": rewrite the heading/first clause to match today's flow (BMAD `dev-story` → `code-review`; unattended work ships at most `review`/`verification: pending`; promotion to `done` is human or fresh-context-reviewer). Meaning unchanged, night vocabulary removed.
-  - [ ] `VERIFY-CONTRACT.md` rule 9: the GSD half is historical — mark it `(GSD retired; BMAD ACs carry the command line)` so the rule stays checkable. Every AC in this story carries a `Verify:` command — follow that pattern.
-  - [ ] `AGENTS.md` Housekeeping: replace the `node --test tests/` bullet (`:68`) with the gate (`./run_tests.sh` — runs `node --test tests/`, prints `N/M passed`, non-zero on failure); amend the near-frozen bullet (`:70`) — its parenthetical claims "the boundary fence tests grep for regressions around them", which is **false as written**: no test reads `package.json`, and only `tests/ropehud.test.js:167`/`tests/ceilingmarker.test.js:64` read `index.html` (to seed the HUD DOM, not to fence it). `tests/boundary.test.js` fences the sim import graph, not these files. Restate it as a convention (near-frozen by rule, not by test) unless this story's Task 5 legs make it true.
-  - [ ] `AGENTS.md`: add the rule-4 Commands block + do-not-touch list (keep it 6 lines, not a manual). Suggested sacred list: `tests/`, `run_tests.sh`, `.github/`, plus the near-frozen `package.json`, `index.html`.
-- [ ] Task 5: Doc/oracle fence legs — `tests/hygiene.test.js` (new file) (AC: all)
-  - [ ] The drift this story exists for was doc-vs-reality rot. Pin it mechanically so it cannot silently recur (rule 9's "if you can't write the command, it isn't formed"; fence-test precedent: `tests/boundary.test.js`). Static file reads only, ~0 ms. Derive `projectRoot` by copying the existing pattern (`tests/ropehud.test.js:165-167`, `new URL('..', import.meta.url)` style) — check the actual idiom there and mirror it.
-  - [ ] Legs: (a) `run_tests.sh` exists, exec bit set, references `node --test` and `tests/`; (b) a `.github/workflows/*.yml` exists and names `run_tests.sh`; (c) `AGENTS.md` and `VERIFY-CONTRACT.md` each name `run_tests.sh` (single-gate-name parity); (d) no night-era paths at repo root (`NIGHT.md`, `JOURNAL.md`, `BLOCKED.md`, `tools/`) and `docs/archive/night/NIGHT.md` exists.
-  - [ ] Red-green: land the legs FIRST, observe all RED for the right reasons; then Tasks 1–4 turn them green. Mutation-check each leg once (Epic-1 retro A3: e.g. point (c) at a nonexistent script name → must kill).
-  - [ ] New file ONLY — existing `tests/*.test.js` stay byte-identical (frozen-test discipline, `AGENTS.md:52`; the gate itself is sacred, rule 3). Prove with `git diff 259b42f -- tests/` → the sole diff is the untracked-to-tracked `tests/hygiene.test.js`.
-- [ ] Task 6: Verification and bookkeeping
-  - [ ] `./run_tests.sh` fully green: `304/304 passed` (baseline 304 @ 8.4 s + ~4 static fence legs; budget < 10 s, report if over, NEVER trim a frozen leg).
-  - [ ] Red-case evidence: run once with a deliberately failing scratch copy (e.g. `bash -c 'sed s/pass/failx/ ...'` is forbidden — instead: `node --test --test-reporter=tap tests/nonexistent-dir-tmp/ ; echo` through the script's parse path, or temporarily point the script at a fixture dir via an env override if you added one). Simplest sanctioned route: assert parse logic in the Debug Log by feeding the parser a captured TAP summary containing `# fail 1` and showing the printed line + non-zero branch. Paste output.
-  - [ ] CI is not self-verifiable locally (no `act` — dependency forbidden; arm64 host has no Chromium for driven checks either, `3-1` precedent). Evidence = workflow YAML + the identical gate command proven green locally + confirmation `git ls-files -s run_tests.sh` = 100755 (clean checkout runs it). If the remote accepts pushes, the first Actions run after landing is the acceptance witness — record its URL in the Debug Log if reachable.
-  - [ ] Static smoke: `python3 -m http.server`, load `index.html`, run starts (nothing moved that `index.html` references — expected zero-diff; run it anyway as the standing chore check).
-  - [ ] File List includes `sprint-status.yaml` (Epic 1 retro Lesson 4).
+- [x] Task 1: `./run_tests.sh` gate script (AC: 1)
+  - [x] Create `run_tests.sh` at repo root: `#!/usr/bin/env bash`, `set -u`; run node's test runner through `tee` or capture so BOTH the human-readable log and the `N/M passed` summary survive; print node's own output unmodified first, then the `N/M passed` line; `exit` with node's exit code (capture `${PIPESTATUS[0]}` / `$?` before anything else — the classic gate bug is grepping the pipeline and exiting on grep's status).
+  - [x] Parse counts from the **TAP reporter** (`node --test --test-reporter=tap tests/`): summary lines `# pass 304` / `# tests 304` / `# fail 0` are ASCII and locale-stable. The default spec reporter's `ℹ` lines are unicode-prefixed — do not grep those. `M` = `# tests`; `N` = `# pass`. If `# fail` > 0 the script still prints the line, then exits non-zero.
+  - [x] `chmod +x run_tests.sh`; stage so git records mode 100755 (`git ls-files -s` shows it; a `644` gate is red in CI on the first `./run_tests.sh` invocation).
+  - [x] No npm script, no Makefile, no second wrapper — one gate name (rule 1). Keep `package.json` byte-identical.
+- [x] Task 2: CI workflow (AC: 2)
+  - [x] New `.github/workflows/test.yml`: `on: {push: ..., pull_request: ...}`; job on `ubuntu-latest`; `permissions: {contents: read}`; steps: checkout, `actions/setup-node` with `node-version: 26`, then `run: ./run_tests.sh`. **No** `npm install`/`npm ci` (zero deps — a lockfile-less `npm ci` fails the build) and **no** `cache: 'npm'` in setup-node (no lockfile to hash; omit the input).
+  - [x] Action versions (researched 2026-11-07): `actions/checkout` — v5.1.0 is the confirmed-good July-2026 major (a v6/v7 line exists by now; either newer major also works, but v5 is the boring pin); `actions/setup-node` v5.x (v5.0.0+, breaking change was cache handling — irrelevant without `cache:`). Node 26: dev box runs v26.8.1 and Node 26 became Active LTS 2026-10-28; the suite's floor is Node ≥ 18 (`AGENTS.md:25`).
+  - [x] Do not rely on branch-filtering (`master` is the current branch; plain `on: push` avoids a wrong-branch silent-skip trap).
+- [x] Task 3: Retire the night-loop files (AC: 3)
+  - [x] `git mv NIGHT.md JOURNAL.md BLOCKED.md docs/archive/night/` and `git mkdir + git mv tools/night docs/archive/night/tools/night` — mirror the root layout so cross-references inside the archived files (`tools/night/briefs/...` cited from NIGHT.md:5) stay repairable by prefixing `docs/archive/night/`. `docs/archive/` already hosts `gsd/` the same way (read-only legacy).
+  - [x] Contents stay byte-identical — these are historical records (GSD-04-xx results, 2026-10-22). No edits inside them, no timestamp fixes, no path rewrites.
+  - [x] After the move `tools/` is empty and disappears from git; the root has no `NIGHT.md`/`JOURNAL.md`/`BLOCKED.md`.
+  - [x] Do NOT touch `.night/` — untracked, already gitignored (`.gitignore` `.night/` line), local scratch logs only. Keep the ignore line.
+  - [x] `AGENTS.md` Workflow section: add one legacy-pointer bullet under the GSD one (`:64`): night-loop kit archived read-only under `docs/archive/night/`, superseded by the BMAD workflow.
+- [x] Task 4: Doc reconciliation (AC: 1, 4)
+  - [x] `VERIFY-CONTRACT.md` rule 3: replace the `NIGHT_PROTECT`-variable sentence with the requirement itself — "`tests/`, the gate script, and CI config are protected paths; a worker touching them is instant red" — plus one clause noting the night-era path list survives in `docs/archive/night/tools/night/night.conf`.
+  - [x] `VERIFY-CONTRACT.md` "Morning flow consequence": rewrite the heading/first clause to match today's flow (BMAD `dev-story` → `code-review`; unattended work ships at most `review`/`verification: pending`; promotion to `done` is human or fresh-context-reviewer). Meaning unchanged, night vocabulary removed.
+  - [x] `VERIFY-CONTRACT.md` rule 9: the GSD half is historical — mark it `(GSD retired; BMAD ACs carry the command line)` so the rule stays checkable. Every AC in this story carries a `Verify:` command — follow that pattern.
+  - [x] `AGENTS.md` Housekeeping: replace the `node --test tests/` bullet (`:68`) with the gate (`./run_tests.sh` — runs `node --test tests/`, prints `N/M passed`, non-zero on failure); amend the near-frozen bullet (`:70`) — its parenthetical claims "the boundary fence tests grep for regressions around them", which is **false as written**: no test reads `package.json`, and only `tests/ropehud.test.js:167`/`tests/ceilingmarker.test.js:64` read `index.html` (to seed the HUD DOM, not to fence it). `tests/boundary.test.js` fences the sim import graph, not these files. Restate it as a convention (near-frozen by rule, not by test) unless this story's Task 5 legs make it true.
+  - [x] `AGENTS.md`: add the rule-4 Commands block + do-not-touch list (keep it 6 lines, not a manual). Suggested sacred list: `tests/`, `run_tests.sh`, `.github/`, plus the near-frozen `package.json`, `index.html`.
+- [x] Task 5: Doc/oracle fence legs — `tests/hygiene.test.js` (new file) (AC: all)
+  - [x] The drift this story exists for was doc-vs-reality rot. Pin it mechanically so it cannot silently recur (rule 9's "if you can't write the command, it isn't formed"; fence-test precedent: `tests/boundary.test.js`). Static file reads only, ~0 ms. Derive `projectRoot` by copying the existing pattern (`tests/ropehud.test.js:165-167`, `new URL('..', import.meta.url)` style) — check the actual idiom there and mirror it.
+  - [x] Legs: (a) `run_tests.sh` exists, exec bit set, references `node --test` and `tests/`; (b) a `.github/workflows/*.yml` exists and names `run_tests.sh`; (c) `AGENTS.md` and `VERIFY-CONTRACT.md` each name `run_tests.sh` (single-gate-name parity); (d) no night-era paths at repo root (`NIGHT.md`, `JOURNAL.md`, `BLOCKED.md`, `tools/`) and `docs/archive/night/NIGHT.md` exists.
+  - [x] Red-green: land the legs FIRST, observe all RED for the right reasons; then Tasks 1–4 turn them green. Mutation-check each leg once (Epic-1 retro A3: e.g. point (c) at a nonexistent script name → must kill).
+  - [x] New file ONLY — existing `tests/*.test.js` stay byte-identical (frozen-test discipline, `AGENTS.md:52`; the gate itself is sacred, rule 3). Prove with `git diff 259b42f -- tests/` → the sole diff is the untracked-to-tracked `tests/hygiene.test.js`.
+- [x] Task 6: Verification and bookkeeping
+  - [x] `./run_tests.sh` fully green: `304/304 passed` (baseline 304 @ 8.4 s + ~4 static fence legs; budget < 10 s, report if over, NEVER trim a frozen leg).
+  - [x] Red-case evidence: run once with a deliberately failing scratch copy (e.g. `bash -c 'sed s/pass/failx/ ...'` is forbidden — instead: `node --test --test-reporter=tap tests/nonexistent-dir-tmp/ ; echo` through the script's parse path, or temporarily point the script at a fixture dir via an env override if you added one). Simplest sanctioned route: assert parse logic in the Debug Log by feeding the parser a captured TAP summary containing `# fail 1` and showing the printed line + non-zero branch. Paste output.
+  - [x] CI is not self-verifiable locally (no `act` — dependency forbidden; arm64 host has no Chromium for driven checks either, `3-1` precedent). Evidence = workflow YAML + the identical gate command proven green locally + confirmation `git ls-files -s run_tests.sh` = 100755 (clean checkout runs it). If the remote accepts pushes, the first Actions run after landing is the acceptance witness — record its URL in the Debug Log if reachable.
+  - [x] Static smoke: `python3 -m http.server`, load `index.html`, run starts (nothing moved that `index.html` references — expected zero-diff; run it anyway as the standing chore check).
+  - [x] File List includes `sprint-status.yaml` (Epic 1 retro Lesson 4).
 
 ## Dev Notes
 
@@ -124,16 +124,31 @@ This is a **chore story**: zero product/game behavior changes. It touches exactl
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+omp (lane-qwen38-ultra/qwen), 2026-11-07
 
 ### Debug Log References
 
 - Baseline: `node --test tests/` → 304/304 green, 8.4 s wall, Node v26.8.1 (2026-11-07, @ 259b42f).
 - Required entries: red-green evidence for the hygiene legs; the parse/red-case witness; `git diff 259b42f -- tests/` fence proof; `git ls-files -s run_tests.sh`; suite wall-time.
+- RED (Task 5, legs landed first @ HEAD 62b047b): `node --test tests/hygiene.test.js` → all 4 legs ✖ — (a) "run_tests.sh must exist at the repo root", (b) ".github/workflows/ must exist", (c) "AGENTS.md must name the one gate command", (d) "NIGHT.md must no longer exist at the repo root". Tasks 1–4 turned all 4 green.
+- Mutation check (one per leg): (a) `chmod 644 run_tests.sh` → kill; (b) workflows dir moved away → kill; (c) `git stash push -- AGENTS.md` (HEAD copy, no gate name) → kill; (d) `touch NIGHT.md` → kill. Restored suite rc=0; exec bit back to 755.
+- Green gate: `time ./run_tests.sh` → `308/308 passed`, `rc=0`, 8.5 s wall (< 10 s budget; = baseline 304 + 4 hygiene legs).
+- Red-case witness through the REAL script: throwaway `tests/zz-redcase-tmp.test.js` (one failing assert) → TAP tail `# tests 309` / `# pass 308` / `# fail 1`, printed line `308/309 passed`, `rc=1`. Scratch file deleted before commit.
+- Parse bug caught green-ward: first cut used `$2` for the `# pass` count → printed `0/308`; fixed to `$3` (both summary fields are column 3).
+- Fence proof: `git diff 259b42f -- tests/` → sole change `tests/hygiene.test.js` (new, 56 lines, zero deletions elsewhere). `git ls-files -s run_tests.sh` → `100755 0feb45df…`.
+- Night retirement: `git status` recorded all 12 paths as `R` renames; `git log --follow --oneline docs/archive/night/NIGHT.md` walks back through ccd4c46 → 72dc536 … → 4bb2704 (night-kit install). Root has no NIGHT.md/JOURNAL.md/BLOCKED.md/tools; `.gitignore` `.night/` line untouched.
+- Doc greps (AC1/AC2/AC4 verify): `grep -c run_tests.sh AGENTS.md VERIFY-CONTRACT.md` → 3 and 1; `grep -l run_tests.sh .github/workflows/*.yml` → test.yml; `grep -n NIGHT_PROTECT VERIFY-CONTRACT.md` → :14, archive-pointer clause only.
+- Static smoke (no Chromium on arm64, 3-1 precedent): `python3 -m http.server 8123` → index.html, css/style.css, js/{shell,game,render3d,audio}.js all HTTP 200 (zero-diff confirmed).
+- CI acceptance witness: Actions run success on push — https://github.com/Tedris/jumprope-web/actions/runs/42412617078 (`✓ Run ./run_tests.sh`, ubuntu-latest, clean checkout).
 
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created (2026-11-07).
+- Gate ships as one 19-line bash script: tee'd TAP run, node's `${PIPESTATUS[0]}` as the only exit source, awk-parsed `# tests`/`# pass` → `N/M passed` in green AND red cases.
+- Fence hygiene.test.js landed RED-first, all 4 legs mutation-killed once each (retro A3).
+- CI-comment rephrase: the hygiene package-manager leg scans the full YAML including comments — the original comment literally said "npm install/ci" and killed the leg. Reworded the comment instead of loosening the regex (value-exact verification preserved).
+- VERIFY-CONTRACT: rule 3 states the protection directly (NIGHT_PROTECT named only as retired-archive pointer); "Morning flow consequence" → "Unattended-run consequence" (BMAD vocabulary, meaning unchanged); rule 9 annotated `(GSD retired; BMAD ACs carry the command line)`.
+- AGENTS.md gained the rule-4 Commands block (build/test+verify/serve/probe-state + do-not-touch), the night-kit pointer bullet, the gate in Housekeeping, and the corrected near-frozen claim (no test reads package.json; the two index.html reads are HUD seeds, not fences — re-verified by grep 2026-11-07).
 
 ### File List
 
@@ -148,3 +163,4 @@ This is a **chore story**: zero product/game behavior changes. It touches exactl
 ## Change Log
 
 - 2026-11-07 — Story 3.0 created: D-003 scope locked (gate script, CI oracle, night-file retirement, doc reconciliation); audit planning write-back landed separately at 259b42f; status ready-for-dev.
+- 2026-11-07 — Story 3.0 implemented: run_tests.sh gate (308/308, rc-correct, 755), .github/workflows/test.yml (Actions run 42412617078 green), night kit → docs/archive/night/ via git mv, AGENTS.md/VERIFY-CONTRACT reconciled, tests/hygiene.test.js fences (red-green + mutation-checked); status review.
