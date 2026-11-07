@@ -90,7 +90,9 @@ export function runBot(config = {}) {
       picks += 1;
     }
     if (player.grounded && rope.phase >= policy.lo && rope.phase <= policy.hi) {
-      player = jump(player, policy.hold);
+      // Story 3.2 (deferred-work :84): the scripted jumper honors launchMul
+      // — peak measurements stay honest for the Launch Heels band.
+      player = jump(player, policy.hold, run.effects.launchMul ?? 1);
     }
     ({ run, rope, player } = tickRun(run, rope, player, STEP, rng));
     trace.push({
@@ -287,6 +289,9 @@ export function cardRuleReport(options = {}) {
 }
 
 // AC4: share of seeded offer draws that put two same-axis cards on the table.
+// Story 3.2 note (D-e): deliberately still state-less — the exact-enumeration
+// twin in tests/balance.test.js is the state-less reference the 3.1 baselines
+// were pinned against; narrowing to live state is a 6.1/6.3 decision.
 export function collisionReport(options = {}) {
   const { draws = 20000, pick = 2, seed = 0 } = options;
   let collisions = 0;

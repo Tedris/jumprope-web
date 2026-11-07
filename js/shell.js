@@ -351,7 +351,7 @@ export function startGame(canvas) {
     if (releaseIntent) {
       if (run.status === 'running') {
         if (performance.now() - reentryAt >= LEAD_IN_MS && holdFrom !== null) {
-          player = jump(player, (performance.now() - holdFrom) / 1000);
+          player = jump(player, (performance.now() - holdFrom) / 1000, run.effects.launchMul ?? 1);
           audio?.handleEvent('jump');
           holdFrom = null;
           // D-N01/D-N11: hand the press to the sim on this exact STEP's

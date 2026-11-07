@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { UPGRADES, freshEffects, pickTwo, shouldOfferUpgrade } from '../js/upgrades.js';
 
 test('effects start neutral', () => {
-  assert.deepEqual(freshEffects(), { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1 });
+  // Story 3.2 re-contract: freshEffects gains the fifth key launchMul.
+  assert.deepEqual(freshEffects(), { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1, launchMul: 1 });
 });
 
 test('effects stack multiplicatively', () => {

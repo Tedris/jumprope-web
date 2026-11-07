@@ -16,7 +16,7 @@ function seeded(seed) {
 const FIXTURE_ROPE = { phase: 0.44, period: 0.9 };
 const FIXTURE_PLAYER = { y: 40, vy: 0, grounded: false, squash: 1, squashVel: 0 };
 
-test('record shape: identity fields, cap, apply over only the four frozen effect keys', () => {
+test('record shape: identity fields, cap, apply over only the five frozen effect keys', () => {
   const DEFINED_COLORS = ['sky', 'slate', 'amber', 'mint', 'ember'];
   for (const card of CARDS) {
     for (const key of ['name', 'icon', 'role', 'color', 'rarity']) {
@@ -28,9 +28,19 @@ test('record shape: identity fields, cap, apply over only the four frozen effect
     assert.equal(typeof card.apply, 'function', `${card.id}.apply is a function`);
     // T-3-06: the color set never grows past the five classes CSS defines.
     assert.ok(DEFINED_COLORS.includes(card.color), `${card.id}.color is one of the defined five`);
-    assert.deepEqual(Object.keys(card.apply(freshEffects())).sort(),
-      ['floatMul', 'ropeMul', 'scoreMul', 'windowMul'],
-      `${card.id}.apply introduces no new effect keys (Pitfall 3)`);
+    // Story 3.2 re-contract: shape dispatch — a run-shaped card patches the
+    // whole record, so assert the five frozen effect keys all SURVIVE the
+    // patch (it may add run fields); effects-shape cards keep the exact set.
+    if (card.shape === 'run') {
+      const patched = card.apply(freshEffects());
+      for (const key of ['floatMul', 'launchMul', 'ropeMul', 'scoreMul', 'windowMul']) {
+        assert.ok(key in patched, `${card.id}: run-shaped apply preserves ${key} (Pitfall 3)`);
+      }
+    } else {
+      assert.deepEqual(Object.keys(card.apply(freshEffects())).sort(),
+        ['floatMul', 'launchMul', 'ropeMul', 'scoreMul', 'windowMul'],
+        `${card.id}.apply introduces no new effect keys (Pitfall 3)`);
+    }
   }
 });
 

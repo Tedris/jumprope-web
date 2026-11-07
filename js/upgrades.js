@@ -33,9 +33,10 @@ export const CARDS = [
   // endofunction until each effect lands (3.2 launchMul/ropes, 3.3 charges,
   // 3.4 mid-air jump). stateCap = plain-data dead-pick thresholds (FR10).
   { id: 'extrarope', name: 'Spare Rope', desc: '+1 rope (max 5)', icon: '∥',
-    role: 'foundation', color: 'amber', rarity: 'uncommon', cap: 4,
+    role: 'foundation', color: 'mint', rarity: 'uncommon', cap: 4,
     stateCap: { ropes: 5 },        // 5 held = dead pick (equals game.js MAX_ROPES)
-    apply: s => ({ ...s }) },      // run-shaped card — effect lands in Story 3.2 (ADR-2)
+    shape: 'run',                 // ADR-2 whole-record patch, dispatched in game.js
+    apply: (run) => ({ ...run, ropes: (run.ropes ?? 1) + 1 }) },
   { id: 'reinforce', name: 'Steel Cord', desc: 'a rope survives one trip', icon: '▣',
     role: 'risk', color: 'slate', rarity: 'uncommon', cap: 2,
     stateCap: { charged: 2 },      // FR12: up to 2 charged ropes (Story 3.3 wires the data)
@@ -45,7 +46,7 @@ export const CARDS = [
     apply: s => ({ ...s }) },      // mid-air jump lands in Story 3.4
   { id: 'highjump', name: 'Launch Heels', desc: '+10% launch velocity', icon: '△',
     role: 'foundation', color: 'sky', rarity: 'common', cap: 3,
-    apply: s => ({ ...s }) },      // launch velocity lands in Story 3.2
+    apply: s => ({ ...s, launchMul: s.launchMul * 1.1 }) },
 ];
 
 // Compat alias: tests/upgrades.test.js freezes the UPGRADES named export.
@@ -55,7 +56,7 @@ export const UPGRADES = CARDS;
 export const RARITY_WEIGHT = { common: 70, uncommon: 25, rare: 5 };
 
 export function freshEffects() {
-  return { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1 };
+  return { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1, launchMul: 1 };
 }
 
 // state (Story 3.1, FR10) is the optional run-state view ({ ropes, charged, ... },

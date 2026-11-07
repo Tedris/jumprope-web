@@ -6,8 +6,8 @@ export function jumpVelocity(holdSeconds) {
   return 350 + Math.min(holdSeconds, 0.5) * 500;
 }
 
-export function jump(player, holdSeconds) {
-  return { ...player, vy: jumpVelocity(holdSeconds), grounded: false };
+export function jump(player, holdSeconds, launchMul = 1) {
+  return { ...player, vy: jumpVelocity(holdSeconds) * launchMul, grounded: false };
 }
 
 export function updatePlayer(player, dt, gravity = 1800) {

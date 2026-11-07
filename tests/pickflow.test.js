@@ -143,7 +143,8 @@ function cursorIndex(env) {
 // ~0.45 s of pumped frames ≈ the 0.1-hold lead-in jump still airborne.
 // Effect expectations are derived from the picked record itself
 // (picked.apply(neutral)) so the check stays green as the roster grows.
-const NEUTRAL_EFFECTS = { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1 };
+// Story 3.2 re-contract: parity with freshEffects — launchMul joins the set.
+const NEUTRAL_EFFECTS = { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1, launchMul: 1 };
 
 test('choose renders one offer line per card: cursor, icon, name, cap readout', async () => {
   const env = await bootShell();
@@ -219,8 +220,11 @@ test('hold confirms once while held; release and lock never charge a jump (D-03/
     assert.equal(done.run.status, 'running');
     assert.equal(done.run.owned[picked.id], 1, 'owned count landed before any later input');
     const want = picked.apply({ ...NEUTRAL_EFFECTS });
-    for (const [field, value] of Object.entries(want)) {
-      assert.ok(Math.abs(done.run.effects[field] - value) < 1e-9, `the ${field} effect applied instantly`);
+    // Story 3.2 re-contract: iterate the effect FIELDS, not the apply output
+    // — a run-shaped pick's output carries run fields (ropes) alongside, and
+    // an output-driven loop would skip launchMul for a highjump pick.
+    for (const field of Object.keys(NEUTRAL_EFFECTS)) {
+      assert.ok(Math.abs(done.run.effects[field] - want[field]) < 1e-9, `the ${field} effect applied instantly`);
     }
     // D-06: re-entry through the shared lead-in.
     assert.ok(done.rope.phase >= 0.33 && done.rope.phase < 0.5, 'rope back to the lead-in phase');

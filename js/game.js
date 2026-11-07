@@ -214,15 +214,25 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   };
 }
 
+// ADR-2 (game-architecture.md:236): every card is a whole-record patch.
+// Effects-shape cards are the subset whose apply is an endofunction over
+// run.effects; run-shaped cards (card.shape === 'run') patch the record.
+function patchedRun(run, card) {
+  if (card.shape === 'run') {
+    const patched = card.apply(run);
+    return { ...patched, ropes: clampRopes(patched.ropes ?? MIN_ROPES) };
+  }
+  return { ...run, effects: card.apply(run.effects) };
+}
+
 export function applyUpgrade(run, upgrade) {
-  return { ...run, effects: upgrade.apply(run.effects), offer: null, status: 'running' };
+  return { ...patchedRun(run, upgrade), offer: null, status: 'running' };
 }
 
 // status stays untouched — resumeRun owns the running transition (D-06).
 export function applyCard(run, card) {
   return {
-    ...run,
-    effects: card.apply(run.effects),
+    ...patchedRun(run, card),
     owned: { ...run.owned, [card.id]: (run.owned[card.id] ?? 0) + 1 },
     offer: null,
   };

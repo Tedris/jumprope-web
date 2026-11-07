@@ -39,10 +39,12 @@ test('FR12: the four new records carry their pinned metadata', () => {
   }
 });
 
-test('3.1 effects-shape contract: every new card apply is the inert endofunction', () => {
-  // Card PRESENCE is 3.1; card EFFECTS land in 3.2-3.4 (ADR-2 migration is
-  // owed to 3.2). An apply that touches any field here is scope creep.
-  for (const id of NEW_IDS) {
+test('effects-shape contract: the still-unlanded cards keep the inert endofunction', () => {
+  // Story 3.2 re-contract: extrarope (run-shape, whole-record patch) and
+  // highjump (launchMul) landed their effects — pinned by
+  // tests/simpleeffects.test.js. The remaining rule-changers stay inert
+  // endofunctions until their stories (3.3 charged, 3.4 airJumps).
+  for (const id of ['reinforce', 'doublejump']) {
     assert.deepEqual(cardById(id).apply(freshEffects()), freshEffects(),
       `${id}.apply must return the effects untouched until its effect story`);
   }

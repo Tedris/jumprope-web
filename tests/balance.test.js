@@ -199,7 +199,7 @@ test('per-card climb and peak deltas land in the analytic band of the real closu
     for (const [n, climbKey, peakKey] of [[1, 'climbDeltaPick', 'peakDeltaPick'], [card.cap, 'climbDeltaCap', 'peakDeltaCap']]) {
       const fx = stackedEffects(card, n);
       const climbFactor = fx.ropeMul * fx.scoreMul;
-      const peakFactor = fx.floatMul;
+      const peakFactor = fx.floatMul * fx.launchMul ** 2; // Story 3.2: peak = v²/2g, launchMul lands at launch (v scales, so v²)
       const climbBand = 0.05 + climbFactor / baseSkips;
       assert.ok(Math.abs(entry[climbKey] - (climbFactor - 1)) <= climbBand,
         `${entry.id}/${n}: measured ${entry[climbKey]} within ${climbBand} of analytic ${climbFactor - 1}`);
@@ -319,17 +319,33 @@ test('same-axis collision rate: seeded draws track the exact weighted enumeratio
 // run-shaped/inert class — the 3.1 rule-changers awaiting 3.2-3.4 effects)
 // are exempt from the "axis is a field apply writes" and group co-write
 // checks. Effect-writing (legacy) cards keep the strict Decided-3 check.
-test('AXIS covers every card; effect-writing cards keep the strict axis contract', () => {
+test('AXIS covers every card; run-shaped cards are marker-exempt, effects-shape cards keep the strict contract', () => {
+  // Story 3.2 re-contract (deferred-work :85 consumed): the inert exemption
+  // is MARKER-driven — shape:'run' cards are exempt BECAUSE the record
+  // declares it, and the marker is verified (their apply touches no effect
+  // field). A card writing no effect field without the marker stays exempt
+  // only while its axis is still a sentinel run-field (unlanded rule-changer,
+  // 3.3/3.4); an inert card whose axis names a live effect field fails
+  // loudly — the hole the behavior-detected exemption could not catch.
+  const effectFields = Object.keys(freshEffects());
   const touchedFields = (card) => {
     const base = freshEffects();
     const applied = card.apply(base);
-    return Object.keys(base).filter((field) => applied[field] !== base[field]);
+    return effectFields.filter((field) => applied[field] !== base[field]);
   };
   const groups = new Map();
   for (const card of CARDS) {
     assert.ok(card.id in harness.AXIS, `${card.id} must be mapped in AXIS`);
     const touched = touchedFields(card);
-    if (touched.length === 0) continue; // inert class — sentinel axis, exempt (Story 3.1)
+    if (card.shape === 'run') {
+      assert.equal(touched.length, 0, `${card.id}: shape 'run' — its apply must touch no effect field`);
+      continue; // run-shaped (Story 3.2): its axis is a run field, not an effect field
+    }
+    if (touched.length === 0) {
+      assert.ok(!effectFields.includes(harness.AXIS[card.id]),
+        `${card.id}: inert effects-shape card — an apply writing no effect field with an effect-field axis fails loudly (Story 3.2)`);
+      continue; // unlanded rule-changer — sentinel run-field axis, exempt
+    }
     assert.ok(touched.includes(harness.AXIS[card.id]),
       `${card.id}: axis ${harness.AXIS[card.id]} is a field its apply closure actually writes`);
     if (!groups.has(harness.AXIS[card.id])) groups.set(harness.AXIS[card.id], []);
