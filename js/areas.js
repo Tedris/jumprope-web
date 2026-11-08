@@ -2,7 +2,9 @@
 // (crossesCeiling lives in js/game.js). `ceiling` is the altitude that ENDS
 // the area; base altitude of area n = the previous row's ceiling, area 1 = 0
 // (no base field by design). The numbers are PLACEHOLDERS — Epic 6 owns the
-// balance pass; periodMul is wired (Story 4.2), palette/fog values (Story 4.3).
+// balance pass; periodMul is wired (Story 4.2); palette/fog values finalized by
+// 4.3 but owned-not-consumed here: the renderer keeps a drift-fenced VISTAS copy
+// (a js/render3d.js import would break its two-specifier boot wheel).
 export const AREAS = Object.freeze([
   Object.freeze({ area: 1, name: 'alley', ceiling: 250, periodMul: 1.00, palette: 'alley', fog: 0x2a3440 }),
   Object.freeze({ area: 2, name: 'rooftops', ceiling: 600, periodMul: 0.96, palette: 'rooftops', fog: 0x16213e }),

@@ -172,11 +172,15 @@ async function shippedIntConst(name) {
   return Number(m[1]);
 }
 
-// The D-c display-side heal, re-evaluated here over AREAS.length (the vista table
-// is tier-aligned with AREAS by D-a; §4's import fence keeps the renderer from
-// importing AREAS itself). Same-tick pairing with js/shell.js markerLine's heal.
-function healedTier(area) {
-  return Math.min(Math.max(Math.round(Number.isFinite(area) ? area : 1), 1), AREAS.length);
+// The D-c display-side heal, derived CROSS-SOURCE from js/shell.js itself
+// (review 4.3, Blind F1): extracting markerLine's clamp expression and
+// evaluating it beats mirroring vistaFor — a silent edit to either side's
+// heal reddens the pairing fence, including the documented +Infinity arm.
+async function markerHeal() {
+  const src = await sourceOf('shell.js');
+  const m = src.match(/const area = (Math\.min\(Math\.max\([^;]+AREAS\.length\));/);
+  assert.ok(m, 'js/shell.js carries the markerLine area heal (pairing fence)');
+  return area => new Function('run', 'AREAS', `return ${m[1]};`)({ area }, AREAS);
 }
 
 function channelsAreMonotonic(upper, lower) {
@@ -330,7 +334,7 @@ test('§4 render never writes back into the view records (one-way payload, AC3)'
 });
 
 test('§4 render3d.js imports EXACTLY {three, ./interpolate.js} — the boot wheel and M7 fence', async () => {
-  const specs = [...(await sourceOf('render3d.js')).matchAll(/\bfrom\s*['"]([^'"]+)['"]/g)].map(m => m[1]);
+  const specs = [...(await sourceOf('render3d.js')).matchAll(/\bfrom\s*['"]([^'"]+)['"]|\bimport\s*\(?\s*['"]([^'"]+)['"]/g)].map(m => m[1] ?? m[2]);
   assert.deepStrictEqual(specs.sort(), ['./interpolate.js', 'three'],
     'a third specifier (e.g. ./areas.js) breaks the two frozen data-URL boots (D-a)');
 });
@@ -347,11 +351,12 @@ test('§5 a run-less payload boots to tier 1 without throwing', async () => {
 
 test('§5 crafted areas are data: every crafted value heals exactly like shell.js markerLine (kills M4)', async () => {
   const env = await bootVista();
+  const healFromMarker = await markerHeal(); // cross-source: shell.js, not a vistaFor copy
   const crafted = [undefined, null, NaN, 0, -2, '3', 4.6, 9, Infinity, {}];
   for (const area of crafted) {
     env.scene.render(vistaView(area));                               // must never throw
-    assert.strictEqual(env.world.fog.color.hex, AREAS[healedTier(area) - 1].fog,
-      `area ${String(area)} lands on tier ${healedTier(area)} — the D-c heal re-evaluated, not a literal`);
+    assert.strictEqual(env.world.fog.color.hex, AREAS[healFromMarker(area) - 1].fog,
+      `area ${String(area)} lands where shell's markerLine heals it — tier ${healFromMarker(area)} (review 4.3)`);
   }
 });
 

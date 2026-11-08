@@ -77,10 +77,10 @@ const VISTAS = [
 // Display-side area heal, structurally copied from js/shell.js markerLine
 // (js/shell.js:555) so the ceiling-marker text and the vista always agree on a
 // crafted payload (D-c, same-tick pairing). Invalid areas are DATA, never
-// errors; the one divergence from the sim's clampArea is +Infinity (here the
-// alley, there the summit — unreachable in production, tickRun write-back
-// heals every record long before the renderer sees it). Returns the 0-based
-// VISTAS index. Do NOT import clampArea: a third import breaks the boot wheel.
+// errors; divergences from the sim's clampArea are the +Infinity arm (here the
+// alley, there the summit) and finite fractions (here rounded, there truncated)
+// — both unreachable in production, tickRun write-back heals every record.
+// Returns the 0-based VISTAS index. Do NOT import clampArea: a third import breaks the boot wheel.
 function vistaFor(area) {
   return Math.min(Math.max(Math.round(Number.isFinite(area) ? area : 1), 1), VISTAS.length) - 1;
 }
