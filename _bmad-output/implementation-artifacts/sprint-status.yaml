@@ -52,7 +52,7 @@ development_status:
   epic-1-retrospective: done
 
   # Epic 2: Altitude & the Win
-  epic-2: in-progress
+  epic-2: done  # stale-flag fix 2026-11-08 (Epic 4 entry probe): all five 2.x stories done; retro stays optional
   2-1-score-is-altitude-one-number-everywhere: done
   2-2-jump-peak-vs-ceiling-and-the-summit-win: done
   2-3-the-ceiling-marker-telegraph-the-moon-jump: done
@@ -71,7 +71,7 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: The Ascent Ladder
-  epic-4: backlog
+  epic-4: in-progress  # Epic 4 autopilot entry 2026-11-08
   4-1-the-area-ladder-five-tiers-one-way-up: backlog
   4-2-area-pressure-rope-period-per-tier: backlog
   4-3-area-vistas-palette-fog-horizon: backlog
