@@ -41,7 +41,7 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 - FR10: Offers fire on every 10th skip; the player picks one of 2 cards (one of 3 after skip 30); draws are rarity-weighted 70/25/5, distinct per offer, with capped cards filtered out. *(v1, unchanged)*
 - FR11: The existing 8 multiplier cards (Cloud Shoes, Heavy Rope, Featherweight, Golden Handle, Wide Stance, Lucky Tally, Wide Brim, Wind-Up Handle) keep their exact v1 effects, rarities, and caps. *(v1, unchanged)*
 - FR12: Four rule-changing cards are added: Spare Rope `extrarope` (+1 rope, max 5 total, cap 4, uncommon); Steel Cord `reinforce` (one rope gains a charge, survives one trip, up to 2 charged ropes at once, cap 2, uncommon); Second Wind `doublejump` (1 mid-air jump per ground contact, cap 2, uncommon); Launch Heels `highjump` (jump launch velocity +10%, cap 3, common).
-- FR13: Card picks are made by pointer/tap on a card, or number keys 1/2/3. [ASSUMPTION: number-key picker not built in v1.0.]
+- FR13: Card picks are made by pointer/tap on a card, or number keys 1/2/3. *(ASSUMPTION resolved by Story 3.5, 2026-11-08: the number-key picker shipped — never built in v1.0; pinned by `tests/pickerhud.test.js` and the key-map fence `tests/secondwind.test.js` leg 11.)*
 - FR14: The owned-card HUD surfaces state-changing card state — rope count, cord charges, double-jump state — alongside the multiplier stack.
 
 **Areas**
