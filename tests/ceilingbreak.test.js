@@ -543,10 +543,22 @@ test('§6 AC2 mechanism census: two render passes, shipped 16-pool, no bitmaps (
     'the beat adds no bitmap machinery (NFR1/NFR10 — donor areavistas §6 oracle)');
 });
 
-test('§6 diff census: only the story-authorized files differ from HEAD (frozen-file tripwire, kills M8)', async () => {
+test('§6 diff census: only the story-authorized files differ from the story base (frozen-file tripwire, kills M8)', async () => {
+  // Pinned base (review 4.4, Blind F2): diffing HEAD goes vacuous the moment
+  // this story commits; the base sha keeps the tripwire armed for every later
+  // run. Shallow clones lacking the base fall back to the HEAD census.
+  const BASE = '5659fd4';
   let changed;
   try {
-    changed = (await run1('git', ['diff', '--name-only', 'HEAD'])).stdout.split('\n').filter(Boolean);
+    try {
+      changed = (await run1('git', ['diff', '--name-only', BASE])).stdout.split('\n').filter(Boolean);
+    } catch (err) {
+      if (/bad object|unknown revision/i.test(String(err.stderr) + String(err.message))) {
+        changed = (await run1('git', ['diff', '--name-only', 'HEAD'])).stdout.split('\n').filter(Boolean);
+      } else {
+        throw err;
+      }
+    }
   } catch (err) {
     if (/not a git repository/i.test(String(err.stderr) + String(err.message))) return; // no VCS: nothing to census
     throw err;

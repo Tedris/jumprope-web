@@ -258,6 +258,8 @@ test('§2 silhouette visible sets and slab colors are pairwise distinct across t
 test('§2 the 1..5 tour never recolors the character or particles — same stage, same grammar (kills M9)', async () => {
   const env = await bootVista();
   for (let t = 1; t <= AREAS.length; t++) env.scene.render(vistaView(t));
+  const ropeMeshes = env.reg.meshes.filter(m => m.geometry?.constructor.name === 'TubeGeometry');
+  assert.equal(ropeMeshes.length, 1, 'exactly one tube mesh — the rope — exists at boot, so the re-contract carve-out below can key on its IDENTITY (review 4.4, Blind F1)');
   const slabSet = new Set(env.horizon.children);
   const floorMat = env.floor.material;
   const slabMats = new Set(env.horizon.children.map(s => s.material));
@@ -269,7 +271,9 @@ test('§2 the 1..5 tour never recolors the character or particles — same stage
     // state now — VISTAS gains a rope column and the edge a fifth write. The
     // rope ladder is fenced in tests/ceilingbreak.test.js §3; character and
     // particles stay byte-frozen here — a vista recolor of the RIG must still die.
-    if (mesh.geometry?.constructor.name === 'TubeGeometry') continue;
+    // Identity-keyed (review 4.4, Blind F1): a NEW tube mesh must be added to
+    // the census here, not silently covered by a geometry-class exemption.
+    if (mesh === ropeMeshes[0]) continue;
     assert.ok(!slabMats.has(m), 'vista materials are never shared with rig/rope/particle meshes (D-d)');
     assert.strictEqual(m.color.hex, m.birthHex,
       `${m.birthHex.toString(16)} keeps its construction color through every vista switch (D-d)`);
