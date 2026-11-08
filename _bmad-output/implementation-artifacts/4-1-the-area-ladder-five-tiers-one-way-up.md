@@ -3,7 +3,7 @@ baseline_commit: a770a2d
 ---
 # Story 4.1: The area ladder — five tiers, one-way up
 
-Status: review
+Status: done
 Baseline: `a770a2d` (Epic 4 entry probe — epics 1–3 done, gate **349/349 green @ ~8.5 s**, tree clean, verified at authoring time 2026-11-08). First story of the Ascent Ladder epic; it formalizes and hardens the ascent machinery Story 2.2 already shipped.
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
@@ -170,3 +170,4 @@ qwen (lane-qwen38-ultra/qwen), worker agent in the Epic 4 autopilot loop.
 
 - 2026-11-08 — Story created (Epic 4 autopilot, `gds-create-story` at baseline `a770a2d`): ACs verbatim from epics.md §Story 4.1; deferred-work.md:50-51 embedded verbatim with resolution disposition; clampArea design decided (D-a…D-f); zero questions outstanding. Ultimate context engine analysis completed - comprehensive developer guide created.
 - 2026-11-08 — Story implemented (`gds-dev-story`): `clampArea`/`MIN_AREA` domain heal at the `tickRun` read site (D-a/D-b/D-c, pays the 2.2-review ledger item — PAID) + NEW `tests/arealadder.test.js` (18 legs: clamp contract, never-throw domain heal, write-back/spread-survival, idempotency & one-per-tick staircase, seeded 1000-tick monotonicity ×2). Gate 367/367 green @ ~8.5 s; mutation matrix M1–M6 all killed; zero existing tests touched. Status → review.
+- 2026-11-08 — Code review (`gds-code-review`, parallel layers @ `9ce943a`): Blind Hunter 1 med + 3 low, Edge Case Hunter 3 low, Acceptance Auditor 0 findings (D-a…D-f verbatim, AC1–4 pinned, frozen discipline clean, no scope creep). 5 patches applied to `tests/arealadder.test.js` (new file, in-story): explicit `null` key kills the `?? 2` Map default; `5.9`/bare-`6` ladder literals derived from `SUMMIT_AREA`/`AREAS.length`; `<= 5` bound → `SUMMIT_AREA`; §4 gains a skip-count rig-liveness assert (5 loops run, disjoint-window singularity pinned); §5 row-2 sim enters at `area: 2` with a distinct jump window (kills the §4-trajectory overlap; seeds stay 41/42). The Blind med was partially misdiagnosed at the mechanism level — the peak is global per tick and windows are disjoint (≤1 crossing/tick frozen since 1.4), so a vacuity-free "+N" test is unreachable; the liveness assert is the honest maximal fix. 2 defers ledgered with owner Story 4.5 (seeded-rng draw vacuity in ladderSim; `ceilingmarker.test.js:362` comment re-contract — frozen file, needs 4.5's authorization). 0 dismissals. Gate re-run green post-patch; Status → done.

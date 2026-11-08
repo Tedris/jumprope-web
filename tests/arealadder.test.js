@@ -63,7 +63,7 @@ test('clampArea sends every garbage class to the alley', () => {
 });
 
 test('clampArea sends top-of-ladder values to the summit tier', () => {
-  for (const high of [6, AREAS.length + 1, Infinity]) {
+  for (const high of [AREAS.length + 1, Infinity]) {
     assert.equal(game.clampArea(high), AREAS.length, `${String(high)} -> the cap`);
     assert.equal(game.clampArea(high), game.SUMMIT_AREA, 'the cap IS SUMMIT_AREA');
   }
@@ -71,7 +71,8 @@ test('clampArea sends top-of-ladder values to the summit tier', () => {
 
 test('clampArea truncates fractions into the ladder', () => {
   assert.equal(game.clampArea(3.7), 3, 'fractions truncate like every sibling clamp');
-  assert.equal(game.clampArea(5.9), AREAS.length, 'trunc happens before the cap clamp');
+  assert.equal(game.clampArea(game.SUMMIT_AREA + 0.9), AREAS.length,
+    'trunc happens before the cap clamp (derived rung, review 4.1)');
   assert.equal(game.clampArea(0.4), game.MIN_AREA, 'trunc happens before the floor clamp');
 });
 
@@ -83,14 +84,15 @@ test('a live tick with a crafted area never throws and lands on a valid rung', (
   // expected POST-tick landings: clamp first, then the tick's own ascend —
   // at AREAS[0].ceiling − 30 the clamped-1 run crosses, clamped-2/5 do not.
   const expected = new Map([
-    [0, 2], [NaN, 2], ['3', 2], [undefined, 2], [2.5, 2], [AREAS.length + 1, AREAS.length],
+    [0, 2], [NaN, 2], ['3', 2], [undefined, 2], [null, 2], [2.5, 2],
+    [AREAS.length + 1, AREAS.length],
   ]);
   for (const crafted of CRAFTED.concat([null])) {
     const out = tickRig(ascentRig(1, { area: crafted }));
     assert.ok(Number.isInteger(out.run.area), `area is an integer for ${String(crafted)}`);
     assert.ok(out.run.area >= game.MIN_AREA && out.run.area <= AREAS.length,
       `area in-ladder for ${String(crafted)}`);
-    assert.equal(out.run.area, expected.get(crafted) ?? 2, `landing for ${String(crafted)}`);
+    assert.equal(out.run.area, expected.get(crafted), `landing for ${String(crafted)}`);
   }
 });
 
@@ -169,6 +171,8 @@ for (const row of AREAS.slice(0, -1)) {
   test(`five ropes, one global peak: crossing row ${row.area}'s ceiling ascends exactly once`, () => {
     const out = tickRig(ascentRig(row.area, { ropes: 5 }));
     assert.ok(out.events.includes('skip'), 'rig sanity: the tick was live (peak rides a real pass)');
+    assert.equal(out.events.filter(e => e === 'skip').length, 1,
+      'rig liveness at 5 loops: disjoint windows leave exactly ONE crossing (review 4.1)');
     assert.equal(out.run.area, row.area + 1, 'exactly +1 — never +N for N ropes (AC2)');
     assert.equal(ascendCount(out.events), 1, 'ONE ascend event per tick regardless of rope count');
     assert.equal(out.run.baseAltitude, row.ceiling, 'base altitude is the row we left (derived)');
@@ -210,10 +214,12 @@ test('a two-ceiling staircase record ascends ONE area per tick, monotone, then s
 // alongside it, so the frozen altitude === ALT_PER_POINT × score invariant
 // (tests/altitude.test.js) holds from tick 0. Seeded rng injected (mulberry32
 // from the balance harness); never the default Math.random.
-function ladderSim({ seedAltitude, rng }) {
+function ladderSim({ seedAltitude, seedArea = 1, rng, jumpWindow = [0.2, 0.35] }) {
   assert.ok(seedAltitude % game.ALT_PER_POINT === 0, 'rig: keep the altitude/score invariant exact');
   let { rope, player, run } = game.startRun();
-  run = { ...run, altitude: seedAltitude, score: seedAltitude / game.ALT_PER_POINT };
+  run = { ...run, area: seedArea,
+    baseAltitude: seedArea === 1 ? 0 : AREAS[seedArea - 2].ceiling,
+    altitude: seedAltitude, score: seedAltitude / game.ALT_PER_POINT };
   let prevArea = run.area;
   let ascends = 0;
   for (let t = 0; t < TICKS; t++) {
@@ -223,7 +229,7 @@ function ladderSim({ seedAltitude, rng }) {
       ({ rope, player, run } = game.resumeRun(run)); // ARCH-02, never startRun
     }
     assert.notEqual(run.status, 'over', `scripted player died at tick ${t}`);
-    if (player.grounded && rope.phase >= 0.2 && rope.phase <= 0.35) player = jump(player, 0.5);
+    if (player.grounded && rope.phase >= jumpWindow[0] && rope.phase <= jumpWindow[1]) player = jump(player, 0.5);
     const out = game.tickRun(run, rope, player, TICK_STEP, rng);
     ({ run, rope, player } = out);
     assert.ok(Number.isInteger(run.area), `area integer at tick ${t}`);
@@ -248,9 +254,11 @@ test('seeded 1000-tick run under row 1\u2019s ceiling: monotone, exactly one rea
 });
 
 test('seeded 1000-tick run under row 2\u2019s ceiling: staircases over several ascents, still monotone', () => {
-  const { run, ascends } = ladderSim({ seedAltitude: AREAS[1].ceiling - 20, rng: mulberry32(42) });
+  const seedArea = 2; // this leg's own input (like the seed numbers), not a ladder literal
+  const { run, ascends } = ladderSim({ seedAltitude: AREAS[seedArea - 1].ceiling - 20, seedArea,
+    rng: mulberry32(42), jumpWindow: [0.25, 0.4] });
   assert.ok(run.area >= 3, 'multi-crossing coverage: the run visited at least 3 areas');
-  assert.ok(run.area <= 5, 'at most 5 areas visited, ever (AC1)');
-  assert.equal(ascends, run.area - 1);
+  assert.ok(run.area <= game.SUMMIT_AREA, 'at most 5 areas visited, ever (AC1)');
+  assert.equal(ascends, run.area - seedArea, 'one event per step FROM the seeded rung');
   assert.notEqual(run.status, 'over');
 });
