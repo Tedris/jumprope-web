@@ -15,6 +15,7 @@ const FLASH_MS = 150;
 export const JUICE_TIERS = {
   skip: { hitstop: 8, shake: 0.5, particles: 4 },
   nearMiss: { hitstop: 40, shake: 1.5, particles: 10 },
+  ascend: { hitstop: 60, shake: 1.75, particles: 12 },  // FR16 ceiling-break beat; seed provisional — 6.2 retunes (Story 4.4)
   trip: { hitstop: 80, shake: 2, particles: 16 }
 };
 

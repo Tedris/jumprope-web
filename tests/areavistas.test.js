@@ -255,7 +255,7 @@ test('§2 silhouette visible sets and slab colors are pairwise distinct across t
     'tier-1 silhouettes are the shipped PROP look by reference (D-a/D-d)');
 });
 
-test('§2 the 1..5 tour never recolors the character, rope or particles — same stage, same grammar (kills M9)', async () => {
+test('§2 the 1..5 tour never recolors the character or particles — same stage, same grammar (kills M9)', async () => {
   const env = await bootVista();
   for (let t = 1; t <= AREAS.length; t++) env.scene.render(vistaView(t));
   const slabSet = new Set(env.horizon.children);
@@ -265,6 +265,11 @@ test('§2 the 1..5 tour never recolors the character, rope or particles — same
     if (mesh === env.floor || slabSet.has(mesh)) continue;
     const m = mesh.material;
     if (!m.color) continue;                                          // shader uniform carrier
+    // AUTHORIZED RE-CONTRACT (Story 4.4, FR16): the rope tube's COLOR is area
+    // state now — VISTAS gains a rope column and the edge a fifth write. The
+    // rope ladder is fenced in tests/ceilingbreak.test.js §3; character and
+    // particles stay byte-frozen here — a vista recolor of the RIG must still die.
+    if (mesh.geometry?.constructor.name === 'TubeGeometry') continue;
     assert.ok(!slabMats.has(m), 'vista materials are never shared with rig/rope/particle meshes (D-d)');
     assert.strictEqual(m.color.hex, m.birthHex,
       `${m.birthHex.toString(16)} keeps its construction color through every vista switch (D-d)`);

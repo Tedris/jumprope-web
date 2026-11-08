@@ -44,7 +44,7 @@ const LOOK_KNOBS = (() => {
 const FOG_NEAR = LOOK_KNOBS.fogNear;   // spike-approved 7/22; overridable for UAT tuning
 const FOG_FAR = LOOK_KNOBS.fogFar;
 const LIGHT_INTENSITY = LOOK_KNOBS.light;   // D-05: the one light — brightness lives here, no ambient fill
-// Story 4.3 (FR15): area vistas — { sky, floor, prop, silhouettes } per tier,
+// Story 4.3 (FR15) + 4.4 (FR16): area vistas — { sky, floor, prop, rope, silhouettes }
 // indexed by area. Inline by law, not taste: the renderer must NOT import
 // js/areas.js — the two frozen data-URL boots rewrite EXACTLY two specifiers
 // and a third breaks them on boot (tests/render3d.test.js:10-15, D-a). sky
@@ -55,21 +55,21 @@ const LIGHT_INTENSITY = LOOK_KNOBS.light;   // D-05: the one light — brightnes
 // Silhouettes: slabs { x, w, h } at z = -8, depth 1.4, each clear of the
 // D-18 judgment zone (|x| - w/2 >= 6).
 const VISTAS = [
-  { sky: SKY, floor: FLOOR, prop: PROP, silhouettes: [        // alley: the shipped five
+  { sky: SKY, floor: FLOOR, prop: PROP, rope: PALE, silhouettes: [        // alley: the shipped five
     { x: -14, w: 2.5, h: 2.2 }, { x: -9, w: 1.8, h: 1.4 }, { x: 7.5, w: 2.0, h: 1.0 },
     { x: 11, w: 3.0, h: 2.8 }, { x: 14, w: 2.2, h: 1.8 }
   ] },
-  { sky: 0x16213e, floor: 0x2f3d46, prop: 0x121a2a, silhouettes: [   // rooftops: a denser skyline
+  { sky: 0x16213e, floor: 0x2f3d46, prop: 0x121a2a, rope: 0xf7dfa0, silhouettes: [   // rooftops: a denser skyline
     { x: -15.5, w: 2.4, h: 3.4 }, { x: -11.5, w: 1.6, h: 4.6 }, { x: -8, w: 1.4, h: 2.8 },
     { x: 7.5, w: 1.4, h: 3.8 }, { x: 10.5, w: 2.0, h: 5.2 }, { x: 14.5, w: 1.8, h: 3.0 }
   ] },
-  { sky: 0x101a30, floor: 0x2a363f, prop: 0x0e1522, silhouettes: [   // blimp: three wide, low hangars
+  { sky: 0x101a30, floor: 0x2a363f, prop: 0x0e1522, rope: 0xcfe2f7, silhouettes: [   // blimp: three wide, low hangars
     { x: -10.5, w: 4.0, h: 2.6 }, { x: 9.5, w: 3.6, h: 3.0 }, { x: 13.5, w: 1.2, h: 4.4 }
   ] },
-  { sky: 0x0a1020, floor: 0x232d38, prop: 0x0a0f1a, silhouettes: [   // stratosphere: thin cloud shelves
+  { sky: 0x0a1020, floor: 0x232d38, prop: 0x0a0f1a, rope: 0xa8c8ff, silhouettes: [   // stratosphere: thin cloud shelves
     { x: -8.5, w: 2.6, h: 0.8 }, { x: 7.5, w: 3.0, h: 0.6 }, { x: 13, w: 2.2, h: 1.2 }
   ] },
-  { sky: 0x060610, floor: 0x33384a, prop: 0x080a12, silhouettes: [    // moon-approach: sparse tall spires;
+  { sky: 0x060610, floor: 0x33384a, prop: 0x080a12, rope: 0xffffff, silhouettes: [    // moon-approach: sparse tall spires;
     { x: -12.5, w: 1.4, h: 5.4 }, { x: 11, w: 1.2, h: 4.0 }, { x: 16, w: 2.6, h: 1.0 }   // the moon floor
   ] }                                                                       // is LIGHTER on purpose (D-a)
 ];
@@ -324,9 +324,10 @@ export function createScene(canvas) {
   ropePivot.position.set(0, HANDLE_HEIGHT, 0);
   scene.add(ropePivot);
 
-  const ropeTube = new THREE.Mesh(
+  const ropeMat = new THREE.MeshBasicMaterial({ color: PALE, fog: false });   // D-09: unlit, fog-exempt, no snap
+  const ropeTube = new THREE.Mesh(                                             // Story 4.4: one material, hoisted — the vista's fifth write lands here
     new THREE.TubeGeometry(ropeCurve, 32, 0.05, 6, false),
-    new THREE.MeshBasicMaterial({ color: PALE, fog: false })   // D-09: unlit, fog-exempt, no snap
+    ropeMat
   );
   ropePivot.add(ropeTube);
 
@@ -450,17 +451,19 @@ export function createScene(canvas) {
       applyBufferSize(lastWidth, lastHeight);
     }
 
-    // Area vista (Story 4.3, D-b): pure area-state, cache-and-apply in the
-    // lastStatus idiom — on an area edge write EXACTLY four things: background,
-    // fog color (the D-06 pair), the floor material and the slab visibility.
-    // No tween, no timer (NFR8; the ascent BEAT — hitstop, palette-flip — is
-    // Story 4.4's). Character/rope/particles are never touched (D-d).
+    // Area vista (Story 4.3 D-b, extended by 4.4 D-b): pure area-state, cache-and-
+    // apply in the lastStatus idiom — on an area edge write EXACTLY five things:
+    // background, fog color (the D-06 pair), the floor material, the rope material
+    // (FR16: the VISTAS rope column) and the slab visibility. No tween, no timer
+    // (NFR8; the ascent BEAT — hitstop, palette-flip — is Story 4.4's, riding the
+    // shell's JUICE_TIERS row). Character and particles are never touched (D-d).
     const vista = vistaFor(view.run.area);
     if (vista !== appliedVista) {
       const v = VISTAS[vista];
       scene.background.set(v.sky);
       scene.fog.color.set(v.sky);
       floor.material.color.set(v.floor);
+      ropeMat.color.set(v.rope);                                   // 4.4: the fifth thing — appearance follows STATE, never the impulse
       for (let t = 0; t < tierSlabs.length; t++) {
         for (const slab of tierSlabs[t]) slab.visible = t === vista;
       }
