@@ -20,3 +20,21 @@ must_answer:
   - "VERIFY-CONTRACT drift (no run_tests.sh, no CI) + dead night-loop files -> D-003 resolved (Story 3.0 chore)"
   - "PRD lags epics 1-2; out-of-scope stale -> D-004/D-005 resolved (PRD patched; META-01 pinned to Epic 7)"
   - "Story 3.1 review round uncommitted -> land-pending: commit as review round; keep planning-doc commits separate per deferred-work land rule"
+
+autopilot:               # probe 2026-11-07 for bmad-epic-autopilot eligibility
+  - epic: "Epic 3 — Rule-Changing Cards"
+    status: ready
+    blockers:
+      - "precondition: land the uncommitted Story 3.1 review round first (clean tree required); loop resumes it at step 4 (review round -> done -> commit)"
+  - epic: "Epic 4 — The Ascent Ladder"
+    status: ready
+    blockers:
+      - "dependency: Epic 3 done; placeholder tunables are sanctioned, owned by Story 6.2"
+  - epic: "Epic 5 — Feel & Fidelity"
+    status: not-ready
+    blockers:
+      - "Story 5.6 music/sound direction undecided (D-006 deferral). 5.1-5.5 + 5.7 are hands-off-eligible; a partial autopilot pass skipping 5.6 is available on request"
+  - epic: "Epic 6 — Balance & Prove"
+    status: ready
+    blockers:
+      - "dependency: Epics 3-5 (5.6 verdict feeds 6.x mix decisions)"
