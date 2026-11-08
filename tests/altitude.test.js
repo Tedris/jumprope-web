@@ -40,9 +40,11 @@ test('factory contract: createRun carries altitude 0 and ALT_PER_POINT is a fini
     'AC 5 pins the placeholder value — the Epic 6 balance pass re-contracts this leg when it lands real numbers');
   const run = game.createRun();
   assert.equal(run.altitude, 0);
+  // Story 3.3 authorized re-contract: charged joins the createRun key set —
+  // charge state is part of the run record, not a side-channel (FR12).
   assert.deepEqual(Object.keys(run).sort(), [
-    'altitude', 'area', 'baseAltitude', 'buffer', 'effects', 'iFrames', 'offer', 'outcome', 'owned', 'ropes', 'score', 'skips', 'status', 'streak',
-  ], 'the createRun record-key set must stay explicit — altitude joins score');
+    'altitude', 'area', 'baseAltitude', 'buffer', 'charged', 'effects', 'iFrames', 'offer', 'outcome', 'owned', 'ropes', 'score', 'skips', 'status', 'streak',
+  ], 'the createRun record-key set must stay explicit — charged joins ropes (Story 3.3)');
 });
 
 test('clean pass accrues ALT_PER_POINT × scoreMul alongside the score', () => {

@@ -39,12 +39,11 @@ test('FR12: the four new records carry their pinned metadata', () => {
   }
 });
 
-test('effects-shape contract: the still-unlanded cards keep the inert endofunction', () => {
-  // Story 3.2 re-contract: extrarope (run-shape, whole-record patch) and
-  // highjump (launchMul) landed their effects — pinned by
-  // tests/simpleeffects.test.js. The remaining rule-changers stay inert
-  // endofunctions until their stories (3.3 charged, 3.4 airJumps).
-  for (const id of ['reinforce', 'doublejump']) {
+test('effects-shape contract: the still-unlanded doublejump keeps the inert endofunction', () => {
+  // Story 3.3 authorized re-contract: reinforce landed the whole-record
+  // run-shape apply (Steel Cord charges) — its effects are pinned by
+  // tests/steelcord.test.js. Only Story 3.4's doublejump stays inert.
+  for (const id of ['doublejump']) {
     assert.deepEqual(cardById(id).apply(freshEffects()), freshEffects(),
       `${id}.apply must return the effects untouched until its effect story`);
   }

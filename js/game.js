@@ -24,6 +24,10 @@ export const NEAR_MARGIN = 0.5;
 export const MIN_ROPES = 1;
 export const MAX_ROPES = 5;
 
+// FR12 (Story 3.3): at most 2 charged ropes at once; anything else is
+// clamped as data at read, exactly like the rope counts above.
+export const MAX_CHARGED = 2;
+
 // Story 2.1 (FR7): PLACEHOLDER — Epic 6 balance pass owns this value.
 export const ALT_PER_POINT = 2;
 
@@ -36,6 +40,15 @@ export function clampRopes(count) {
   const n = Number.isFinite(count) ? Math.trunc(count)
     : count === Infinity ? MAX_ROPES : MIN_ROPES;
   return Math.min(MAX_ROPES, Math.max(MIN_ROPES, n));
+}
+
+export function clampCharged(count) {
+  // The clampRopes arms, mirrored (FR12): +Infinity is "fully charged" ->
+  // the cap; NaN/nullish/strings -> uncharged. (Number.isFinite is false for
+  // Infinity, so it needs its own arm.)
+  const n = Number.isFinite(count) ? Math.trunc(count)
+    : count === Infinity ? MAX_CHARGED : 0;
+  return Math.min(MAX_CHARGED, Math.max(0, n));
 }
 
 // Story 2.2 (FR6): strict `>` — a peak exactly at the ceiling has not broken
@@ -62,7 +75,7 @@ export function resumeRun(run) {
 }
 
 export function createRun() {
-  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, iFrames: 0, area: 1, baseAltitude: 0, outcome: null };
+  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, charged: 0, iFrames: 0, area: 1, baseAltitude: 0, outcome: null };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
@@ -87,8 +100,12 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   // non-finite record (NaN/Infinity/nullish) behaves as "no i-frames" — there
   // is no clampRopes-style Infinity arm here. Capped to MAX_ROPES so crafted
   // floats cannot decrement forever; legitimate writers only ever produce
-  // integers 0..MAX_ROPES - 1 (a strip leaves ropeCount - 1).
+  // integers 0..MAX_ROPES (a strip leaves ropeCount - 1, a charge trip the
+  // full ropeCount — Story 3.3).
   let iframesLeft = Number.isFinite(run.iFrames) ? Math.min(MAX_ROPES, Math.max(0, run.iFrames)) : 0;
+  // FR12 (Story 3.3): the charged count reads through the same heal idiom —
+  // invalid values behave per the clampCharged arms, invalid states are data.
+  let charged = clampCharged(run.charged);
   let strippedTo = null;
   const events = [];
   if (player.grounded && !nextPlayer.grounded) events.push('jump');
@@ -125,11 +142,10 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // Buffer-forgiven passes below are v1-frozen and skip this check — a
       // forgiven 10th defers the offer to the next cleared crossing.
       if (shouldOfferUpgrade(skips)) {
-        // FR10 state-aware dead-pick filter (Story 3.1): ropeCount is the
-        // clamped count from the crossings loop; charged: 0 is the honest
-        // current value — Story 3.3 extends this object with real charges.
+        // FR10 state-aware dead-pick filter (Story 3.1): ropeCount and
+        // charged are the clamped live values from the loop's heal (3.3).
         const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng,
-          { ropes: ropeCount, charged: 0 });
+          { ropes: ropeCount, charged });
         // Pitfall 6: an exhausted pool must never freeze the run in choose.
         if (offers.length > 0) {
           status = 'choose';
@@ -148,6 +164,16 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       buffer = 0;
       streak += 1;
       events.push('skip', 'nearMiss');
+    } else if (charged > 0) {
+      // FR12 Steel Cord: armor eats the hit — the charge is consumed
+      // instead of a rope (buffer → charge → strip). The blank spans one
+      // revolution like a strip trip: one i-frame per rope HELD, count
+      // unchanged (GDD trip rule; NFR8 — the phase clock is untouched).
+      charged -= 1;
+      iframesLeft = ropeCount;
+      streak = 0;
+      events.push('chargeUsed');
+      break;
     } else if (ropeCount > 1) {
       // FR2: ropes are health — strip one rope and blank the clock. All ropes
       // share the one period, so "fastest" is degenerate (any rope; offsets
@@ -203,7 +229,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       events.push('ascend');
     }
   }
-  const nextRun = { ...run, score, altitude, skips, status, offer, buffer, streak, iFrames: iframesLeft, area, baseAltitude, outcome };
+  const nextRun = { ...run, score, altitude, skips, status, offer, buffer, streak, iFrames: iframesLeft, charged, area, baseAltitude, outcome };
   if (strippedTo !== null) nextRun.ropes = strippedTo;
   return {
     run: nextRun,
@@ -220,7 +246,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
 function patchedRun(run, card) {
   if (card.shape === 'run') {
     const patched = card.apply(run);
-    return { ...patched, ropes: clampRopes(patched.ropes ?? MIN_ROPES) };
+    return { ...patched, ropes: clampRopes(patched.ropes ?? MIN_ROPES), charged: clampCharged(patched.charged ?? 0) };
   }
   return { ...run, effects: card.apply(run.effects) };
 }
