@@ -44,6 +44,46 @@ const LOOK_KNOBS = (() => {
 const FOG_NEAR = LOOK_KNOBS.fogNear;   // spike-approved 7/22; overridable for UAT tuning
 const FOG_FAR = LOOK_KNOBS.fogFar;
 const LIGHT_INTENSITY = LOOK_KNOBS.light;   // D-05: the one light — brightness lives here, no ambient fill
+// Story 4.3 (FR15): area vistas — { sky, floor, prop, silhouettes } per tier,
+// indexed by area. Inline by law, not taste: the renderer must NOT import
+// js/areas.js — the two frozen data-URL boots rewrite EXACTLY two specifiers
+// and a third breaks them on boot (tests/render3d.test.js:10-15, D-a). sky
+// tracks AREAS[i].fog; the drift between the two tables is fenced by
+// tests/areavistas.test.js §2. Tier 1 IS the signed-off look BY REFERENCE to
+// the constants above — the alley pixels are preserved structurally, never as
+// re-typed hex (D-a: the data caught up to the render, never the reverse).
+// Silhouettes: slabs { x, w, h } at z = -8, depth 1.4, each clear of the
+// D-18 judgment zone (|x| - w/2 >= 6).
+const VISTAS = [
+  { sky: SKY, floor: FLOOR, prop: PROP, silhouettes: [        // alley: the shipped five
+    { x: -14, w: 2.5, h: 2.2 }, { x: -9, w: 1.8, h: 1.4 }, { x: 7.5, w: 2.0, h: 1.0 },
+    { x: 11, w: 3.0, h: 2.8 }, { x: 14, w: 2.2, h: 1.8 }
+  ] },
+  { sky: 0x16213e, floor: 0x2f3d46, prop: 0x121a2a, silhouettes: [   // rooftops: a denser skyline
+    { x: -15.5, w: 2.4, h: 3.4 }, { x: -11.5, w: 1.6, h: 4.6 }, { x: -8, w: 1.4, h: 2.8 },
+    { x: 7.5, w: 1.4, h: 3.8 }, { x: 10.5, w: 2.0, h: 5.2 }, { x: 14.5, w: 1.8, h: 3.0 }
+  ] },
+  { sky: 0x101a30, floor: 0x2a363f, prop: 0x0e1522, silhouettes: [   // blimp: three wide, low hangars
+    { x: -10.5, w: 4.0, h: 2.6 }, { x: 9.5, w: 3.6, h: 3.0 }, { x: 13.5, w: 1.2, h: 4.4 }
+  ] },
+  { sky: 0x0a1020, floor: 0x232d38, prop: 0x0a0f1a, silhouettes: [   // stratosphere: thin cloud shelves
+    { x: -8.5, w: 2.6, h: 0.8 }, { x: 7.5, w: 3.0, h: 0.6 }, { x: 13, w: 2.2, h: 1.2 }
+  ] },
+  { sky: 0x060610, floor: 0x33384a, prop: 0x080a12, silhouettes: [    // moon-approach: sparse tall spires;
+    { x: -12.5, w: 1.4, h: 5.4 }, { x: 11, w: 1.2, h: 4.0 }, { x: 16, w: 2.6, h: 1.0 }   // the moon floor
+  ] }                                                                       // is LIGHTER on purpose (D-a)
+];
+
+// Display-side area heal, structurally copied from js/shell.js markerLine
+// (js/shell.js:555) so the ceiling-marker text and the vista always agree on a
+// crafted payload (D-c, same-tick pairing). Invalid areas are DATA, never
+// errors; the one divergence from the sim's clampArea is +Infinity (here the
+// alley, there the summit — unreachable in production, tickRun write-back
+// heals every record long before the renderer sees it). Returns the 0-based
+// VISTAS index. Do NOT import clampArea: a third import breaks the boot wheel.
+function vistaFor(area) {
+  return Math.min(Math.max(Math.round(Number.isFinite(area) ? area : 1), 1), VISTAS.length) - 1;
+}
 
 // The ONE post pass (D-02): sRGB-encode first (the render target holds
 // LINEAR values), then Bayer 4×4 offset + 31-level floor quantize (~15-bit),
@@ -136,21 +176,26 @@ export function createScene(canvas) {
   floor.rotation.x = -Math.PI / 2;                     // one sparse quad keeps the snap calm (Pitfall 7)
   scene.add(floor);
 
-  // Horizon silhouettes (D-18): static dark slabs far off-axis and behind
-  // the floor edge, deep inside the fog falloff; nothing tall within 6
-  // world units of x = 0 keeps the judgment zone clean.
-  const SILHOUETTES = [
-    { x: -14, w: 2.5, h: 2.2 },
-    { x: -9, w: 1.8, h: 1.4 },
-    { x: 7.5, w: 2.0, h: 1.0 },
-    { x: 11, w: 3.0, h: 2.8 },
-    { x: 14, w: 2.2, h: 1.8 }
-  ];
-  for (const s of SILHOUETTES) {
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(s.w, s.h, 1.4), propMat);
-    slab.position.set(s.x, s.h / 2, -8);
-    scene.add(slab);
-  }
+  // Horizon silhouettes (D-18, Story 4.3/D-e): ALL tiers prebuilt ONCE in ONE
+  // Group — render() only flips .visible, so a vista switch allocates nothing
+  // and at most one tier ever draws (NFR1's cheap geometry). Per-tier material
+  // through the one worldMaterial() pipeline (D-d); tier 1 keeps the shipped
+  // slab numbers and the shipped PROP hex — the first-boot look is unchanged.
+  // Fingerprint safety: ONE Group of 20 Box children, never trio-shaped, added
+  // AFTER the floor — the frozen rig/ropePivot/snap probes (render3d.test.js
+  // :241-248, :158-165) cannot see it (D-e).
+  const horizonGroup = new THREE.Group();
+  const tierSlabs = VISTAS.map((vista, tier) => {
+    const tierMat = worldMaterial(vista.prop);
+    return vista.silhouettes.map((s) => {
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(s.w, s.h, 1.4), tierMat);
+      slab.position.set(s.x, s.h / 2, -8);
+      slab.visible = tier === 0;
+      horizonGroup.add(slab);
+      return slab;
+    });
+  });
+  scene.add(horizonGroup);
 
   // Blob shadow (D-17): a stable, snap-EXEMPT disc under the crawling
   // geometry — the depth reference that makes jump height legible.
@@ -359,6 +404,11 @@ export function createScene(canvas) {
   // the idle/trip branches below — the running pose never reads it (T-02-08).
   let lastStatus = 'idle';
   let tripAt = 0;
+  // Vista cache (D-b): the applied VISTAS index. 0 at boot is not a guess —
+  // the constructed scene IS tier 1: background/fog/floor/slabs are built from
+  // VISTAS[0]'s very values (the SKY/FLOOR/PROP references), so area-less
+  // payloads (every frozen-suite boot) never take the apply path.
+  let appliedVista = 0;
 
   // Read-only juice-signal bookkeeping (D-N06): the shell's view.juice is
   // sampled here and NEVER written back (Phase-1 D-01). Everything decays
@@ -398,6 +448,23 @@ export function createScene(canvas) {
       lastWidth = canvas.width;
       lastHeight = canvas.height;
       applyBufferSize(lastWidth, lastHeight);
+    }
+
+    // Area vista (Story 4.3, D-b): pure area-state, cache-and-apply in the
+    // lastStatus idiom — on an area edge write EXACTLY four things: background,
+    // fog color (the D-06 pair), the floor material and the slab visibility.
+    // No tween, no timer (NFR8; the ascent BEAT — hitstop, palette-flip — is
+    // Story 4.4's). Character/rope/particles are never touched (D-d).
+    const vista = vistaFor(view.run.area);
+    if (vista !== appliedVista) {
+      const v = VISTAS[vista];
+      scene.background.set(v.sky);
+      scene.fog.color.set(v.sky);
+      floor.material.color.set(v.floor);
+      for (let t = 0; t < tierSlabs.length; t++) {
+        for (const slab of tierSlabs[t]) slab.visible = t === vista;
+      }
+      appliedVista = vista;
     }
 
     // Single clock entry: canonical rope phase, interpolated prev -> curr.
