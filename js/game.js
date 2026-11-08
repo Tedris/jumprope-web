@@ -28,6 +28,10 @@ export const MAX_ROPES = 5;
 // clamped as data at read, exactly like the rope counts above.
 export const MAX_CHARGED = 2;
 
+// Story 3.5 (FR14): the 0..1 mid-air-jump policy, named (3.4 review nit —
+// it was open-coded three times). clampCharged's arms, mirrored.
+export const MAX_AIRJUMPS = 1;
+
 // Story 2.1 (FR7): PLACEHOLDER — Epic 6 balance pass owns this value.
 export const ALT_PER_POINT = 2;
 
@@ -49,6 +53,14 @@ export function clampCharged(count) {
   const n = Number.isFinite(count) ? Math.trunc(count)
     : count === Infinity ? MAX_CHARGED : 0;
   return Math.min(MAX_CHARGED, Math.max(0, n));
+}
+
+export function clampAirJumps(count) {
+  // The Story 3.4 heal verbatim (pinned by tests/secondwind.test.js:37):
+  // any non-finite reads as no charge — no Infinity arm, unlike
+  // clampCharged; fractions truncate (new, unpinnable by 3.4's legs).
+  const n = Number.isFinite(count) ? Math.trunc(count) : 0;
+  return Math.min(MAX_AIRJUMPS, Math.max(0, n));
 }
 
 // Story 2.2 (FR6): strict `>` — a peak exactly at the ceiling has not broken
@@ -111,7 +123,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   // ground-contact refresh below, not the owned counter, enforces "exactly
   // 1 per contact regardless of copies" (AC2). The refresh is idempotent;
   // the unconditional write below heals out-of-range records (3.3 D-b).
-  let airJumps = Number.isFinite(run.airJumps) ? Math.min(1, Math.max(0, run.airJumps)) : 0;
+  let airJumps = clampAirJumps(run.airJumps);
   if (nextPlayer.grounded) airJumps = ((run.owned ?? {}).doublejump ?? 0) > 0 ? 1 : 0;
   let strippedTo = null;
   const events = [];
@@ -254,7 +266,7 @@ function patchedRun(run, card) {
   if (card.shape === 'run') {
     const patched = card.apply(run);
     return { ...patched, ropes: clampRopes(patched.ropes ?? MIN_ROPES), charged: clampCharged(patched.charged ?? 0),
-      airJumps: Number.isFinite(patched.airJumps) ? Math.min(1, Math.max(0, patched.airJumps)) : 0 };
+      airJumps: clampAirJumps(patched.airJumps ?? 0) };
   }
   return { ...run, effects: card.apply(run.effects) };
 }

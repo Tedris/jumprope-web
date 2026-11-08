@@ -504,10 +504,13 @@ test('combo (shell): the air launch multiplies by launchMul exactly like the gro
 // Auditor low): a source-scan fence — the one-button pillar survives Second
 // Wind as the frozen keyboard map, so the state discrimination is the ONLY
 // way an airborne press can launch. Mirrors the hygiene.test.js source-scan
-// idiom; the set is the v1.0 shipped map (start/jump, pause, cycle, audio).
+// idiom; the set is the shipped map (start/jump, pause, cycle, audio).
+// RE-CONTRACTED by Story 3.5 (authorized, FR13): the three picker digits
+// join the map — the first sanctioned extension; the Space press remains
+// the only jump input.
 test('AC4: the one-button pillar holds — shell.js registers no new key codes', async () => {
   const src = await readFile(resolve(jsDir, 'shell.js'), 'utf8');
   const codes = [...new Set([...src.matchAll(/e\.code === '([A-Za-z0-9_]+)'/g)].map((m) => m[1]))].sort();
-  assert.deepEqual(codes, ['ArrowLeft', 'ArrowRight', 'Equal', 'Escape', 'KeyP', 'Minus', 'Mute', 'Space'],
-    'the keyboard map is frozen — Second Wind extends the Space press by STATE, never by a new key (FR17/NFR5)');
+  assert.deepEqual(codes, ['ArrowLeft', 'ArrowRight', 'Digit1', 'Digit2', 'Digit3', 'Equal', 'Escape', 'KeyP', 'Minus', 'Mute', 'Space'],
+    'the keyboard map is frozen — jumps stay on Space alone; only the FR13 picker digits were ever added (FR17/NFR5)');
 });

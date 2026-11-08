@@ -1,4 +1,4 @@
-import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA } from './game.js';
+import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA, clampCharged, clampAirJumps } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
@@ -294,6 +294,19 @@ export function startGame(canvas) {
         pickDone = false;
       }
     }
+    // Story 3.5 (FR13): digit picker — 1/2/3 CONFIRM offer[k] instantly
+    // through the shared confirmPick (the freeze stays snappy; D-a). Out of
+    // range or outside choose: fully inert, no preventDefault
+    // (EXPERIENCE.md:62 "everything else inert").
+    if (run.status === 'choose' && run.offer && !e.repeat
+        && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3')) {
+      const k = Number(e.code.slice(5));
+      if (k <= run.offer.length) {
+        e.preventDefault();
+        pickIdx = k - 1;
+        confirmPick();
+      }
+    }
   });
   window.addEventListener('keyup', e => { if (e.code === 'Space') release(); });
   // UI-03 (D-10): the existing resize listener re-derives the band/letterbox;
@@ -392,25 +405,31 @@ export function startGame(canvas) {
     tickPick();
   }
 
+  // Story 3.5 (FR13): one confirmation handler (house rule) — the hold-fill
+  // path and the digit keys share it verbatim. Statement order is load-
+  // bearing (3.3/3.4 review): applyCard BEFORE reentryAt; holdFrom cleared so
+  // a Space held across the pick never launches on release.
+  function confirmPick() {
+    const picked = run.offer[pickIdx];
+    flashName = picked.name;
+    audio?.handleEvent('pick');
+    flashUntil = performance.now() + FLASH_MS;
+    run = applyCard(run, picked);
+    ({ rope, player, run } = rearmCalloutGate(resumeRun(run)));
+    reentryAt = performance.now();
+    holdFrom = null;
+    pickIdx = 0;
+    pickPressedAt = null;
+    pickFill = 0;
+    pickDone = true;
+  }
+
   // Fill cue + hold-confirm: driven from wall-clock every STEP regardless of
   // status — tickRun never runs in 'choose' (Pitfall 9).
   function tickPick() {
     if (run.status === 'choose' && run.offer && pickPressedAt !== null) {
       pickFill = Math.min(1, (performance.now() - pickPressedAt) / PICK_HOLD_MS);
-      if (pickFill >= 1 && !pickDone) {
-        const picked = run.offer[pickIdx];
-        flashName = picked.name;
-        audio?.handleEvent('pick');
-        flashUntil = performance.now() + FLASH_MS;
-        run = applyCard(run, picked);
-        ({ rope, player, run } = rearmCalloutGate(resumeRun(run)));
-        reentryAt = performance.now();
-        holdFrom = null;
-        pickIdx = 0;
-        pickPressedAt = null;
-        pickFill = 0;
-        pickDone = true;
-      }
+      if (pickFill >= 1 && !pickDone) confirmPick();
     }
   }
 
@@ -483,7 +502,10 @@ export function startGame(canvas) {
       bar.className = 'card-fill-bar';
       bar.style.width = '0%';
       fill.appendChild(bar);
-      for (const child of [icon, name, desc, read, fill]) el.appendChild(child);
+      const hint = document.createElement('div');
+      hint.className = 'card-hint';
+      hint.textContent = String(i + 1);
+      for (const child of [hint, icon, name, desc, read, fill]) el.appendChild(child);
       el.addEventListener('pointerdown', e => {
         if (run.status !== 'choose' || !run.offer) return;
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
@@ -537,9 +559,18 @@ export function startGame(canvas) {
     hudScore.textContent = String(Math.round(run.altitude));
     hudBest.textContent = 'best ' + Math.round(Math.max(best, run.altitude));
     const owned = run.owned ?? {};
+    // Story 3.5 (FR14): state-aware owned line — multiplier cards keep the
+    // icon repeat; state cards read their live field through the display
+    // clamps (reads only, NFR7): Spare Rope the rope COUNT, Steel Cord the
+    // charges, Second Wind the double-jump availability (DESIGN.md:87
+    // glyphs ×/⟳/↑). updateHud runs every rendered frame — no stale
+    // display is possible (AC4).
     hudOwned.textContent = CARDS
       .filter(c => (owned[c.id] ?? 0) > 0)
-      .map(c => c.icon.repeat(owned[c.id]))
+      .map(c => c.id === 'extrarope' ? c.icon + '×' + clampRopes(run.ropes)
+        : c.id === 'reinforce' ? c.icon + '⟳' + clampCharged(run.charged)
+        : c.id === 'doublejump' ? c.icon + '↑' + clampAirJumps(run.airJumps)
+        : c.icon.repeat(owned[c.id]))
       .join(' ');
     if (cards) cards.render();
     if (markerEl) markerEl.textContent = markerLine(run, player);
