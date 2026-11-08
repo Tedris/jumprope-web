@@ -61,7 +61,7 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Rule-Changing Cards
-  epic-3: in-progress
+  epic-3: done
   3-0-repo-hygiene-verify-contract: done  # chore from readiness audit 2026-11-07 (D-003); landed before 3-2
   3-1-four-new-cards-in-the-catalogue: done
   3-2-spare-rope-launch-heels-the-simple-effects: done
