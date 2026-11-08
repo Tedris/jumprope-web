@@ -1,7 +1,7 @@
 # Story 3.4: Second Wind — the mid-air jump
 
 Status: ready-for-dev
-Baseline: `79ba9ec` (Story 3.2 review; 318/318 green @ ~8.5 s) + uncommitted Story-3.3 docs delta (story file, sprint-status, deferred-work — **no code delta**: `js/` and `tests/` are byte-identical to baseline at authoring time).
+Baseline: `9257b23` (Story 3.3 landed — code delta included — in the commit that ships this file; 327/327 green @ ~8.5 s). Authored at `79ba9ec` + the 3.3 docs delta; the tickRun line map and deal-site facts below are re-verified post-3.3.
 
 ## Story
 
@@ -55,7 +55,7 @@ AC3 needs no mechanism: `peak = altitude + nextPlayer.y` (`js/game.js:188`) samp
 - Authorized re-contracts — **exactly these two test sites, nothing else in `tests/`**:
   - `tests/altitude.test.js:43-45` — the createRun record-key-set leg: add `'airJumps'` to the sorted list, story-commented. **This story explicitly re-authorizes this leg** under the AGENTS.md frozen-test exception.
   - `tests/rulecards.test.js:42-51` — inert-endofunction leg: move `doublejump` out of the inert loop; replace with a run-shape assertion (apply preserves the five effect keys — spreads input, `freshEffects()` in ⇒ five keys out + `airJumps`; mirrors `tests/catalogue.test.js:34-38`). **Re-authorized.** Leave the `reinforce` arm exactly as found (Story 3.3's turf).
-  - Prove with `git diff 79ba9ec -- tests/` (adjust sha if 3.3 landed first and was committed) in the Debug Log; both files must otherwise be byte-identical.
+  - Prove with `git diff 9257b23 -- tests/` (3.3 is committed; its re-contracts are already in the checkout's text) in the Debug Log; both files must otherwise be byte-identical.
   - If Story 3.3 (`run.charged`) lands before this story, its re-contracts are already in these two sites — re-contract against the checkout's current text; the key-set gains a second name; never revert 3.3's edits. The two stories share the patchedRun arm, the nextRun write line, and the ledger — land in any order, resolve to text.
 - `_bmad-output/implementation-artifacts/deferred-work.md` — narrow the :99 stackedEffects-leak entry (`doublejump` now rides the same run-shaped idiom, not "will ship"), and add the Second Wind parity note under :100 owned-cap lock (owned.doublejump ≥ 2 hides forever via the owned arm — same lifetime-lock math as Spare Rope/Steel Cord; Epic 6 decides recovery semantics).
 - `sprint-status.yaml` — 3-4 status transitions (handled by the workflows).
@@ -65,8 +65,8 @@ Untouched: `js/player.js`, `js/rope.js`, `js/interpolate.js`, `js/render3d.js`, 
 ## Out of scope (do NOT build here)
 
 - **HUD double-jump state (`Second Wind ⟳1`, `EXPERIENCE.md:111`)** → Story 3.5 (FR14 reads `run` off the view payload — your run field is all it needs).
-- **Renderer dust tell / juice / dedicated SFX** → Epic 5 (`gdd-epic-overview.md`'s "3.4 = renderer pips" numbering is superseded; epics.md is the spine). The air launch reuses the shell-direct `'jump'` voice in the shared branch; it emits NO new sim event (airborne→airborne makes no takeoff edge at `js/game.js:94` — correct, JUICE_TIERS is fenced to three tiers, `tests/juice.test.js:153`).
-- **`stateCap`/offer-filter changes**: `doublejump` has no stateCap (cap-only, correct — owned-arm filters at cap 2). Leave the `charged: 0` literal at `js/game.js:132` to 3.3.
+- **Renderer dust tell / juice / dedicated SFX** → Epic 5 (`gdd-epic-overview.md`'s "3.4 = renderer pips" numbering is superseded; epics.md is the spine). The air launch reuses the shell-direct `'jump'` voice in the shared branch; it emits NO new sim event (airborne→airborne makes no takeoff edge at `js/game.js:111` — correct, JUICE_TIERS is fenced to three tiers, `tests/juice.test.js:153`).
+- **`stateCap`/offer-filter changes**: `doublejump` has no stateCap (cap-only, correct — owned-arm filters at cap 2). 3.3's deal-site wiring has LANDED — the deal reads the live clamped `{ ropes: ropeCount, charged }` (`js/game.js:147-148`); leave it untouched, nothing left to hand off.
 - **Balance bot awareness**: harness jumpers press grounded-only and call `jump()` sim-side — the balance/runBot pool is unaffected; a policy bot that exploits air jumps is 6.1's job.
 
 ## Test plan — tests/secondwind.test.js (red-green per AC; metadata-derived expectations per AGENTS)
@@ -86,9 +86,9 @@ Reuse existing idioms: `tickRun` fixture rigs (`tests/multirope.test.js:16-25`),
 
 ## Dev Notes — current-state facts (all verified at authoring)
 
-- **tickRun line map** (`js/game.js:68-215`): read-heals :72-92 (i-frames arm :91 = the heal precedent); buffer decay/re-arm :83-84 (`press` is truthiness-only, D-N11); takeoff-edge :94; crossing loop :100-181 (i-frame → cleared → buffer → strip → death, order IS contract); deal site :127-140 (`{ ropes, charged: 0 }` — 3.3's); ceiling check :188-205 (`iframesLeft === 0`, strict `>`, one plain if); write list :206-207.
-- **`jump(player, holdSeconds, launchMul = 1)`** (`js/player.js:9-11`); `jumpVelocity = 350 + min(hold,0.5)*500` (:5-7); gravity 1800/`floatMul` (`js/game.js:70`); landing sets `grounded=true` at y≤0 (:17-24).
-- **`doublejump` today** (`js/upgrades.js:44-46`): purchasable since 3.1, `owned.doublejump` stacks to cap 2, apply inert (pinned at `tests/rulecards.test.js:42-51` — one of the two re-contract sites). role `foundation`, color `sky`, icon ⇈, no `stateCap`, no `shape`.
+- **tickRun line map** (`js/game.js:81-241`): read-heals :84-108 (i-frames arm :105 = the heal precedent; charged clamp-heal read :108); buffer decay/re-arm :96-97 (`press` is truthiness-only, D-N11); takeoff-edge :111; crossing loop :117-207 (i-frame → cleared → buffer → charge → strip → death, order IS contract; charge branch :167-176 — `iframesLeft = ropeCount` :173, `chargeUsed` :175); deal site :144-152 (live `{ ropes: ropeCount, charged }` at :148 — 3.3's); ceiling check :215-231 (`iframesLeft === 0`, strict `>`, one plain if); write list :232-233 (`charged` rides the unconditional `nextRun` write).
+- **`jump(player, holdSeconds, launchMul = 1)`** (`js/player.js:9-11`); `jumpVelocity = 350 + min(hold,0.5)*500` (:5-7); gravity 1800/`floatMul` (`js/game.js:83`); landing sets `grounded=true` at y≤0 (:17-24).
+- **`doublejump` today** (`js/upgrades.js:46-48`): purchasable since 3.1, `owned.doublejump` stacks to cap 2, apply inert (pinned at `tests/rulecards.test.js:42-51` — one of the two re-contract sites). role `foundation`, color `sky`, icon ⇈, no `stateCap`, no `shape`.
 - **AXIS/balance guard stays green untouched**: `shape === 'run'` ⇒ verify apply writes no effect field, then exempt (`tests/balance.test.js:325-353`; ratified narrow reading — 3.2 Review Decision :87); `doublejump: 'airJumps'` sentinel already registered (`tests/support/balance-harness.js:33`). Do not touch collision baselines.
 - **Catalogue run-shape leg stays green untouched**: `card.shape === 'run'` branch asserts the five effect keys SURVIVE the patch (`tests/catalogue.test.js:34-38`) — spreading input satisfies it; `headless-sim.test.js:144-148` shape sweep likewise (extrarope proved the pattern in 3.2).
 - **Whole-run-record deep-equals: none** (searched `tests/`) — a new run key trips only the createRun key-set leg.

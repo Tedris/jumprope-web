@@ -1,5 +1,5 @@
 # generated: 2026-10-28
-# last_updated: 2026-11-07
+# last_updated: 2026-11-08
 # project: jumprope-web
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-10-28
-last_updated: 2026-11-07
+last_updated: 2026-11-08
 project: jumprope-web
 project_key: NOKEY
 tracking_system: file-system
@@ -65,7 +65,7 @@ development_status:
   3-0-repo-hygiene-verify-contract: done  # chore from readiness audit 2026-11-07 (D-003); landed before 3-2
   3-1-four-new-cards-in-the-catalogue: done
   3-2-spare-rope-launch-heels-the-simple-effects: done
-  3-3-steel-cord-charges-that-survive-one-trip: review
+  3-3-steel-cord-charges-that-survive-one-trip: done
   3-4-second-wind-the-mid-air-jump: ready-for-dev
   3-5-picker-keys-the-state-aware-owned-card-hud: backlog
   epic-3-retrospective: optional

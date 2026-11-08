@@ -229,13 +229,19 @@ const wantsJump = (phase, ropeCount) => {
 };
 
 test('200-seed replay with live charged state; a 1000-tick charged build never stalls', () => {
-  const drawA = [];
-  const drawB = [];
+  const drawsView = [];
+  const drawsStateless = [];
+  const drawsSaturated = [];
   for (let seed = 0; seed < 200; seed++) {
-    drawA.push(pickOffers(CARDS, {}, 2, seeded(seed), { ropes: 1, charged: 2 }).map((c) => c.id).join('+'));
-    drawB.push(pickOffers(CARDS, {}, 2, seeded(seed), { ropes: 1, charged: 2 }).map((c) => c.id).join('+'));
+    // owned.reinforce keeps Steel Cord in the pool (owned arm below cap 2), so
+    // charged state alone decides its presence: 1 hides nothing, 2 saturates
+    // the stateCap — the offerstate.test.js:73-77 non-vacuity idiom.
+    drawsView.push(pickOffers(CARDS, { reinforce: 1 }, 2, seeded(seed), { ropes: 1, charged: 1 }).map((c) => c.id).join('+'));
+    drawsStateless.push(pickOffers(CARDS, { reinforce: 1 }, 2, seeded(seed), undefined).map((c) => c.id).join('+'));
+    drawsSaturated.push(pickOffers(CARDS, { reinforce: 1 }, 2, seeded(seed), { ropes: 1, charged: 2 }).map((c) => c.id).join('+'));
   }
-  assert.deepEqual(drawA, drawB, 'the live charged-saturating state shifts no rng position (NFR4)');
+  assert.deepEqual(drawsView, drawsStateless, 'a state view that hides nothing shifts no rng position (NFR4)');
+  assert.notDeepEqual(drawsSaturated, drawsView, 'saturating charged hides reinforce — the live deal state is wired, not decorative (NFR4)');
 
   let { rope, run } = game.startRun();
   let player = createPlayer();
