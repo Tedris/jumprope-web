@@ -77,6 +77,13 @@ export function clampArea(area) {
   return Math.min(SUMMIT_AREA, Math.max(MIN_AREA, n));
 }
 
+export function areaPeriodMul(area) {
+  // Story 4.2 (FR15): the current area's rope-period multiplier, read
+  // through clampArea — crafted/missing areas are data (row 1's 1.00 for
+  // garbage, row 5's 0.85 for +Infinity), never a lookup throw.
+  return AREAS[clampArea(area) - 1].periodMul;
+}
+
 // Story 2.2 (FR6): strict `>` — a peak exactly at the ceiling has not broken
 // it (GDD "exceeds"). `area` is the 1-based ladder index.
 export function crossesCeiling(peakAltitude, area) {
@@ -105,14 +112,21 @@ export function createRun() {
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
-  const nextRope = updateRope(rope, dt * run.effects.ropeMul);
-  const nextPlayer = updatePlayer(player, dt, 1800 / run.effects.floatMul);
-  let { score, skips, status, offer } = run;
-  let altitude = run.altitude ?? 0;
   // Story 4.1 (FR9): the area ladder reads through clampArea, replacing the
   // ?? idiom (which healed missing keys only — hand-built harness records
   // like the uxpolish tickRun wrapper still land on MIN_AREA = 1).
+  // Story 4.2 (FR15): hoisted ABOVE the rope step — one canonical read;
+  // the ascend branch below re-clocks the NEXT tick, never this one, so
+  // the phase value stays continuous through an ascent (NFR8, D-b).
   let area = clampArea(run.area);
+  // Story 4.2 (FR15): area pressure composes on the PERIOD side (GDD
+  // principle 2): the one scalar shared by this tick's phase step and the
+  // buffer decay below; left-associative so area 1 stays byte-identical.
+  const periodMul = areaPeriodMul(area);
+  const nextRope = updateRope(rope, (dt * run.effects.ropeMul) / periodMul);
+  const nextPlayer = updatePlayer(player, dt, 1800 / run.effects.floatMul);
+  let { score, skips, status, offer } = run;
+  let altitude = run.altitude ?? 0;
   let baseAltitude = run.baseAltitude ?? 0;
   let outcome = run.outcome ?? null;
   let tripped = false;
@@ -120,7 +134,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   // upgrade shortens the real-time window exactly as it shortens the period.
   // A press re-arms the full window at delivery; it is truthiness only and
   // never fires a jump (D-N11).
-  let buffer = Math.max(0, (run.buffer ?? 0) - dt * (run.effects.ropeMul ?? 1));
+  let buffer = Math.max(0, (run.buffer ?? 0) - (dt * (run.effects.ropeMul ?? 1)) / periodMul);
   if (press) buffer = BUFFER_SEC;
   let streak = run.streak ?? 0;
   // FR3: i-frames are a crossing count, not a second clock (NFR8). Any
