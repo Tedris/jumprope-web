@@ -7,6 +7,7 @@
 - **`atFeet`/`atFeetOffset` mod-1 domain change** — derived phase now uses `% 1`, so out-of-domain inputs (`phase ≥ 1` after a pathological `updateRope` wrap, or negative phase) report window membership where v1 returned false. Normalize with `((x % 1) + 1) % 1` if this code is ever revisited.
 - **Offer cadence + streak escalation scale with rope count** — first offer ≈1.85 revolutions at N=5; `CLOSE! ×N` callouts accumulate N× per revolution. Assigned to Epic 6 (balance pass) by GDD §163-186.
 - **`run.ropes` clamp is at-read only** — invalid values are never normalized into the record; Story 1.3's HUD must re-apply `clampRopes` rather than render the raw field.
+  - **CLOSED by practice** (Epic 3 close, 2026-11-08): every HUD render site since 1.3 re-applies `clampRopes` (`updateHud`, the pip builder); honored, never marked.
 
 ## Deferred from: code review of story 1-2-trip-resolution-lose-the-fastest-rope-ride-the-i-frames (2026-11-02)
 
@@ -42,17 +43,22 @@
 - **Two writers to the same persisted best** (`js/shell.js:338` over-restart + `:556` trip) — v1 structure; the restart write is dead weight (the run record is frozen between the sites). Consolidate into one shared save path when Story 2.4 reworks run-over persistence, per the FR22 shared-handler rule.
 - **Invariant leg uses exact float equality** (`tests/altitude.test.js:104`) — `altitude === ALT_PER_POINT × score` is exact only because the placeholder `ALT_PER_POINT = 2` is a power of two; a non-power-of-two balance value will fail the leg with no product bug. Re-express with tolerance in Epic 6's balance pass.
 - **Shell test harness forked a third time** (`tests/altitude.test.js:115-203` vs `uxpolish.test.js:58-156`, `shell.test.js:30-105`) — ~90 lines of data-URL boot scaffolding repeated; extracting `tests/support/shell-harness.js` touches frozen files, so it needs a dedicated chore, not a story-sized change.
+  - **OWNER: chore story "test-harness + CI consolidation"** (assigned Epic 3 close, 2026-11-08) — create before Epic 6; bundles :51, :97, :98 and the fork dedup.
 
 ## Deferred from: code review of story 2-2-jump-peak-vs-ceiling-and-the-summit-win (2026-11-05)
 
 - **`crossesCeiling` has no domain guard for a crafted out-of-range/typed `area`** (`js/game.js:41`) — `AREAS[area - 1].ceiling` throws TypeError on `area: 0/6/NaN/fractional` and string-concat-corrupts on `area: '3'`; the `??` heal repairs only missing keys. Diverges from the module's own hardening doctrine (`clampRopes`, the i-frames non-finite arm). Spec-sanctioned (story Task 2: "No clamp on `area`") and unreachable from production writers (only 1..5 are ever written). Story 4.1's monotonicity pin should also pin the domain — or add the clamp there.
+  - **OWNER CONFIRMED at Epic 3 close** (2026-11-08): Story 4.1's create-story MUST embed this item verbatim (monotonicity pin + domain pin/clamp).
 - **Summit win leaves the same-tick `'offer'` event on the D-N02 channel** (`js/game.js` summit branch vs the crossings-loop push) — the offer FIELD is cleared to null as decided, but a `'win'` tick that also crossed the 10th skip still pushes `'offer'`, so audio announces an offer that is never presented (probe: `events ['skip','offer','win']`). Claim it in Story 2.4's win-presentation work (suppress or gate the cue; 5.1 owns the fanfare itself). — **FIXED by Story 2.4** (summit branch splices `'offer'` out of the tick's events; pinned in tests/winloss.test.js).
 - **i-frame-suppressed summit peak is not banked** (`js/game.js` ceiling-check gate `iframesLeft === 0`) — the check is level-triggered, so the win re-fires on a later live tick; live play is bounded (the blank drains ≤ 1 revolution and `altitude` alone crossing re-fires regardless of arc), but a crafted crossing-starved record with `iFrames: 1` resolves forever. Story 4.5 must pin the deferral semantics in its i-frame interlock text.
+  - **OWNER CONFIRMED at Epic 3 close** (2026-11-08): Story 4.5's create-story MUST embed the deferral-semantics pin verbatim in its i-frame interlock text.
 - **Fourth bootShell fork captures `console.error` without asserting it** (`tests/ascent.test.js` `bootAscentShell`) — the `errors` array is collected and discarded, so any render-path `console.error` on the summit legs passes unnoticed; same ~90-line harness duplication as the extraction chore at :44 — fold the assertion in when the shared `tests/support/shell-harness.js` lands.
+  - **OWNER: same chore story** (test-harness + CI consolidation) — folds the assertion in with the extraction.
 
 ## Deferred from: code review of story 2-3-the-ceiling-marker-telegraph-the-moon-jump (2026-11-05)
 
 - **Marker pins `ceiling 0 ↑` while i-frames suppress the ascend** (`js/shell.js` markerLine vs `js/game.js` ceiling-check gate) — during a rope-stripped blank with ≥2 ropes, the telegraph promises the ceiling for up to ~1.3 s per remaining i-frame and the sim refuses to break it; the suppression is intentional (Story 4.5 interlock), so the fix is a marker-side blocked-at-ceiling arm (dim/blink the line while `iframesLeft > 0` and dist is 0). Claim in Epic 4/5's ascent-polish pass alongside the 4.5 deferral pin.
+  - **OWNER CONFIRMED at Epic 3 close** (2026-11-08): claimed into the Epic 4/5 ascent-polish story text at creation, alongside the 4.5 pin.
 
 ## Deferred from: card-catalogue design review (2026-11-06 — catalogue rules adopted)
 
@@ -76,6 +82,7 @@
 ## Deferred from: code review of story 2-5-ascent-economy-balance-harness (2026-11-06)
 
 - **Working tree bundles planning-pass docs with the story set** (`epics.md`, `gdd.md`, `decision-log.md`, plus NEW research + change-proposal docs) — the story's own change set is the two new test files + story + sprint-status; split the planning commit from the story commit at land time so the File List claim stays true.
+  - **CLOSED by practice** (Epic 3 close, 2026-11-08): planning/story commit split honored in every land since (`115c8b6`, `b38c220`, `f484ffd` pattern).
 - **Evaluator iFrames parity is vacuous for crafted/multi-rope traces** (`tests/support/balance-harness.js` evaluateLadder vs `js/game.js:92`) — the sim clamps non-finite `iFrames` to "gate open", the evaluator skips the tick; unreachable from `runBot` (single rope, startRun records only). Revisit when a harness sweeps multi-rope traces.
 - **"Peak axis" prose vs the AXIS = first-effect-field contract** (`gdd.md`, `research-scarlet-skips-2026-11-06.md`, deferred-work:61) — Launch Heels "joins the peak axis" but a launch-velocity card that doesn't write `floatMul` would fail the AXIS-guard leg and shift the collision math; Epic 3 must either write `floatMul`-shaped effects or amend the contract deliberately. Related wording nit: "measured linear at 1.00 / 1.97 / 2.92 / 3.84 / 4.73" is sub-linear, not linear.
   - **CONSUMED by Story 3.1** (2026-11-06): the AXIS contract is deliberately amended — inert (run-shaped) cards are exempt from the axis-is-a-field-written and group co-write checks, sentinel axes name their future effect fields (`launchMul`/`ropes`/`charged`/`airJumps`), and the collision baselines are re-contracted to 0.07 / 0.21 (`tests/balance.test.js`, Story 3.1 comments).
@@ -96,6 +103,7 @@
 
 - **CI exercises only Node 26** (`.github/workflows/test.yml:19`) — documented floor is Node ≥ 18 (`AGENTS.md:25`) but no engines/.nvmrc matrix exists; a dev green on an older Node has no CI signal. Pre-existing toolchain gap; the pin is spec-documented (Task 2). Add a matrix or engines field when the toolchain story lands.
 - **Unfiltered `on: push` double-runs on tag pushes and PR-head pushes** (`.github/workflows/test.yml:5-7`) — spec Task 2 deliberately avoided branch filters (wrong-branch silent-skip trap); cost is duplicate runner minutes, not correctness. Add `tags-ignore`/`concurrency` only if minutes become a problem.
+  - **OWNER: chore story "test-harness + CI consolidation"** (assigned Epic 3 close, 2026-11-08; see :44).
 
 ## Deferred from: code review of story 3-2-spare-rope-launch-heels-the-simple-effects (2026-11-07)
 
@@ -117,3 +125,10 @@
 ## Deferred from: code review of story 3-5-picker-keys-the-state-aware-owned-card-hud (2026-11-08)
 
 - **Digit keys confirm during the juice hitstop that the hold-confirm path respects** (review 3.5, Blind low/Edge P3 — same window; `js/shell.js:297-311` vs the drain gate `if (paused || now < stopUntil) break;`) — the freeze-opening `trip`/`skip`/`nearMiss` events open an 80/8/40 ms hitstop during which `consumeIntents`/`tickPick` are frozen, but the digit branch calls `confirmPick()` straight from the keydown listener. End state correct; impact cosmetic (a digit mashed at the trip moment cuts the trip shake; the pick flash overlaps the juice beat; the D-07 lock is unaffected — stricter if anything). The one-line guard (`performance.now() >= stopUntil` in the branch condition) is unagreed timing surface — D-a deliberately chose "the freeze stays snappy." Owner: Story 6.2/UAT (same playtest pass that decides the auto-hop ledger entry) — accept as designed or add the guard + a timing leg.
+
+## Epic 3 close — boundary dispositions (2026-11-08, per autopilot ledger check)
+
+- **Epic 6 balance/docs cluster CONFIRMED deferred** by the user: :8 (offer cadence/streak N-scaling), :63 (same-axis merges), :69 (extrarope dominance + offer-frequency dial), :79 (evaluator iFrames parity), :82 (47%→46.2), :89 (collision-gate state model), :102 (effects leak), :103/:104 (owned-cap lifetime lock, all three rule-changers), :109 (localStorage key drift), :23 (nearmiss constants), :43 (ALT float-equality leg), :113 (auto-hop press window), :119 (hitstop digit confirm). All ride into Epic 6's 6.1/6.2/6.3/6.4 passes; 6.1's create-story re-reads this ledger first.
+- **Later-story owners CONFIRMED**: :13/:18 ropeLost cue → 5.2; :74 extra-rope 3D → 5.3; :28 live-browser re-exercise → 5.5.
+- **Conditionals kept as-is** (revisit-if-touched): :6 (crossing blind spots), :7 (mod-1 domain).
+- **Stale unowned CLOSED by practice**: :5 buffer-forgiven offer check is SHIPPED BEHAVIOR (decision never taken in six epics; the check would change FR10 cadence — if it ever matters, it is an Epic 6 cadence decision, not a defect); :80 AXIS contract already CONSUMED (:81 sub-item, verified at this check); :9 and :78 stamped closed above.
