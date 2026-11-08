@@ -63,6 +63,20 @@ export function clampAirJumps(count) {
   return Math.min(MAX_AIRJUMPS, Math.max(0, n));
 }
 
+// Story 4.1 (FR9): the area index joins the shared clamp handler — crafted
+// out-of-domain records are data at the tick read, never a TypeError out of
+// crossesCeiling (pays deferred-work.md's crossesCeiling-guard item).
+export const MIN_AREA = 1;
+
+export function clampArea(area) {
+  // The clampRopes/clampCharged arms mirrored: +Infinity is "the top of the
+  // ladder" -> the summit tier; NaN/nullish/strings -> the alley. Fractions
+  // truncate like every sibling clamp.
+  const n = Number.isFinite(area) ? Math.trunc(area)
+    : area === Infinity ? SUMMIT_AREA : MIN_AREA;
+  return Math.min(SUMMIT_AREA, Math.max(MIN_AREA, n));
+}
+
 // Story 2.2 (FR6): strict `>` — a peak exactly at the ceiling has not broken
 // it (GDD "exceeds"). `area` is the 1-based ladder index.
 export function crossesCeiling(peakAltitude, area) {
@@ -95,9 +109,10 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   const nextPlayer = updatePlayer(player, dt, 1800 / run.effects.floatMul);
   let { score, skips, status, offer } = run;
   let altitude = run.altitude ?? 0;
-  // Story 2.2: same ?? heal idiom as altitude — hand-built harness records
-  // (e.g. the uxpolish tickRun wrapper) lack the ascent fields.
-  let area = run.area ?? 1;
+  // Story 4.1 (FR9): the area ladder reads through clampArea, replacing the
+  // ?? idiom (which healed missing keys only — hand-built harness records
+  // like the uxpolish tickRun wrapper still land on MIN_AREA = 1).
+  let area = clampArea(run.area);
   let baseAltitude = run.baseAltitude ?? 0;
   let outcome = run.outcome ?? null;
   let tripped = false;
