@@ -499,3 +499,15 @@ test('combo (shell): the air launch multiplies by launchMul exactly like the gro
     assert.ok(vy > jumpVelocity(hHi), `vy ${vy} exceeds the un-multiplied ceiling ${jumpVelocity(hHi)} (mutant: dropped launchMul)`);
   } finally { env.restore(); }
 });
+
+// Leg 11 — AC4's "no new key" clause, falsifiable (review 3.4, Acceptance
+// Auditor low): a source-scan fence — the one-button pillar survives Second
+// Wind as the frozen keyboard map, so the state discrimination is the ONLY
+// way an airborne press can launch. Mirrors the hygiene.test.js source-scan
+// idiom; the set is the v1.0 shipped map (start/jump, pause, cycle, audio).
+test('AC4: the one-button pillar holds — shell.js registers no new key codes', async () => {
+  const src = await readFile(resolve(jsDir, 'shell.js'), 'utf8');
+  const codes = [...new Set([...src.matchAll(/e\.code === '([A-Za-z0-9_]+)'/g)].map((m) => m[1]))].sort();
+  assert.deepEqual(codes, ['ArrowLeft', 'ArrowRight', 'Equal', 'Escape', 'KeyP', 'Minus', 'Mute', 'Space'],
+    'the keyboard map is frozen — Second Wind extends the Space press by STATE, never by a new key (FR17/NFR5)');
+});

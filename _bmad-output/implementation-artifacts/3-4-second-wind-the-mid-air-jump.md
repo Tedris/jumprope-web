@@ -3,7 +3,7 @@ baseline_commit: 115c8b6
 ---
 # Story 3.4: Second Wind — the mid-air jump
 
-Status: review
+Status: done
 Baseline: `9257b23` (Story 3.3 landed — code delta included — in the commit that ships this file; 327/327 green @ ~8.5 s). Authored at `79ba9ec` + the 3.3 docs delta; the tickRun line map and deal-site facts below are re-verified post-3.3.
 
 ## Story
@@ -149,3 +149,9 @@ lane-qwen38-ultra/qwen (omp, 2026-11-08)
 - `tests/rulecards.test.js` — authorized re-contract (inert leg → run-shape leg)
 - `_bmad-output/implementation-artifacts/deferred-work.md` — :102 narrowed, owned-cap parity note appended
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — status transitions
+
+## Change Log
+
+- 2026-11-08 — Dev round (baseline `115c8b6`): implementation + 10 mutation-proven legs + 2 authorized re-contracts + ledger updates; gate 337/337; committed `20a0561`, status review.
+- 2026-11-08 — Code review (three parallel layers, fresh context, baseline `115c8b6`→`20a0561`): **Blind Hunter** 0 high / 2 med / 2 low / 1 nit, **Edge Case Hunter** 0 findings (all edges pinned-or-unreachable, confidence 0.9), **Acceptance Auditor** per-AC PASS ×4, 1 low / 2 nits. **1 patch applied**: leg 11 — the key-set source-scan fence making AC4's "no new key" clause falsifiable (Acceptance low; gate 338/338, 11/11 secondwind). **2 deferred**: the auto-hop press window (M1+M2 — planning gap, fix candidates listed, owner Story 6.2 + playtest) and the `clampAirJumps` extraction (owner Story 3.5) — both to `deferred-work.md`. **5 dismissed with reasons**: M3 blur-burns-charge (D-11 "acts as if released at that instant" — a permitted AC1 launch; baseline burned nothing only because it free-flapped); M4 `cap: 2` second copy inert (epics.md:575 + GDD :234-237 authoritative — "copies doing nothing beyond 1 is design, not omission"; the economics note already lives in the owned-cap ledger parity entry); AC2 wording vs epics "until designed otherwise" (semantics preserved verbatim by this story's Balance-intent note); "own via applyCard" shell-leg deviation (coverage equivalent — grant+refresh pinned sim-side in legs 2/3, the end-to-end choose-flow pick is the frozen pickflow/steelcord legs' turf); fractional/string `airJumps` at the shell gate (Edge layer proved every writer numeric + boot/restart windows closed — unreachable, harmless-by-trajectory).
+- 2026-11-08 — Gate 338/338 @ ~8.5 s; status done.
