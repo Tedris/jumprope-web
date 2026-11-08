@@ -3,7 +3,7 @@ baseline_commit: 34df600
 ---
 # Story 4.2: Area pressure — rope period per tier
 
-Status: review
+Status: done
 
 Baseline: `34df600` (Story 4.1 done — `clampArea` shipped, `tests/arealadder.test.js` frozen, gate **367/367 green @ ~8.5 s**, tree clean, verified at authoring time 2026-11-08). Second story of the Ascent Ladder epic; it wires the `periodMul` column Story 2.2 shipped as dead placeholder data.
 
@@ -177,3 +177,4 @@ qwen (lane-qwen38-ultra/qwen, via omp worker)
 
 - 2026-11-08 — Story created (Epic 4 autopilot, `gds-create-story` at baseline `34df600`): ACs verbatim from epics.md §Story 4.2; ledger checked — no items owned by 4.2 (explicit in Deferred obligations); design decided D-a…D-g (dt-scaled composition, tick-start multiplier, phase-clock buffer coupling, derived wrap-bound pin); regression analysis of every area-2+ frozen leg. Ultimate context engine analysis completed - comprehensive developer guide created.
 - 2026-11-08 — Implemented via `gds-dev-story` at baseline `34df600`: `areaPeriodMul` + tick-start `periodMul` wiring in `tickRun`, `tests/areapressure.test.js` (20 legs, red-green), mutation matrix M1–M6 all killed, gate 387/387 @ ~8.5 s. Zero existing files touched. Status → review.
+- 2026-11-08 — Code review (`gds-code-review`, parallel layers @ `4e897c8`): Blind Hunter 1 med + 2 low (all test-file), Edge Case Hunter 0 findings (call-site clamping, mid-tick area, extremes, decay floor, periodMul-typo fence, arealadder phase-independence all traced clean), Acceptance Auditor 0 findings (AC1–3, D-a…D-g, §1–§7, frozen/scope clean). 3 patches applied to `tests/areapressure.test.js`: §5 per-tick buffer recurrence (±ulp, floor mirrored from the sim line — first gate run caught the terminal-tick negative prediction, fixed same round) + `skips`-unchanged contact assertion, §5 span wrap guard `0 ≤ span < 1`, `WORST_ROPEMUL` fail-closed cap assert. The med's contact-model premise was disproved from the geometry (BUFFER_SEC 0.1 ⇒ drain spans ≈0.08 phase from 0.05, never reaches the [0.45,0.55] window — the rig's own "parked clear" comment is true); the recurrence pin is the honest hardening regardless. 0 defers, 0 dismissals. Gate re-run 387/387 green post-patch; Status → done.

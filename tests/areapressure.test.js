@@ -68,7 +68,10 @@ const WORST_ROPEMUL = (() => {
   for (const card of CARDS) {
     if (card.shape === 'run') continue;
     const step = card.apply(freshEffects()).ropeMul;
-    if (step > 1) for (let i = 0; i < (card.cap ?? 0); i++) acc *= step;
+    if (step > 1) {
+      assert.ok(card.cap !== undefined, `ropeMul-raising card ${card.id} must declare a cap (review 4.2, fail-closed bound)`);
+      for (let i = 0; i < card.cap; i++) acc *= step;
+    }
   }
   return acc;
 })();
@@ -220,11 +223,17 @@ function bufferDecayTrace(area) {
   let out = game.tickRun(run, rope, player, STEP, rngStub, true);
   const armed = out.rope.phase;
   let ticks = 0;
+  const skipsAtArm = out.run.skips; // review 4.2: exclude any contact model
   while (out.run.buffer > 0) {
     assert.ok(ticks < 500, 'the buffer must drain');
     assert.equal(out.run.status, 'running');
     assert.equal(out.run.area, area, 'no ascent during decay (rig pin)');
+    const prevBuffer = out.run.buffer;
     out = game.tickRun(out.run, out.rope, out.player, STEP, rngStub, null);
+    assert.equal(out.run.skips, skipsAtArm, 'drain path stays contact-free (review 4.2)');
+    const expected = Math.max(0, prevBuffer - STEP / row.periodMul); // floor mirrors the sim line
+    assert.ok(Math.abs(out.run.buffer - expected) <= 8 * Number.EPSILON * Math.max(prevBuffer, expected),
+      `per-tick buffer recurrence holds at tick ${ticks} (review 4.2)`);
     ticks += 1;
   }
   return { ticks, span: out.rope.phase - armed, row };
@@ -237,6 +246,7 @@ test('the forgiveness buffer drains on the phase clock: constant phase span, are
     const predicted = game.BUFFER_SEC * t.row.periodMul; // real-time expiry from records
     assert.ok(Math.abs(t.ticks * STEP - predicted) < 1.5 * STEP,
       `area ${t.row.area}: buffer expires ${t.ticks * STEP} s within a tick of ${predicted} s`);
+    assert.ok(t.span >= 0 && t.span < 1, 'the drain never crosses a phase wrap (review 4.2)');
   }
   assert.ok(high.ticks < low.ticks, 'the summit grace window is SHORTER in seconds');
   const incHigh = expectedInc(STEP, 1, high.row.periodMul, game.ROPE_PERIOD);
