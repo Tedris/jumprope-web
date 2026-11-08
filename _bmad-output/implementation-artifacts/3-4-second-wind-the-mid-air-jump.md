@@ -1,6 +1,9 @@
+---
+baseline_commit: 115c8b6
+---
 # Story 3.4: Second Wind — the mid-air jump
 
-Status: ready-for-dev
+Status: review
 Baseline: `9257b23` (Story 3.3 landed — code delta included — in the commit that ships this file; 327/327 green @ ~8.5 s). Authored at `79ba9ec` + the 3.3 docs delta; the tickRun line map and deal-site facts below are re-verified post-3.3.
 
 ## Story
@@ -118,10 +121,31 @@ Reuse existing idioms: `tickRun` fixture rigs (`tests/multirope.test.js:16-25`),
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+lane-qwen38-ultra/qwen (omp, 2026-11-08)
 
 ### Debug Log References
 
+- 2026-11-08 — RED: `tests/secondwind.test.js` written first; 9/10 legs observed failing (factory `airJumps` undefined, no gate: airborne presses launched, no consumption/refresh, no `shape` on the record). Leg 4 (AC3 peak-chain) observed PASSING pre-implementation — the ceiling check already samples post-step position; the leg exists to pin that fact, per the story's "verify by legs, not code".
+- 2026-11-08 — GREEN: `airJumps: 0` in `createRun`, tickRun read-heal + ground-contact refresh + unconditional `nextRun` write, `patchedRun` clamp, `doublejump` run-shape record + comment rewrite, shell release-branch gate (grounded / charged / denied). Gate first went 336/337 — the altitude key-set re-contract had `'altitude'` before `'airJumps'` in the SORTED list (`'i' < 'l'`); fixed, 337/337 @ ~8.5 s (baseline 327 — +10 legs, wall-time delta ≈ 0).
+- 2026-11-08 — Re-contract proof: `git diff 115c8b6 -- tests/` touches ONLY `tests/altitude.test.js` (key-set leg, 6 lines) and `tests/rulecards.test.js` (inert→run-shape leg, 15 lines) — both explicitly authorized above; plus the new `tests/secondwind.test.js`. All other test files byte-identical; `js/player.js`, `js/rope.js`, `js/interpolate.js`, `js/render3d.js`, `js/audio.js`, `index.html`, `package.json`, `run_tests.sh`, `.github/` untouched.
+- 2026-11-08 — Mutation matrix (each mutant applied, run, reverted; ≥1 red leg per branch): M1 ungated air-launch → legs 6,7,8,9 red; M2 air launch loses `launchMul` → leg 10 red; M2b GROUNDED launch loses `launchMul` → leg 10 red (survived the FIRST rig — the held combo release landed after touchdown, taking the ground branch; the leg was rewired to release strictly airborne and the grounded twin of the same boot now pins both sites); M3 refresh writes the owned counter → leg 2 red; M4 denial arms the D-N01 buffer → leg 9 red (survived the FIRST rig — the apex-choreographed forced crossing landed outside the buffer's ~0.1 phase-second life; rewired to the lead-in descent so the crossing lands inside it); M5 air launch doesn't consume → legs 5,6,7 red; M6 `patchedRun` clamp removed → leg 3 red; M7 refresh without the owned guard → legs 2,8,9 red; M8 read-heal without the `nextRun` write → legs 1,2,5,7 red; M9 charge read from `ropes` → legs 6,7,8,9 red; M10 grounded press gated on the charge → legs 8,9 red.
+- 2026-11-08 — Live-browser note: the release-branch gate, voice count and hold model are pinned headlessly through the real `js/shell.js` frame loop (bootSW data-URL harness, fake clock, 4 ms strides); nothing in this story needs a browser-only check. The air launch emitting exactly ONE `jump` voice (vs the grounded path's two-by-drift) is pinned in leg 5; the drift itself stays Epic 5's (audio consolidation).
+
 ### Completion Notes List
 
+- `run.airJumps` is live run data (scalar 0..1): factory field, i-frames-arm read-heal (`Number.isFinite ? min(1,max(0,·)) : 0` — `Infinity` behaves as UNCHARGED, mirroring the i-frames arm, not the `clampCharged` +Infinity arm), ground-contact refresh `owned.doublejump > 0 ? 1 : 0` (the refresh cap, not the counter, enforces "exactly 1 per contact regardless of copies" — AC2), unconditional every-tick write (3.3 D-b heal-on-write doctrine), `patchedRun` clamp so a mid-air second pick lands at 1, never 2.
+- The grounded-guard fix is folded in as AC4's state gate in `js/shell.js` ONLY: `player.grounded` at release picks ground-vs-air, a permitted launch arms `pressFired` exactly as v1 did, the DENIAL arms nothing (no buffer — leg 9), clears `holdFrom` (no phantom re-fire), and emits nothing (`releaseEverything` inherits via `consumeIntents`, no edit). `js/player.js` byte-identical — the sim-side `jump()` stays unconditional for the harnesses; v1-parity legs (lead-in hop, D-07 discard) stay green by construction: the gate sits INSIDE the `LEAD_IN_MS` branch.
+- AC3 needed no mechanism and is pinned as such (leg 4): chained air peaks feed the FR6 ceiling check through the existing post-step sample; the Second-Wind twin is tick-identical to the no-card twin (NFR8); i-frame suppression covers air peaks (Story 4.5 inheritance).
+- The combo leg caught a real coverage gap OUT OF SCOPE for the fix but in scope for the file: no shell-cap test anywhere pinned that the grounded release multiplies by `launchMul` (M2b survived the FULL suite before the twin assertion landed — Story 3.2's shell wiring was pinned only sim-side). Closed here under leg 10's "rides the same expression" remit; noted for the review round.
+- Ledger: `deferred-work.md` :102 narrowed (all three rule-changers now ride the run-shaped composition idiom — the stackedEffects leak is fully live-relevant for 6.1/6.3) and a Second Wind PARITY note appended under the owned-cap lifetime-lock entries (`owned.doublejump` ≥ 2 hides forever; Epic 6 owns recovery semantics).
+
 ### File List
+
+- `js/game.js` — modify (`airJumps: 0` in `createRun`; tickRun heal + ground-contact refresh + `nextRun` write; `patchedRun` airJumps clamp)
+- `js/upgrades.js` — modify (`doublejump`: `shape: 'run'`, whole-record apply, FR12 comment rewrite)
+- `js/shell.js` — modify (`consumeIntents` release-branch state gate — the folded grounded-guard fix)
+- `tests/secondwind.test.js` — new (10 legs: 4 sim + 6 shell-cap through bootSW)
+- `tests/altitude.test.js` — authorized re-contract (createRun key-set leg)
+- `tests/rulecards.test.js` — authorized re-contract (inert leg → run-shape leg)
+- `_bmad-output/implementation-artifacts/deferred-work.md` — :102 narrowed, owned-cap parity note appended
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — status transitions

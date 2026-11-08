@@ -351,12 +351,26 @@ export function startGame(canvas) {
     if (releaseIntent) {
       if (run.status === 'running') {
         if (performance.now() - reentryAt >= LEAD_IN_MS && holdFrom !== null) {
-          player = jump(player, (performance.now() - holdFrom) / 1000, run.effects.launchMul ?? 1);
-          audio?.handleEvent('jump');
-          holdFrom = null;
-          // D-N01/D-N11: hand the press to the sim on this exact STEP's
-          // tickRun (the release's jump call stays the player's timing).
-          pressFired = true;
+          // Story 3.4 (FR12/FR17): the one button discriminates by state at
+          // RELEASE — grounded launches byte-identically; airborne spends a
+          // Second Wind charge with the SAME hold model; no charge is a
+          // silent denial (no pressFired — the D-N01 buffer arms for
+          // PERMITTED launches only, no voice, no juice). The decision
+          // instant is player.grounded here; a hold that lands became a
+          // ground jump, charge untouched.
+          const grounded = player.grounded;
+          const airLaunch = !grounded && run.airJumps >= 1;
+          if (grounded || airLaunch) {
+            player = jump(player, (performance.now() - holdFrom) / 1000, run.effects.launchMul ?? 1);
+            audio?.handleEvent('jump');
+            // Shell writing a run field mid-run — the enterPause buffer:0
+            // precedent; tickRun heals/clamps 0..1 on every tick after.
+            if (airLaunch) run = { ...run, airJumps: Math.max(0, run.airJumps - 1) };
+            // D-N01/D-N11: hand the press to the sim on this exact STEP's
+            // tickRun (the release's jump call stays the player's timing).
+            pressFired = true;
+          }
+          holdFrom = null; // denial clears too — no phantom re-fire
         }
       } else if (run.status === 'choose') {
         if (pickDone) {

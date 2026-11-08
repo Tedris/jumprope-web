@@ -75,7 +75,7 @@ export function resumeRun(run) {
 }
 
 export function createRun() {
-  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, charged: 0, iFrames: 0, area: 1, baseAltitude: 0, outcome: null };
+  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, charged: 0, airJumps: 0, iFrames: 0, area: 1, baseAltitude: 0, outcome: null };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
@@ -106,6 +106,13 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   // FR12 (Story 3.3): the charged count reads through the same heal idiom —
   // invalid values behave per the clampCharged arms, invalid states are data.
   let charged = clampCharged(run.charged);
+  // FR12 (Story 3.4): the mid-air charge reads through the i-frames arm —
+  // any non-finite record behaves as "no charge". Valid range is 0..1: the
+  // ground-contact refresh below, not the owned counter, enforces "exactly
+  // 1 per contact regardless of copies" (AC2). The refresh is idempotent;
+  // the unconditional write below heals out-of-range records (3.3 D-b).
+  let airJumps = Number.isFinite(run.airJumps) ? Math.min(1, Math.max(0, run.airJumps)) : 0;
+  if (nextPlayer.grounded) airJumps = ((run.owned ?? {}).doublejump ?? 0) > 0 ? 1 : 0;
   let strippedTo = null;
   const events = [];
   if (player.grounded && !nextPlayer.grounded) events.push('jump');
@@ -229,7 +236,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       events.push('ascend');
     }
   }
-  const nextRun = { ...run, score, altitude, skips, status, offer, buffer, streak, iFrames: iframesLeft, charged, area, baseAltitude, outcome };
+  const nextRun = { ...run, score, altitude, skips, status, offer, buffer, streak, iFrames: iframesLeft, charged, airJumps, area, baseAltitude, outcome };
   if (strippedTo !== null) nextRun.ropes = strippedTo;
   return {
     run: nextRun,
@@ -246,7 +253,8 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
 function patchedRun(run, card) {
   if (card.shape === 'run') {
     const patched = card.apply(run);
-    return { ...patched, ropes: clampRopes(patched.ropes ?? MIN_ROPES), charged: clampCharged(patched.charged ?? 0) };
+    return { ...patched, ropes: clampRopes(patched.ropes ?? MIN_ROPES), charged: clampCharged(patched.charged ?? 0),
+      airJumps: Number.isFinite(patched.airJumps) ? Math.min(1, Math.max(0, patched.airJumps)) : 0 };
   }
   return { ...run, effects: card.apply(run.effects) };
 }

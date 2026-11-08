@@ -29,9 +29,9 @@ export const CARDS = [
   { id: 'widebrim', name: 'Wide Brim', desc: '+20% forgiveness, −10% hang time', icon: '⌸',
     role: 'margin', color: 'mint', rarity: 'uncommon', cap: 2,
     apply: s => ({ ...s, windowMul: s.windowMul * 1.2, floatMul: s.floatMul * 0.9 }) },
-  // FR12 rule-changers (Story 3.1): Spare Rope and Steel Cord have landed
-  // (whole-record run-shape apply); the inert endofunction remains only for
-  // Story 3.4's mid-air jump (3.4).
+  // FR12 rule-changers: all three ship the whole-record run-shape apply —
+  // Spare Rope in Story 3.2, Steel Cord in 3.3, Second Wind's mid-air jump
+  // in 3.4 (run.airJumps, refreshed on ground contact).
   // stateCap = plain-data dead-pick thresholds (FR10).
   { id: 'extrarope', name: 'Spare Rope', desc: '+1 rope (max 5)', icon: '∥',
     role: 'foundation', color: 'mint', rarity: 'uncommon', cap: 4,
@@ -44,8 +44,8 @@ export const CARDS = [
     shape: 'run',                 // ADR-2 whole-record patch, dispatched in game.js
     apply: (run) => ({ ...run, charged: (run.charged ?? 0) + 1 }) },
   { id: 'doublejump', name: 'Second Wind', desc: 'extra jump in mid-air', icon: '⇈',
-    role: 'foundation', color: 'sky', rarity: 'uncommon', cap: 2,
-    apply: s => ({ ...s }) },      // mid-air jump lands in Story 3.4
+    role: 'foundation', color: 'sky', rarity: 'uncommon', cap: 2, shape: 'run',
+    apply: (run) => ({ ...run, airJumps: (run.airJumps ?? 0) + 1 }) },
   { id: 'highjump', name: 'Launch Heels', desc: '+10% launch velocity', icon: '△',
     role: 'foundation', color: 'sky', rarity: 'common', cap: 3,
     apply: s => ({ ...s, launchMul: s.launchMul * 1.1 }) },

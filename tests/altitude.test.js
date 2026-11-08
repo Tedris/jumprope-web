@@ -42,9 +42,11 @@ test('factory contract: createRun carries altitude 0 and ALT_PER_POINT is a fini
   assert.equal(run.altitude, 0);
   // Story 3.3 authorized re-contract: charged joins the createRun key set —
   // charge state is part of the run record, not a side-channel (FR12).
+  // Story 3.4 authorized re-contract: airJumps joins it too — the mid-air
+  // charge is run-record data (FR12, and the 3.5 HUD reads it off the view).
   assert.deepEqual(Object.keys(run).sort(), [
-    'altitude', 'area', 'baseAltitude', 'buffer', 'charged', 'effects', 'iFrames', 'offer', 'outcome', 'owned', 'ropes', 'score', 'skips', 'status', 'streak',
-  ], 'the createRun record-key set must stay explicit — charged joins ropes (Story 3.3)');
+    'airJumps', 'altitude', 'area', 'baseAltitude', 'buffer', 'charged', 'effects', 'iFrames', 'offer', 'outcome', 'owned', 'ropes', 'score', 'skips', 'status', 'streak',
+  ], 'the createRun record-key set must stay explicit — airJumps joins charged (Story 3.4)');
 });
 
 test('clean pass accrues ALT_PER_POINT × scoreMul alongside the score', () => {

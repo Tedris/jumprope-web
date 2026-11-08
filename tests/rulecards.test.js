@@ -39,14 +39,15 @@ test('FR12: the four new records carry their pinned metadata', () => {
   }
 });
 
-test('effects-shape contract: the still-unlanded doublejump keeps the inert endofunction', () => {
-  // Story 3.3 authorized re-contract: reinforce landed the whole-record
-  // run-shape apply (Steel Cord charges) — its effects are pinned by
-  // tests/steelcord.test.js. Only Story 3.4's doublejump stays inert.
-  for (const id of ['doublejump']) {
-    assert.deepEqual(cardById(id).apply(freshEffects()), freshEffects(),
-      `${id}.apply must return the effects untouched until its effect story`);
+test('run-shape contract: doublejump landed the whole-record apply in Story 3.4', () => {
+  // Story 3.4 authorized re-contract: doublejump ships the mid-air jump —
+  // run-shaped apply (behavior pinned by tests/secondwind.test.js). The inert
+  // endofunction class is now empty; reinforce landed in 3.3, doublejump here.
+  const patched = cardById('doublejump').apply(freshEffects());
+  for (const key of ['floatMul', 'launchMul', 'ropeMul', 'scoreMul', 'windowMul']) {
+    assert.ok(key in patched, `doublejump: run-shaped apply preserves ${key} (Pitfall 3)`);
   }
+  assert.equal(patched.airJumps, 1, 'apply grants the mid-air charge as a run field (ADR-2 sketch)');
 });
 
 test('stateCap metadata: plain-data thresholds on the two saturating cards', () => {
