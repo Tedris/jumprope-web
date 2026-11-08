@@ -76,6 +76,9 @@ canvas {
   border-color: #f4f0d8;
   background: rgba(42, 52, 64, 0.85);
 }
+/* Story 3.5 (FR13): the picker slot number — muted voice, top of the card
+   column, so 1/2/3 reads as the KEY, not as a count. */
+.card-hint { font-size: 11px; color: #9aa7b4; }
 .card-icon { font-size: 22px; line-height: 1; }
 .card-name { font-size: 14px; font-weight: bold; }
 .card-desc { color: #b8b4a0; }

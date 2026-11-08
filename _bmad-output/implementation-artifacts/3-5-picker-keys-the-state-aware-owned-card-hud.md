@@ -46,7 +46,7 @@ Second story of the "polish the menu" tail: 3.4 shipped the last state-changing 
    - new keydown branch after :297 per D-b → sets `pickIdx`, calls `confirmPick()`;
    - `makeCard` gains the `card-hint` child per D-c (hint text is `String(i + 1)`, role-neutral class `card-hint`);
    - `updateHud` owned-line builder per D-d (`clampCharged`/`clampAirJumps` imported from game.js).
-3. No new DOM ids (index.html untouched); no CSS work beyond a `.card-hint` rule if `index.html`'s inline `<style>` needs it — it does NOT: cards are styled by class only where needed and the hint inherits `.hud-card` layout (probe leg 6 asserts text, not style; if a style rule is unavoidable, index.html change needs the story's explicit justification — expected: none, the div renders unstyled like `card-fill`'s wrapper).
+  3. No new DOM ids (index.html untouched). Card styling lives in `css/style.css` (NOT inline as first drafted here — corrected in the dev round): one additive `.card-hint` rule (muted 11px, the `card-owned` voice) so the slot number reads as the KEY, not a count. `css/style.css` is not a near-frozen file; no test reads it.
 
 ### Files
 
@@ -97,7 +97,8 @@ Second story of the "polish the menu" tail: 3.4 shipped the last state-changing 
 - `js/shell.js` — modify (`confirmPick()` extraction; digit keydown branch; `card-hint` child; state-aware owned line; clamp imports on :1)
 - `tests/pickerhud.test.js` — create (10 legs, 7-mutant matrix)
 - `tests/secondwind.test.js` — leg 11 re-contract ONLY (authorized; key list + comment + message)
-- `index.html` — UNTOUCHED (`#hud-owned` already ships at :24; `card-hint` inherits layout, no CSS diff needed)
+- `css/style.css` — modify (one `.card-hint` rule; story-mechanism wording corrected — the sheet is external, not inline)
+- `index.html` — UNTOUCHED (`#hud-owned` already ships at :24)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — status transitions
 
 ## Change Log

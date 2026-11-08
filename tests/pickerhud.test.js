@@ -188,6 +188,18 @@ test('AC1: Digit2 confirms offer[1] instantly, applied and resumed', async () =>
     assert.equal(v.run.status, 'running', 'the run resumed at once — no hold wait');
     assert.equal(v.run.owned[offer[1].id], 1, 'offer[1] was picked, not the cursor entry');
     assert.equal(v.run.offer, null, 'the freeze ended');
+    // Full sweep: every digit k is valid exactly when k <= offer.length —
+    // one 3-card offer exercises the Digit3-valid case (skips > 30 deals
+    // three cards in production).
+    const offer3 = [card('float'), card('multi'), card('feather')];
+    freezeAt(env, offer3);
+    keydown(env, 'Digit3');
+    tick(env);
+    assert.equal(view(env).run.owned[offer3[2].id], 1, 'Digit3 picks offer[2] of a 3-card offer');
+    freezeAt(env, offer3);
+    keydown(env, 'Digit1');
+    tick(env);
+    assert.equal(view(env).run.owned[offer3[0].id], 1, 'and Digit1 picks offer[0] of three');
   } finally { env.restore(); }
 });
 

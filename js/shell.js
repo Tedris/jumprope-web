@@ -372,7 +372,7 @@ export function startGame(canvas) {
           // instant is player.grounded here; a hold that lands became a
           // ground jump, charge untouched.
           const grounded = player.grounded;
-          const airLaunch = !grounded && run.airJumps >= 1;
+          const airLaunch = !grounded && clampAirJumps(run.airJumps) >= 1;
           if (grounded || airLaunch) {
             player = jump(player, (performance.now() - holdFrom) / 1000, run.effects.launchMul ?? 1);
             audio?.handleEvent('jump');
