@@ -1,6 +1,6 @@
 # Story 3.5: Picker keys & the state-aware owned-card HUD
 
-**Status:** review
+**Status:** done
 
 **Baseline:** `5325d0d` (Story 3.4 landed — code delta included — in the commit that ships this file; 338/338 green @ ~8.5 s).
 
@@ -104,4 +104,6 @@ Second story of the "polish the menu" tail: 3.4 shipped the last state-changing 
 ## Change Log
 
 - 2026-11-08 — Dev round (baseline `5325d0d`): digit picker via shared `confirmPick`, `card-hint` overlays, state-aware owned line (`×`/`⟳`/`↑`), `clampAirJumps` extraction (ledger nit paid), leg 11 re-contract (authorized), 10 mutation-proven legs; gate 348/348; status review.
+- 2026-11-08 — Pre-review follow-ups (`8e6d543`): Digit3-valid-on-3-cards sweep, release-gate clamp unification (D-e complete), `.card-hint` CSS rule + mechanism wording fix, ledger PAID note.
+- 2026-11-08 — Code review (three parallel layers, fresh context, range `5325d0d..8e6d543`): **Blind Hunter** 0 high/med, 1 low + 1 nit (18 runtime scenarios), **Edge Case Hunter** 0 findings + 1 P3 (full edge ledger: pickIdx range, offer lengths, pause+choose unreachable, hint binding — all pinned-or-unreachable, confidence 0.85), **Acceptance Auditor** per-AC PASS ×4 with 1 medium + 1 low + 1 nit. **4 patches applied**: spent-Second-Wind `↑0`→`↑1` leg (Acceptance F1 — constant-`↑1` mutant survived 348/348 before the patch, is red after); multiplier-mixed owned line in leg 7 (F2); epics.md FR13 ASSUMPTION pinned resolved (F3); `Numpad1/2/3` accepted with leg-11 fence extension + sweep assertion (Blind nit — its introduction briefly broke Digit k-extraction via `slice(6)`, the AC1 legs caught it same-gate). **1 deferred**: hitstop-window digit confirm (Blind low = Edge P3, same window; owner Story 6.2/UAT). **1 dismissed**: leg 7 self-reference note (Blind's own record: the concrete-value assert covers it). Gate 349/349 @ ~8.5 s; frozen files byte-identical (only the authorized secondwind leg 11 moved, twice); status done.
 

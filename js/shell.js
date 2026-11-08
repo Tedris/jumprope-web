@@ -297,10 +297,12 @@ export function startGame(canvas) {
     // Story 3.5 (FR13): digit picker — 1/2/3 CONFIRM offer[k] instantly
     // through the shared confirmPick (the freeze stays snappy; D-a). Out of
     // range or outside choose: fully inert, no preventDefault
-    // (EXPERIENCE.md:62 "everything else inert").
+    // (EXPERIENCE.md:62 "everything else inert"). Numpad codes are the same
+    // keys for numpad-only players (review 3.5, Blind nit).
     if (run.status === 'choose' && run.offer && !e.repeat
-        && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3')) {
-      const k = Number(e.code.slice(5));
+        && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3'
+          || e.code === 'Numpad1' || e.code === 'Numpad2' || e.code === 'Numpad3')) {
+      const k = Number(e.code.charAt(e.code.length - 1));
       if (k <= run.offer.length) {
         e.preventDefault();
         pickIdx = k - 1;

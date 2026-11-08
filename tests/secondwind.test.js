@@ -511,6 +511,6 @@ test('combo (shell): the air launch multiplies by launchMul exactly like the gro
 test('AC4: the one-button pillar holds — shell.js registers no new key codes', async () => {
   const src = await readFile(resolve(jsDir, 'shell.js'), 'utf8');
   const codes = [...new Set([...src.matchAll(/e\.code === '([A-Za-z0-9_]+)'/g)].map((m) => m[1]))].sort();
-  assert.deepEqual(codes, ['ArrowLeft', 'ArrowRight', 'Digit1', 'Digit2', 'Digit3', 'Equal', 'Escape', 'KeyP', 'Minus', 'Mute', 'Space'],
+  assert.deepEqual(codes, ['ArrowLeft', 'ArrowRight', 'Digit1', 'Digit2', 'Digit3', 'Equal', 'Escape', 'KeyP', 'Minus', 'Mute', 'Numpad1', 'Numpad2', 'Numpad3', 'Space'],
     'the keyboard map is frozen — jumps stay on Space alone; only the FR13 picker digits were ever added (FR17/NFR5)');
 });

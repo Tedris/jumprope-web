@@ -200,6 +200,10 @@ test('AC1: Digit2 confirms offer[1] instantly, applied and resumed', async () =>
     keydown(env, 'Digit1');
     tick(env);
     assert.equal(view(env).run.owned[offer3[0].id], 1, 'and Digit1 picks offer[0] of three');
+    freezeAt(env, offer3);
+    keydown(env, 'Numpad2'); // review 3.5 (Blind nit): numpad codes are the same keys
+    tick(env);
+    assert.equal(view(env).run.owned[offer3[1].id], 2, 'Numpad2 picks offer[1] like Digit2');
   } finally { env.restore(); }
 });
 
@@ -335,17 +339,45 @@ test('AC3: the owned line reads live state — rope count, charges, double-jump'
     keydown(env, 'Digit2');
     freezeAt(env, stateOffer);
     keydown(env, 'Digit3');
+    freezeAt(env, [card('multi')]);
+    keydown(env, 'Digit1');
     tick(env);
     const expected = [
+      card('multi').icon,
       `${card('extrarope').icon}×${view(env).run.ropes}`,
       `${card('reinforce').icon}⟳${view(env).run.charged}`,
       `${card('doublejump').icon}↑${view(env).run.airJumps}`,
     ].join(' ');
     assert.equal(env.hud['hud-owned'].textContent, expected,
-      'state cards show their live fields; the multipliers stay icon-only');
+      'state cards show their live fields alongside the multiplier stack (CARDS order)');
     assert.equal(env.hud['hud-owned'].textContent,
-      `${card('extrarope').icon}×2 ${card('reinforce').icon}⟳1 ${card('doublejump').icon}↑1`,
-      'and the concrete values are: 2 ropes, 1 cord charge, double jump ready');
+      `${card('multi').icon} ${card('extrarope').icon}×2 ${card('reinforce').icon}⟳1 ${card('doublejump').icon}↑1`,
+      'concretely: a plain multiplier icon, then 2 ropes, 1 cord charge, double jump ready');
+  } finally { env.restore(); }
+});
+
+// Review 3.5 (Acceptance F1): the ↑ arm's 0-state — the FR14 stale-display
+// failure class AC4 exists to block — pinned by SPENDING the charge mid-air
+// (secondwind:346 timing idiom): ↑0 the same frame, ↑1 restored on landing.
+test('AC4: a spent Second Wind reads ↑0 in flight until the landing restores it', async () => {
+  const env = await bootShell();
+  try {
+    startRunning(env);
+    freezeAt(env, [card('doublejump'), card('float')]);
+    keydown(env, 'Digit1');
+    for (let i = 0; i < 10; i++) tick(env); // past the lead-in lock; the hop lands
+    assert.ok(view(env).player.grounded, 'grounded before the ground jump');
+    keydown(env, 'Space'); tick(env); env.handlers.window.keyup({ code: 'Space' }); // ground jump
+    for (let i = 0; i < 6 && view(env).player.grounded; i++) tick(env); // into the air
+    keydown(env, 'Space'); tick(env); env.handlers.window.keyup({ code: 'Space' }); // spend it mid-air
+    tick(env);
+    assert.equal(view(env).run.airJumps, 0, 'the air launch consumed the charge');
+    assert.ok(env.hud['hud-owned'].textContent.includes(`${card('doublejump').icon}↑0`),
+      'the spend shows ↑0 the SAME frame — no stale readiness (FR14)');
+    for (let i = 0; i < 200 && !view(env).player.grounded; i++) tick(env);
+    tick(env);
+    assert.ok(env.hud['hud-owned'].textContent.includes(`${card('doublejump').icon}↑1`),
+      'the landing restores ↑1');
   } finally { env.restore(); }
 });
 
