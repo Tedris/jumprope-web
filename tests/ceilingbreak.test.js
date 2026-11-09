@@ -600,6 +600,13 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // the live-browser re-run lands Debug-Log evidence + the ledger stamp only.
     'tests/audiolifecycle.test.js',
     '_bmad-output/implementation-artifacts/5-5-audio-lifecycle-regression-sweep.md',
+    // Story 5.6 sanctioned re-contract R1 (2026-11-09): zero product-code delta —
+    // the committed music asset, the track1 metadata suite, and this story's
+    // artifact join the set; the live-browser lane lands Debug-Log evidence +
+    // the ledger stamp only.
+    'audio/track.ogg',
+    'tests/track1.test.js',
+    '_bmad-output/implementation-artifacts/5-6-track-1-music-content.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
