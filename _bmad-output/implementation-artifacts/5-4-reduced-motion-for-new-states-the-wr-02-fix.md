@@ -3,7 +3,7 @@ baseline_commit: 052b652
 ---
 # Story 5.4: Reduced motion for new states & the WR-02 fix
 
-Status: review
+Status: done
 
 Note: Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-09).
 
@@ -139,7 +139,7 @@ Zero other changes in either file. (Ledger `:173` records the census's known bli
 
 ### The one paragraph that prevents the top three disasters
 
-The fix is ONE LINE at `js/render3d.js:567` — if your diff touches any other product-code character, you have misread this story (disaster 1: scope creep past the gate). The suite has TWO kinds of legs — L1-L3 are the honest-red WR-02 repro (they MUST fail before the gate), L4-L11 are verify-and-pin legs that are green on baseline BY DESIGN (disaster 2: "fixing" a green pin into a red strawman, e.g. making L5 assert ghosts-hidden — the decided answer is visible, D2, with the rationale in the table). And `tests/render3d.test.js` is sacred: its idle/snap/uShake/particle/runningPose legs are the inherited premises your new suite restates reduced-only — copying its stub/harness code into the new file is required, importing from it is forbidden, editing it reddens the censuses (disaster 3: "tidying" the donor into your new file and tripping both tripwires).
+The fix is ONE LINE at `js/render3d.js:567` — if your diff touches any other product-code character, you have misread this story (disaster 1: scope creep past the gate). The suite has TWO kinds of legs — L1 and L3 are the honest-red WR-02 repro (they MUST fail before the gate; L2 was written expecting red but shipped green-from-first-write because the `:502` reduced guard from Story 5.3 already covers its premise — it stands as a staticity pin, premise-corrected, see Dev Log), L4-L11 are verify-and-pin legs that are green on baseline BY DESIGN (disaster 2: "fixing" a green pin into a red strawman, e.g. making L5 assert ghosts-hidden — the decided answer is visible, D2, with the rationale in the table). And `tests/render3d.test.js` is sacred: its idle/snap/uShake/particle/runningPose legs are the inherited premises your new suite restates reduced-only — copying its stub/harness code into the new file is required, importing from it is forbidden, editing it reddens the censuses (disaster 3: "tidying" the donor into your new file and tripping both tripwires).
 
 ### What "static or minimal" means here (the doctrine in one line each)
 
@@ -205,6 +205,16 @@ qwen (lane-qwen38-ultra/qwen)
 
 - 2026-11-09: Dev round complete — red-first L1-L3 (9/2 solo pre-fix), one-line gate landed and flipped, R1 restored both creation censuses, ledger PAID entry, M1-M7 battery 7/7 killed on `/tmp` clones (gold 504/504); status → review.
 - 2026-11-09: Story 5.4 created — one-line beat-gate fix decided at `js/render3d.js:567` (D1), ghost keep-visible decision (D2), 11-leg verify-and-pin + honest-red suite spec, R1 both censuses, ledger truth recorded (no pre-existing WR-02 line; fresh PAID entry in dev Task 4, D4); all calls [DECIDED-BY-CREATE]; status ready-for-dev.
+- 2026-11-09: Review round complete — verdict correct/PASS (two layers @ dea4409); 1 record patch (:142 red-first claim -> L1+L3 honest-red + L2 premise correction), 0 product patches, 0 defers (drift-guard observation recorded as considered/rejected at create); status done.
+
+## Review (2026-11-09, two layers @ dea4409 — Blind mutation battery + contract audit)
+
+- **Verdict:** `correct` (Blind, conf 0.88-0.90) + all ACs PASS, fences PASS, records PASS (Auditor). Product delta one line, zero patches needed.
+- **Battery (Blind, independent of dev's M1-M7):** 8 mutants killed with full-gate numbers on `/tmp` clones (revert-gate; theta-as-gated-beat; arms-guarded-beat-live -> L1+L3 ONLY; `reduced ? theta`; ghosts-hidden-reduced -> L5 only; raw snap write bypassing `snapGridFor`; unconditionally-zero snap grid; wall-clock in idle branch); 8 weakened-suite probes — no accidental load-bearing. M4 (`beat = 0`) is the SOLE killer of L2: the full-motion gate leg alone detects a dead-code stillness (Blind's hardening note — accepted as-is, both fences fire only together on the M1 shape).
+- **Record patch:** loop-contract red-first claim corrected in place (:142): L1+L3 are the honest-red pair; L2 shipped green-from-first-write (the `:502` reduced guard from Story 5.3 covers its premise) and stands as a staticity pin — matching the Dev Log's executed numbers. The auditor's three record asks (466/476 typo, clone-count parenthetical, R1 range) all resolved as misquotes: the strings do not exist at either generation, and the two fixes requested are literally already in :177; R1 phrasing is positional ("after :592") and correct against the hunk.
+- **Finding closed as INVALID-TREE:** the blind layer's mid-round claim that `snapGridFor` is absent from `js/` was a corrupt-clone artifact — repo root @ dea4409: `grep -rn snapGridFor js/` hits `render3d.js:160/167/424/485` (+ :480 comment), which is exactly what L11 censuses; the M7 kill mechanism the layer itself walked through (raw write drops the 4-occurrence count and breaks the spread law) is sound on the real tree.
+- **F1 disposition:** per-site `reduced ? 0 :` guards at the three consumer sites — considered and REJECTED at create (D1): the scarf loop (`:613-615`) reads `beat`, so arm-only guards leave it animating (WR-02 half-paid); the source gate zeroes rig+arms+scarf from one site, and dev battery M3 (arms-guarded/beat-live) is the executed proof the per-site shape dies at L1+L3.
+- **Defers: 0 new.** The auditor's three named defers re-verified as already-owned ledger lanes (D-05 flake re-classified pre-6.6; census re-pin owned pre-6.6; 6.2/UAT lanes unchanged) — no new rows landed.
 
 ## Open notes (created at story creation; reported, not blocking)
 
