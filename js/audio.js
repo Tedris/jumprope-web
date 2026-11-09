@@ -54,6 +54,12 @@ export function createAudio({ context, storage, fetchFn } = {}) {
   let trackPlaying = false;
   let trackMissing = false;
   let trackPending = false;
+  // Story 5.2 (FR28): last-rope tension — pure closure STATE (Decisions #3):
+  // armed ONLY through setRopes below, touches no node and no ctx, so it is
+  // a correct no-op before the first gesture (the play() state-guard idiom
+  // applied to a setter). The shell calls it from updateHud's pip-signature
+  // flip — one shared call site; no new event names (D-N02 untouched).
+  let tension = false;
 
   function applyGain() {
     if (master) master.gain.value = settings.muted ? 0 : settings.volume;
@@ -177,9 +183,21 @@ export function createAudio({ context, storage, fetchFn } = {}) {
 
   const VOICES = {
     jump: t => tone('square', 220, t, 0.08, 330),
-    skip: t => tone('triangle', 660, t, 0.06),
+    // Story 5.2 (FR28): the rope's own tick gains a last-rope variant — a
+    // taut double-tick (tonic + free harmonic 1320, nearMiss/pick stagger
+    // precedent) while tension is armed by setRopes(1). Unarmed, the shipped
+    // single 660 tick is byte-identical (v1parity: DOM-less harnesses never
+    // reach the pip block, so tension can never arm on a parity boot).
+    skip: t => { if (tension) { tone('triangle', 660, t, 0.04); tone('triangle', 1320, t + 0.05, 0.04); } else tone('triangle', 660, t, 0.06); },
     nearMiss: t => { tone('square', 880, t, 0.05); tone('square', 880, t + 0.07, 0.05); },
     trip: t => noiseHit(t, 0.25, 1600, 120),
+    // Story 5.2 (FR28): the rope-loss thud — oscillator-only square sub-bass
+    // (Decisions #1: a noiseHit body would collide with trip's single 'noise'
+    // oracle tag). One down-ramp note under every shipped pitch (110 < win's
+    // 196 floor); the terminal variant of the same moment stays the untouched
+    // trip voice — the channel already splits strip (ropeLost) from last-rope
+    // (trip), so VOICES IS the variant mechanism (Decisions #2, D-N09).
+    ropeLost: t => tone('square', 110, t, 0.2, 55),
     pick: t => { tone('triangle', 523, t, 0.07); tone('triangle', 659, t + 0.07, 0.08); },
     // Story 5.1 (FR28): the deferred beat's audio half. Uniform voices —
     // no per-area variant (a tier payload would widen handleEvent beyond
@@ -211,6 +229,12 @@ export function createAudio({ context, storage, fetchFn } = {}) {
   function toggleMute() {
     setMuted(!settings.muted);
   }
+  // Story 5.2: the state-only rope-count seam (see `tension` above) — held
+  // exactly 1 arms the variant, any other count disarms it, so Spare Rope
+  // reverses for free through the same updateHud call site.
+  function setRopes(held) {
+    tension = held === 1;
+  }
 
   return {
     gesture,
@@ -220,6 +244,7 @@ export function createAudio({ context, storage, fetchFn } = {}) {
     setMuted,
     setVolume,
     toggleMute,
+    setRopes,
     isMuted: () => settings.muted,
     getVolume: () => settings.volume,
     getStatus: () => ({

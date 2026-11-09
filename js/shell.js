@@ -16,6 +16,7 @@ export const JUICE_TIERS = {
   skip: { hitstop: 8, shake: 0.5, particles: 4 },
   nearMiss: { hitstop: 40, shake: 1.5, particles: 10 },
   ascend: { hitstop: 60, shake: 1.75, particles: 12 },  // FR16 ceiling-break beat; seed provisional — 6.2 retunes (Story 4.4)
+  ropeLost: { hitstop: 65, shake: 1.9, particles: 14 },  // FR28 rope-loss thud beat; seed provisional — 6.2 retunes (Story 5.2)
   trip: { hitstop: 80, shake: 2, particles: 16 }
 };
 
@@ -632,6 +633,13 @@ export function startGame(canvas) {
       const sig = 'h'.repeat(held) + 'g'.repeat(ropesEver - held);
       if (sig !== pipsShown) {
         pipsShown = sig;
+        // Story 5.2 (FR28): the ONE audio.setRopes seam — the pip-signature
+        // flip IS the held-count change, so this fires exactly once per
+        // change (and resetPips re-arms the signature, so every new run
+        // re-fires). Optional-chained: it no-ops when audio never booted
+        // or a harness stubs an old-shape instance; DOM-less 4-key harness
+        // maps never reach this block (v1parity-immunity, story :96).
+        audio?.setRopes?.(held);
         const makePip = (cls, glyph) => {
           const pip = document.createElement('span');
           pip.className = cls;

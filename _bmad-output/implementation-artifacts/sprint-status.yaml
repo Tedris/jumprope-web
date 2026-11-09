@@ -82,7 +82,7 @@ development_status:
   # Epic 5: Feel & Fidelity
   epic-5: in-progress
   5-1-ascent-stinger-win-fanfare: done
-  5-2-rope-loss-thud-last-rope-tension: ready-for-dev
+  5-2-rope-loss-thud-last-rope-tension: review
   5-3-i-frame-trip-juice: backlog
   5-4-reduced-motion-for-new-states-the-wr-02-fix: backlog
   5-5-audio-lifecycle-regression-sweep: backlog

@@ -323,8 +323,8 @@ test('§1 JUICE_TIERS carries the ascend row: key census + seeds, extending not 
   const env = await bootBreakShell();
   try {
     const t = env.mod.JUICE_TIERS;
-    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'nearMiss', 'skip', 'trip'],
-      "the four juice tiers — the ladder is EXTENDED by Story 4.4 (FR16), 'jump' still gets no juice");
+    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'nearMiss', 'ropeLost', 'skip', 'trip'],
+      "the five juice tiers — the ladder is EXTENDED by Story 5.2 (FR28 ropeLost beat), 'jump' still gets no juice");
     assert.deepEqual(t.ascend, { hitstop: 60, shake: 1.75, particles: 12 },
       'the beat row lands between nearMiss and trip on every axis');
   } finally { env.restore(); }
@@ -338,7 +338,7 @@ test('§1 v1 rows verbatim + significance order skip < nearMiss < ascend < trip 
   assert.deepEqual(t.skip, { hitstop: 8, shake: 0.5, particles: 4 }, 'skip verbatim (D-a: extend, never replace)');
   assert.deepEqual(t.nearMiss, { hitstop: 40, shake: 1.5, particles: 10 }, 'nearMiss verbatim');
   assert.deepEqual(t.trip, { hitstop: 80, shake: 2, particles: 16 }, 'trip verbatim — death stays the loudest event');
-  for (const [lo, hi] of [['skip', 'nearMiss'], ['nearMiss', 'ascend'], ['ascend', 'trip']]) {
+  for (const [lo, hi] of [['skip', 'nearMiss'], ['nearMiss', 'ascend'], ['ascend', 'ropeLost'], ['ropeLost', 'trip']]) {
     for (const axis of ['hitstop', 'shake', 'particles']) {
       assert.ok(t[lo][axis] < t[hi][axis], `${lo}.${axis} < ${hi}.${axis} — significance-scaled (FEEL-02)`);
     }
@@ -508,13 +508,13 @@ test('§5 crafted areas are data: the rope lands on the tier markerLine lands th
 // §6 Static fences + deferred evidence (AC2/AC4) — no boots
 // ---------------------------------------------------------------------------
 
-test('§6 js/audio.js VOICES census is EXACTLY the seven shipped voices — the deferred beat\'s audio half landed, census pinned (AC4 ledger fence, re-contracted by Story 5.1)', async () => {
+test('§6 js/audio.js VOICES census is EXACTLY the eight shipped voices — the deferred beat\'s audio half + the rope-loss thud landed, census pinned (AC4 ledger fence, re-contracted by Story 5.2)', async () => {
   const src = await sourceOf('audio.js');
   const m = src.match(/const VOICES = \{([\s\S]*?)\n  \};/);
   assert.ok(m, 'the VOICES literal is present in js/audio.js');
   const names = [...m[1].matchAll(/^\s*(\w+):/gm)].map(x => x[1]).sort();
-  assert.deepEqual(names, ['ascend', 'jump', 'nearMiss', 'pick', 'skip', 'trip', 'win'],
-    'the exact-name-set pin replaces 4.4\'s ascend-absence pin — the stinger + fanfare shipped, and nothing else may join the table (Story 5.1)');
+  assert.deepEqual(names, ['ascend', 'jump', 'nearMiss', 'pick', 'ropeLost', 'skip', 'trip', 'win'],
+    'the exact-name-set pin replaces 5.1\'s seven-name census — the rope-loss thud shipped, and nothing else may join the table (Story 5.2; tension is a skip VARIANT, never a name)');
 });
 
 test('§6 render3d.js imports EXACTLY {three, ./interpolate.js} — the boot wheel survives the beat (kills M9)', async () => {
@@ -580,6 +580,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     'js/audio.js',
     'tests/ascentstinger.test.js',
     '_bmad-output/implementation-artifacts/5-1-ascent-stinger-win-fanfare.md',
+    // Story 5.2 sanctioned re-contract R2 (2026-11-09): the ropeLost VOICES
+    // entry + tension state, the thud suite + its story artifact (tests/
+    // juice.test.js already rides this set from 4.4).
+    'tests/ropelossthud.test.js',
+    '_bmad-output/implementation-artifacts/5-2-rope-loss-thud-last-rope-tension.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

@@ -3,7 +3,7 @@ baseline_commit: 7a87ccb
 ---
 # Story 5.2: Rope-loss thud & last-rope tension
 
-Status: ready-for-dev
+Status: review
 
 Baseline: `7a87ccb` (Story 5.1 done — ascend stinger + win fanfare shipped, ceilingbreak §6 census re-contracted to seven names; gate **460/460 green @ ~8.5 s**, tree clean, verified at authoring time 2026-11-09). Second story of Feel & Fidelity. This story **pays the Epic-1 ledger debt** (below): a strip trip is audio-visually silent today, and `js/audio.js` has **no rope-count surface at all** — the last-rope tension treatment needs a shell→audio state seam, and it is the ONLY new seam this story may open.
 
@@ -73,6 +73,18 @@ Per the ledger carry-in, **Story 5.2 owns the JUICE_TIERS wiring for `ropeLost`*
 - `tests/ceilingbreak.test.js:341`: extend the significance ladder pairs from `[['skip','nearMiss'],['nearMiss','ascend'],['ascend','trip']]` to `[['skip','nearMiss'],['nearMiss','ascend'],['ascend','ropeLost'],['ropeLost','trip']]` — the fence keeps fencing: losing a rope out-juices a ceiling break, death stays loudest.
 Zero other changes in either file; the 1-in/1-out rule keeps the leg counts unchanged.
 
+### R4 — Sanctioned re-contract of `tests/summitapproach.test.js` §3.4 blank-phase loop (parent-approved mid-round, 2026-11-09)
+
+The ledger-mandated `ropeLost` tier row (hitstop 65, R3's ladder pins it strictly in (60,80)) freezes ≥1 of §3.4's 50 ms frame strides after the strip tick (`stopUntil` holds the drain gate, `js/shell.js:664`). §3.4's blank-phase loop asserts the marker text on EVERY `iFrames > 0` frame — on a frozen frame the view/DOM legitimately re-present the last STEPPED state (`ceiling 200 ↑`, the strip tick's altitude) so the assert reads red with zero product defect. Provably no value in the R3 ladder avoids this; the fix is a stepped-frame gate, approved by the epic parent as an AC-preserving re-contract (the leg's semantics — "the sim refuses the break while the line promises it; the dim lifts on the blank-end tick" — speak about SIM truth, and frozen frames carry no new sim truth by design).
+
+Authorized diff (exact shape):
+
+- In `bootSummitShell`'s game-wrapper data-URL source (:487-504): count steps — first line of the wrapper body: `s.steps = (s.steps || 0) + 1;` (the `__saScript` object is the natural carrier; `script` is exposed on `env`).
+- In §3.4's THIRD loop (the blank-phase loop, `:749-762`): capture `const n0 = env.script.steps || 0;` before `tick(env)` and `const stepped = (env.script.steps || 0) > n0;` after; gate the four asserts inside the `if (run.iFrames > 0)` branch (status/area/outcome/marker-text, plus the dim className assert) AND the `else`-branch ended-asserts behind `if (stepped)`. Loop-exit conditions and the liveness assert (`ended`) unchanged — the blank-end tick IS stepped (a 65 ms freeze cannot outlast two 50 ms strides), so `ended` stays reachable and the leg stays non-vacuous: a mutant that never lifts the dim still dies on the first stepped post-blank frame.
+- Zero other changes in the file; bases/censuses/other legs untouched.
+
+Precedent: this is the same "re-contract the fence the plan already predicted" pattern as R1-R3; the conflict proof (deterministic 3/3 red, root-caused to the hitstop × stride interplay) is in the story's Debug Log.
+
 ### Ledger carry-in (verbatim, `deferred-work.md:13-15`, `:18-21`, `:35-37` — Epic-1 retro mandate)
 
 > ":13 — **`ropeLost` event→cue wiring has no explicit owner** (`js/audio.js` VOICES, `js/shell.js` JUICE_TIERS, renderer rope-count visuals) — a strip trip is currently audio-visually silent. The pieces are split across 1.3 (rope-count HUD), 5.2 (rope-loss thud), 5.3 (i-frame juice), but no story lists the event→cue wiring itself … — **RETRO 2026-11-05: owned by 5.2**"
@@ -128,18 +140,18 @@ Story 5.2 touches JUICE_TIERS with **exactly one row (`ropeLost`)** and the rend
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — RED: write `tests/ropelossthud.test.js` (AC: 1,2,3). All legs land before any product code; run the gate — the new legs go red against the shipped tree.
-  - [ ] 1a. Part A material legs: `ropeLost` post-gesture starts EXACTLY 1 oscillator on the master bus (bounded count — a bloated or swapped voice reds); every env `connectedTo` the master; pre-gesture: `handleEvent('ropeLost')` → zero starts, no throw, gesture → still zero (no queued blast; 5.1's leg shape).
-  - [ ] 1b. Part A oracle legs (derived, never hard-coded twice): derive the eight names from the VOICES source literal; the `ropeLost` signature set is disjoint with all seven other sets **and with `trip`** (the terminal-variant leg); register leg — every `ropeLost` f0 < 196; baseline `skip` set is exactly `{osc:triangle:660}` while tension is unarmed (the default state).
-  - [ ] 1c. Part A channel-truth legs (≤4 `tickRun` calls, rng stubbed, donors: `tests/nearmiss.test.js:103`, `tests/steelcord.test.js:88`): a strip tick emits exactly `['ropeLost']`; a charged tick emits `['chargeUsed']` and NO `ropeLost`/`trip`; a buffer-mercy tick emits exactly `['skip','nearMiss']`; a last-rope tick emits `['trip']` + `status: 'over'` (the AC1 "not a charge, not a mercy save" + terminal-split proof, on the channel).
-  - [ ] 1d. Part A mute leg (AC3): `setMuted(true)` → master gain 0; `handleEvent('ropeLost')` still schedules ≥1 voice, routing intact (ascentstinger :259-269 precedent).
-  - [ ] 1e. Part B tension state legs: `setRopes(1)` → `handleEvent('skip')` starts the variant ({660,1320}, staggered t) and its set stays disjoint with the other seven voices' baseline sets (1320 shared with nothing); `setRopes(2)`/`setRopes(5)` after 1 → baseline single tick (the Spare-Rope reverse leg); `setRopes(1)` pre-gesture then `gesture()` → nothing starts until an event (state-guarded no-op); `setRopes` alone starts zero nodes in any state.
-  - [ ] 1f. Part B booted-shell legs (≤3 boots, polish wrapper donor + setRopes logging): scripted strip cascade (stamp `ropes: 2, buffer: 0, charged: 0` into the 5th tickRun's INPUT run; a no-press crossing fires the REAL strip arm) → the wrapper log shows `ropeLost` reaching `handleEvent` AND `setRopes` logging `[…, 2, 1]` (held-drop; the R3 `ropeLost` JUICE row read from `env.mod.JUICE_TIERS` deepEquals the seed row); a follow-up stamp to `ropes: 2` re-fires `setRopes(2)` (reverse at the seam). One juice-conservation A/B (JUICE_TIERS per-boot-mutable, juice.test.js :123-147 idiom): ropeLost hitstop 65 vs 0 — identical phase sequence + conserved total steps, freeze window present only with the row.
-- [ ] Task 2 — RED (by design): land R1 (ceilingbreak §6 :511-518 eight-name census) and R3 (juice.test.js :153 five-name census; ceilingbreak §1 :326 census + :341 ladder extension) exactly as authorized above. 1-in/1-out; leg counts unchanged.
-- [ ] Task 3 — Neutral: land R2 (the two diff-census allow-set appends with attribution comments, + `tests/juice.test.js` in summitapproach §4.3). This restores the two legs the creation commit turned red.
-- [ ] Task 4 — GREEN Part A: `js/audio.js` — `ropeLost` VOICES entry (Decision #1 seed, 5.1-style attribution comment :184-188 lane); tension closure var + `setRopes` on the return object (state-only); `skip` entry becomes the tension-dispatching voice (baseline byte-identical when unarmed). R1 + 1a/1b/1c/1d/1e go green.
-- [ ] Task 5 — GREEN Part B: `js/shell.js` — JUICE_TIERS `ropeLost` row (Decision #5, attribution comment) + the ONE `audio?.setRopes?.(held)` call in `updateHud`'s sig-change block after the `pipsShown` flip. R3 + 1f go green. Verify `stopUntil` code-write census stays 4 (`tests/ceilingbreak.test.js:533`).
-- [ ] Task 6 — Close-out: mutation-proof on `/tmp` clones (noise-copy of trip into `ropeLost` → oracle red; `jump` material copy → red; register raise → red; tension always-on mutant → the reverse + baseline-skip legs red), paste every number in the Debug Log; **PAID-stamp the ledger** (`deferred-work.md` :13-15, :18-21, :35-37 — "PAID by Story 5.2: thud + JUICE_TIERS ropeLost row + audio thud wiring shipped; 5.3 retains the i-frame visual + other events' tier rows"); full `./run_tests.sh` green; flip this story's checkboxes.
+- [x] Task 1 — RED: write `tests/ropelossthud.test.js` (AC: 1,2,3). All legs land before any product code; run the gate — the new legs go red against the shipped tree.
+  - [x] 1a. Part A material legs: `ropeLost` post-gesture starts EXACTLY 1 oscillator on the master bus (bounded count — a bloated or swapped voice reds); every env `connectedTo` the master; pre-gesture: `handleEvent('ropeLost')` → zero starts, no throw, gesture → still zero (no queued blast; 5.1's leg shape).
+  - [x] 1b. Part A oracle legs (derived, never hard-coded twice): derive the eight names from the VOICES source literal; the `ropeLost` signature set is disjoint with all seven other sets **and with `trip`** (the terminal-variant leg); register leg — every `ropeLost` f0 < 196; baseline `skip` set is exactly `{osc:triangle:660}` while tension is unarmed (the default state).
+  - [x] 1c. Part A channel-truth legs (≤4 `tickRun` calls, rng stubbed, donors: `tests/nearmiss.test.js:103`, `tests/steelcord.test.js:88`): a strip tick emits exactly `['ropeLost']`; a charged tick emits `['chargeUsed']` and NO `ropeLost`/`trip`; a buffer-mercy tick emits exactly `['skip','nearMiss']`; a last-rope tick emits `['trip']` + `status: 'over'` (the AC1 "not a charge, not a mercy save" + terminal-split proof, on the channel).
+  - [x] 1d. Part A mute leg (AC3): `setMuted(true)` → master gain 0; `handleEvent('ropeLost')` still schedules ≥1 voice, routing intact (ascentstinger :259-269 precedent).
+  - [x] 1e. Part B tension state legs: `setRopes(1)` → `handleEvent('skip')` starts the variant ({660,1320}, staggered t) and its set stays disjoint with the other seven voices' baseline sets (1320 shared with nothing); `setRopes(2)`/`setRopes(5)` after 1 → baseline single tick (the Spare-Rope reverse leg); `setRopes(1)` pre-gesture then `gesture()` → nothing starts until an event (state-guarded no-op); `setRopes` alone starts zero nodes in any state.
+  - [x] 1f. Part B booted-shell legs (≤3 boots, polish wrapper donor + setRopes logging): scripted strip cascade (stamp `ropes: 2, buffer: 0, charged: 0` into the 5th tickRun's INPUT run; a no-press crossing fires the REAL strip arm) → the wrapper log shows `ropeLost` reaching `handleEvent` AND `setRopes` logging `[…, 2, 1]` (held-drop; the R3 `ropeLost` JUICE row read from `env.mod.JUICE_TIERS` deepEquals the seed row); a follow-up stamp to `ropes: 2` re-fires `setRopes(2)` (reverse at the seam). One juice-conservation A/B (JUICE_TIERS per-boot-mutable, juice.test.js :123-147 idiom): ropeLost hitstop 65 vs 0 — identical phase sequence + conserved total steps, freeze window present only with the row.
+- [x] Task 2 — RED (by design): land R1 (ceilingbreak §6 :511-518 eight-name census) and R3 (juice.test.js :153 five-name census; ceilingbreak §1 :326 census + :341 ladder extension) exactly as authorized above. 1-in/1-out; leg counts unchanged.
+- [x] Task 3 — Neutral: land R2 (the two diff-census allow-set appends with attribution comments, + `tests/juice.test.js` in summitapproach §4.3). This restores the two legs the creation commit turned red.
+- [x] Task 4 — GREEN Part A: `js/audio.js` — `ropeLost` VOICES entry (Decision #1 seed, 5.1-style attribution comment :184-188 lane); tension closure var + `setRopes` on the return object (state-only); `skip` entry becomes the tension-dispatching voice (baseline byte-identical when unarmed). R1 + 1a/1b/1c/1d/1e go green.
+- [x] Task 5 — GREEN Part B: `js/shell.js` — JUICE_TIERS `ropeLost` row (Decision #5, attribution comment) + the ONE `audio?.setRopes?.(held)` call in `updateHud`'s sig-change block after the `pipsShown` flip. R3 + 1f go green. Verify `stopUntil` code-write census stays 4 (`tests/ceilingbreak.test.js:533`).
+- [x] Task 6 — Close-out: mutation-proof on `/tmp` clones (noise-copy of trip into `ropeLost` → oracle red; `jump` material copy → red; register raise → red; tension always-on mutant → the reverse + baseline-skip legs red), paste every number in the Debug Log; **PAID-stamp the ledger** (`deferred-work.md` :13-15, :18-21, :35-37 — "PAID by Story 5.2: thud + JUICE_TIERS ropeLost row + audio thud wiring shipped; 5.3 retains the i-frame visual + other events' tier rows"); full `./run_tests.sh` green; flip this story's checkboxes.
 
 ## Dev Notes
 
@@ -168,13 +180,40 @@ Story 5.2 touches JUICE_TIERS with **exactly one row (`ropeLost`)** and the rend
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+qwen (lane-qwen38-ultra/qwen)
 
 ### Debug Log References
 
+- **Baseline gate @ `2b8cf9c`: 458/460** — the two reds are the R2 diff-census legs (creation artifact vs pinned bases `5659fd4`/`2c3e693`), green-restored by Task 3.
+- **Task 1 RED (new suite against shipped tree): gate 464/476.** ropelossthud reds = legs 1, 3, 4, 10, 11, 12, 13, 14, 15, 16 (10 of 16 — material, oracle, mute, all four tension-state, both boot legs); green-by-guard from the start: pre-gesture drop (2), baseline-skip identity (5), the four channel-truth legs (6-9) + the 2 standing census reds.
+- **Tasks 2-3:** R1/R3 censuses flipped red BY DESIGN (4 legs); R2 appends restored the two creation-red census legs.
+- **Tasks 4-5 GREEN:** product delta landed; mid-round gate 473/476 with exactly three reds — my two boot legs (own-harness bugs: missing `document.createElement` in the pip-capable stub made updateHud throw inside `frame()`'s try → stale views; the honest once-per-change log is `[1,1,2,1]` incl. the sanctioned resetPips run-start re-fire; the reversal pump had to outlast the strip's own 65 ms freeze) and **`summitapproach` §3.4** — a genuine AC conflict, not a code bug: the row (ladder-pinned hitstop ∈ (60,80)) freezes ≥1 of the leg's 50 ms strides after the strip tick; any such value reds it. Conflict proof: 3/3 deterministic red with the row, green with the row deleted; no authorized code satisfies both. Escalated; parent approved **R4** (stepped-frame gate on the blank-phase loop, `s.steps` wrapper counter); landed exactly as authorized.
+- **Task 6 mutation-proof (4/4 red on `/tmp` clones):** M1 trip-noiseHit body copied into `ropeLost` → legs 3+4 red (the `'noise'`-tag trap armed, terminal-variant fence bites); M2 `jump` material copy (`square 220`) → 3+4 red; M3 register raise (`square 300`) → leg 4 red; M4 tension always-on (`let tension = true`) → baseline-skip leg 5 + Spare-Rope-reversal leg 13 red.
+- **Final gate: `./run_tests.sh` 476/476 passed, duration_ms ≈ 8500** (460 baseline + 16 new; R1/R3 1-in/1-out; NFR4 < 10 s).
+
 ### Completion Notes List
 
+- AC1: `ropeLost` ships as ONE oscillator-only square sub-bass voice (`tone('square', 110, t, 0.2, 55)`) on the master bus — disjoint with all seven shipped voices INCLUDING `trip` (the disjointness-with-trip leg IS the distinct-terminal-variant fence; the terminal split itself is the shipped `ropeLost`/`trip` channel fact, `trip` byte-identical), register-fenced < 196 Hz, and the four channel-truth legs pin "not a charge, not a mercy save" on the event channel with ZERO `js/game.js` delta.
+- AC2: the tension seam is `audio.setRopes(held)` — pure closure state (zero node churn pre-/post-gesture, nothing queues) — with the ONE call site in `updateHud`'s pip-signature flip: fired exactly once per held change across a scripted boot strip-cascade (`[1,1,2,1]` incl. the sanctioned resetPips run-start re-fire) and reversed to 2 by a Spare-Rope-style stamp. The taut double-tick (`660`+`1320` staggered) never arms in DOM-less parity harnesses by construction; the A/B boot pair proves the juice row delays-never-drops (identical post-catch-up phase sequence, conserved total advance, freeze window only with the row).
+- AC3: mute zeroes the master and the thud still schedules through the ONE bus; volume/persistence untouched; the variant is material, not a gain layer.
+- Ledger carry-in PAID-stamped at `deferred-work.md` :15/:21/:37 (1.2-review, 1.3-review, retro-assignment entries).
+- R1/R2/R3 landed exactly as authorized (1-in/1-out; census-leg counts unchanged); R4 (parent-approved mid-round) added `s.steps` to the §3.4 harness wrapper + stepped-gates in that loop — no other change in the file; `stopUntil` write census stays 4; no timers/random/clock surface added anywhere (`setRopes` is state-only).
+
 ### File List
+
+- `js/audio.js` (modified — VOICES `ropeLost` + tension dispatching `skip`; tension closure + `setRopes`; return-object line)
+- `js/shell.js` (modified — JUICE_TIERS `ropeLost` row; one `audio?.setRopes?.(held)` in `updateHud`)
+- `tests/ropelossthud.test.js` (new — 16 legs)
+- `tests/ceilingbreak.test.js` (modified — R1 eight-name census, R3 §1 census + ladder, R2 allow-set)
+- `tests/summitapproach.test.js` (modified — R2 allow-set, R4 §3.4 stepped-frame gate + `s.steps` counter)
+- `tests/juice.test.js` (modified — R3 five-name census)
+- `_bmad-output/implementation-artifacts/5-2-rope-loss-thud-last-rope-tension.md` (this file)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (ready-for-dev → review)
+- `_bmad-output/implementation-artifacts/deferred-work.md` (three PAID stamps)
+
+## Change Log
+
+- 2026-11-09: Story 5.2 implemented — rope-loss thud voice + last-rope tension variant on the new `setRopes` state seam + JUICE_TIERS `ropeLost` row; R1-R4 re-contracts; 16-leg suite; ledger PAID-stamped; gate 476/476.
 
 ## Open notes (created at story creation; all settled in-file — nothing blocks dev)
 

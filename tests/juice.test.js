@@ -150,8 +150,8 @@ test('JUICE_TIERS data pins: D-N12 seeds verbatim, magnitudes inside band, tier 
   const env = await bootShell();
   try {
     const t = env.mod.JUICE_TIERS;
-    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'nearMiss', 'skip', 'trip'],
-      "the four juice tiers — table EXTENDED by Story 4.4 (FR16 ascend beat); 'jump' still gets no juice");
+    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'nearMiss', 'ropeLost', 'skip', 'trip'],
+      "the five juice tiers — table EXTENDED by Story 5.2 (FR28 ropeLost beat); 'jump' still gets no juice");
     assert.deepEqual(t.skip, { hitstop: 8, shake: 0.5, particles: 4 });
     assert.deepEqual(t.nearMiss, { hitstop: 40, shake: 1.5, particles: 10 });
     assert.deepEqual(t.trip, { hitstop: 80, shake: 2, particles: 16 });

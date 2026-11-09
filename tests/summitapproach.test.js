@@ -488,6 +488,7 @@ async function bootSummitShell() {
     'import * as real from "' + fileHref('game.js') + '";',
     'export const tickRun = (...args) => {',
     '  const s = globalThis.__saScript;',
+    '  s.steps = (s.steps || 0) + 1;',
     '  let a = args;',
     '  if (s.forceArea !== null) a = [{ ...a[0], area: s.forceArea }, ...a.slice(1)];',
     '  if (s.forceRopesIn !== null) a = [{ ...a[0], ropes: s.forceRopesIn }, ...a.slice(1)];',
@@ -749,17 +750,30 @@ test('§3.4 truthfulness: through a REAL strip blank at the ceiling the sim refu
     env.script.forceScore = (C + 5) / ALT_PER_POINT; // altitude ALONE over: dist 0, the peak wants the break
     let ended = false;
     for (let i = 0; i < 240 && !ended; i++) {
+      // R4 (Story 5.2 sanctioned re-contract, parent-approved 2026-11-09): the
+      // ropeLost juice row arms a 65 ms freeze on the strip frame (D-N05
+      // delays, never drops). A frozen frame legitimately re-presents the
+      // LAST STEPPED record, so the truthfulness asserts below ride stepped
+      // frames only — the blank-end tick is always stepped (65 ms < two 50 ms
+      // strides), so ended stays reachable and a never-lift-the-dim mutant
+      // still dies on the first stepped post-blank frame.
+      const n0 = env.script.steps || 0;
       tick(env);
+      const stepped = (env.script.steps || 0) > n0;
       const { run } = env.views.at(-1);
       if (run.iFrames > 0) {
-        assert.equal(run.status, 'running', 'the blank refuses the break the line promises (FR9)');
-        assert.equal(run.area, 4, 'no ascend event hid behind the dim (no area bump = no ascend, AC2)');
-        assert.equal(run.outcome, null);
-        assert.equal(marker(env).textContent, 'ceiling 0 ↑', 'dist 0 while the sim refuses (the ledger defect, fixed)');
-        assert.equal(marker(env)._cn, 'hud-marker blocked', 'the dim says: refused right now (deferred-work:61)');
+        if (stepped) {
+          assert.equal(run.status, 'running', 'the blank refuses the break the line promises (FR9)');
+          assert.equal(run.area, 4, 'no ascend event hid behind the dim (no area bump = no ascend, AC2)');
+          assert.equal(run.outcome, null);
+          assert.equal(marker(env).textContent, 'ceiling 0 ↑', 'dist 0 while the sim refuses (the ledger defect, fixed)');
+          assert.equal(marker(env)._cn, 'hud-marker blocked', 'the dim says: refused right now (deferred-work:61)');
+        }
       } else {
         ended = true;
-        assert.equal(marker(env)._cn, 'hud-marker', 'the dim lifts the tick the blank ends — the break is already taken');
+        if (stepped) {
+          assert.equal(marker(env)._cn, 'hud-marker', 'the dim lifts the tick the blank ends — the break is already taken');
+        }
       }
     }
     assert.ok(ended, 'the blank drained (the harmless pass spent the i-frame)');
@@ -842,6 +856,13 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     'js/audio.js',
     'tests/ascentstinger.test.js',
     '_bmad-output/implementation-artifacts/5-1-ascent-stinger-win-fanfare.md',
+    // Story 5.2 sanctioned re-contract R2 (2026-11-09): the ropeLost VOICES
+    // entry + tension state, the thud suite + its story artifact, and tests/
+    // juice.test.js — that file joins this census's changed set only via the
+    // R3 JUICE_TIERS re-contract (the ceilingbreak set already had it).
+    'tests/ropelossthud.test.js',
+    'tests/juice.test.js',
+    '_bmad-output/implementation-artifacts/5-2-rope-loss-thud-last-rope-tension.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');
