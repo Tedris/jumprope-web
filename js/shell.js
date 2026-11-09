@@ -568,8 +568,11 @@ export function startGame(canvas) {
     // The markerLine clamp expression, textually identical — first regex match
     // stays markerLine's copy, so the areavistas §5 pairing fence is unaffected.
     const area = Math.min(Math.max(Math.round(Number.isFinite(run.area) ? run.area : 1), 1), AREAS.length);
-    return Number.isFinite(run.iFrames) && run.iFrames > 0
-      && run.altitude + player.y >= AREAS[area - 1].ceiling;
+    // Review 4.5 (Blind F1): dist reads through markerLine's EXACT expression,
+    // so dim and text are bit-identical by construction — the bare sum disagreed
+    // inside the 1-ulp float-associativity tie window (dim at "ceiling 1").
+    const dist = Math.max(0, Math.ceil(AREAS[area - 1].ceiling - run.altitude - player.y));
+    return Number.isFinite(run.iFrames) && run.iFrames > 0 && dist === 0;
   }
 
   function updateHud() {

@@ -143,6 +143,14 @@ test('§1.5 real strip at the summit: the win re-fires EXACTLY ONCE on the first
         `area event on an iFrames>0 record at tick ${t} (interlock, AC2)`);
     } else {
       winTick = t;
+      // Review 4.5 (Blind F3): the drain-tick eligibility CLAIM ("the gate reads
+      // the post-loop i-frames; the drain tick IS eligible") had prose-only proof.
+      // A drain+1-delayed verdict (banking-lite) passes every other §1 leg — pin
+      // the win to the FIRST record whose iFrames reached 0.
+      assert.equal(out.run.iFrames, 0,
+        `win at tick ${t} must land on an iFrames-0 record (drain-tick eligibility)`);
+      if (t > 1) assert.ok(run.iFrames > 0,
+        `tick ${t}: the PRIOR record still had a live blank — the win is the FIRST 0-drain tick, not a delayed verdict`);
       assert.equal(out.run.status, 'over', 'win ⇒ over the SAME tick (kills M5)');
       assert.equal(out.run.outcome, 'summit', 'the win stamps summit at the win tick (kills M5)');
       assert.equal(out.run.area, SUMMIT_AREA, 'the win does not touch the area (kills M4)');
@@ -240,6 +248,26 @@ test('§1.9 trip > ascend: a last-rope trip on a straddling tick beats the ascen
   assert.equal(out.run.outcome, 'tripped', 'the death path stamps the outcome');
   assert.deepEqual(out.events, ['trip'], 'no ascend, no win on a dead tick (D-d iii)');
   assert.equal(out.run.area, 4, 'no ascent on a dead tick');
+});
+
+test('§1.11 crafted fractional i-frames: the one-tick under-dim is ACCEPTED crafted-input semantics (review 4.5, Edge F1)', () => {
+  // A fractional blank (unproducible live — clampRopes truncs) drains PAST zero
+  // on the crossing that consumes it: tick 1 denies the verdict (post-loop −0.5
+  // ≠ 0) while the record reads −0.5, so the marker is un-dimmed for exactly that
+  // rendered frame; tick 2's entry clamp heals to 0 and fires. Named + pinned so
+  // the dim mirror is never "fixed" to `!== 0` — crafted −3 ASCENDS (verified at
+  // review), so a ≠0 predicate would dim where nothing is refused. Ledger :61
+  // family, crafted half; the iFrames:1 crossing-starved forever-case stays §1.4.
+  const t1 = game.tickRun(
+    { ...game.createRun(), area: 4, altitude: AREAS[3].ceiling + 5, ropes: 2, iFrames: 0.5 },
+    // phase 0.449 + STEP/1.3 lands the window-entry crossing edge on tick 1 (FEET 0.45..0.55).
+    { phase: 0.449, period: 1.3 }, { ...GROUND }, STEP, rngStub);
+  assert.deepEqual(t1.events, [], 'tick 1: crossing suppressed, verdict refused (post-loop count ≠ 0)');
+  assert.equal(t1.run.iFrames, -0.5, 'the record stores the past-zero drain (view: predicate > 0 ⇒ no dim that frame)');
+  assert.equal(t1.run.area, 4, 'and the area is unmoved');
+  const t2 = game.tickRun(t1.run, t1.rope, { ...GROUND }, STEP, rngStub);
+  assert.equal(t2.run.area, 5, 'tick 2 heals at entry and the verdict fires — bounded, no forever-case');
+  assert.equal(ascends(t2.events), 1);
 });
 
 test('§1.10 ascent while a mercy buffer decays: a surviving buffer forgives and ascends the SAME tick; a decayed one trips', () => {
@@ -427,7 +455,7 @@ async function bootSummitShell() {
     getItem: k => (map.has(k) ? map.get(k) : null),
     setItem: (k, v) => { map.set(k, v); },
   };
-  const script = { forceScore: undefined, forceArea: null, forceRopesIn: null, forceIFrames: null, chooseOffer: null, armed: false };
+  const script = { forceScore: undefined, forceArea: null, forceAreaOut: undefined, forceRopesIn: null, forceIFrames: null, forceIFramesIn: null, chooseOffer: null, armed: false };
   globalThis.__saScript = script;
   const views = [];
   globalThis.__saViews = views;
@@ -463,9 +491,11 @@ async function bootSummitShell() {
     '  let a = args;',
     '  if (s.forceArea !== null) a = [{ ...a[0], area: s.forceArea }, ...a.slice(1)];',
     '  if (s.forceRopesIn !== null) a = [{ ...a[0], ropes: s.forceRopesIn }, ...a.slice(1)];',
+    '  if (s.forceIFramesIn !== null) a = [{ ...a[0], iFrames: s.forceIFramesIn }, ...a.slice(1)];',
     '  let out = real.tickRun(...a);',
     '  if (s.forceScore !== undefined) out = { ...out, run: { ...out.run, score: s.forceScore, altitude: s.forceScore * real.ALT_PER_POINT } };',
     '  if (s.forceIFrames !== null) out = { ...out, run: { ...out.run, iFrames: s.forceIFrames } };',
+    '  if (s.forceAreaOut !== undefined) out = { ...out, run: { ...out.run, area: s.forceAreaOut } };',
     '  if (s.chooseOffer && !s.armed && out.run.status === "running") {',
     '    s.armed = true;',
     '    out = { ...out, run: { ...out.run, status: "choose", offer: s.chooseOffer } };',
@@ -560,6 +590,7 @@ test('§3.3a/§3.3b blocked-at-ceiling: live i-frames + dist 0 dim the line (are
       env.script.forceArea = area;
       env.script.forceScore = AREAS[area - 1].ceiling / ALT_PER_POINT; // altitude pinned AT the ceiling
       env.script.forceIFrames = 2; // the sim suppresses; the line must say so
+      env.script.forceIFramesIn = 2; // review 4.5 (Blind F4): blank from tick 1 (see §3.3d note)
       startRunning(env);
       for (let i = 0; i < 12; i++) {
         tick(env);
@@ -620,6 +651,9 @@ test('§3.3d equivalence leg: dimmed ⟺ (dist 0 ∧ iFrames > 0) across the pay
           env.script.forceArea = area;
           env.script.forceScore = (AREAS[area - 1].ceiling + off) / ALT_PER_POINT;
           env.script.forceIFrames = iframes;
+          env.script.forceIFramesIn = iframes; // review 4.5 (Blind F4): the FIRST tick of the cell
+          // must already run the sim in the blank — an output-only stamp let tick 1 execute with the
+          // PREVIOUS cell's i-frames, silently violating the crafted-blank premise on cell entry.
           tick(env);
           const { run, player } = env.views.at(-1);
           assert.equal(run.status, 'running', `matrix area ${area} off ${off} iFrames ${iframes}`);
@@ -631,6 +665,24 @@ test('§3.3d equivalence leg: dimmed ⟺ (dist 0 ∧ iFrames > 0) across the pay
             `blocked ⟺ dist 0 ∧ iFrames > 0 (area ${area} off ${off} iFrames ${iframes})`);
         }
       }
+    }
+    // Review 4.5 (Blind F2): out-of-domain run.area can reach the VIEW only via
+    // an OUTPUT stamp (the sim write-backs healed integers) — the donor's
+    // forceAreaOut arm. Without it, markerBlocked's clamp is comment-pinned and
+    // a clamp-dropping mutant desyncs dim-vs-text on crafted payloads unnoticed.
+    for (const crafted of [0, 4.6, NaN, Infinity]) {
+      env.script.forceAreaOut = crafted;
+      env.script.forceScore = AREAS[SUMMIT_AREA - 1].ceiling / ALT_PER_POINT; // altitude AT the summit ceiling
+      env.script.forceIFrames = 2;
+      env.script.forceIFramesIn = 2;
+      tick(env);
+      const healed = Math.min(Math.max(Math.round(Number.isFinite(crafted) ? crafted : 1), 1), AREAS.length);
+      const dist0 = Math.max(0, Math.ceil(AREAS[healed - 1].ceiling - env.views.at(-1).run.altitude - env.views.at(-1).player.y)) === 0;
+      assert.equal(dimmed(env), dist0,
+        `crafted area ${String(crafted)} dims through the SAME clamp as the text (heals to tier ${healed})`);
+      env.script.forceAreaOut = undefined;
+      env.script.forceIFrames = null;
+      env.script.forceIFramesIn = null;
     }
   } finally { env.restore(); }
 });
