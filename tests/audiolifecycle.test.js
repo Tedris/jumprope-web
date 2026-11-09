@@ -133,8 +133,10 @@ test('L1 gesture-gate × census: nothing exists pre-gesture, no queued blast, fi
   assert.ok(VOICE_NAMES.length >= 8, `census derived ${VOICE_NAMES.length} names from the source`);
   for (const name of VOICE_NAMES) {
     const ctx = makeAudioContext();
-    const audio = createAudio({ storage: makeStorage() });
-    // cold factory: the play() guard (audio.js:179-182) is the ONLY gate.
+    // The factory HOLDS the pendingContext (audio.js:50) but must not touch it
+    // pre-gesture — the four counters below are the real witnesses (a mutant
+    // building voices off the pending slot dies here, not just at :145).
+    const audio = createAudio({ context: ctx, storage: makeStorage() });
     audio.handleEvent(name); // no throw is part of the assert (M1 throws here)
     assert.equal(ctx.gains, 0, `${name}: no nodes of any kind before gesture`);
     assert.equal(ctx.oscs, 0, `${name}: zero oscillators created pre-gesture`);
@@ -164,6 +166,8 @@ test('L2 suspend-window + resume × census: dispatch never un-suspends, state pr
     audio.suspend();
     assert.equal(ctx.state, 'suspended', `${name}: suspend() parks the context`);
     assert.equal(ctx.suspends, 1, `${name}: the state guard calls suspend exactly once`);
+    audio.suspend(); // redundant call: the state guard must swallow it
+    assert.equal(ctx.suspends, 1, `${name}: never re-suspends an already-suspended ctx`);
     // THE suspend-window law (D3): no-sneaky-resume + state preserved. Node
     // starts during the frozen window are the honest shape (context time is
     // the browser-side guard) — NEVER asserted at node level through a stub.
@@ -237,7 +241,7 @@ test('L5 fences, no boots: EXACTLY the eight derived names, chargeUsed silent, s
   assert.equal(ctx.started, 0, 'chargeUsed remains silent at the VOICES lookup (audio.js:212-213)');
   audio.gesture(ctx);
   audio.handleEvent('chargeUsed');
-  assert.equal(ctx.started, 0, 'chargeUs remains silent at the VOICES lookup (audio.js:212-213)');
+  assert.equal(ctx.started, 0, 'chargeUsed remains silent at the VOICES lookup (audio.js:212-213)');
 
   // source censuses over the whole js/ tree
   const files = (await readdir(jsDir)).filter(f => f.endsWith('.js')).sort();
@@ -550,8 +554,7 @@ test('L8 pause + tab-hide walks (boots A/B, the ONE shared audio seam): suspends
     assert.equal(ctx.state, 'suspended', 'the pause is not self-healing');
 
     keydown(env, 'KeyP'); // the resume seam
-    assert.ok(env.log.gestures >= 2, 'resumeFromPause went through audio.gesture (shell.js:262)');
-    assert.equal(ctx.state, 'running', 'resume re-arms the context');
+    assert.equal(ctx.state, 'running', 'resume re-arms the context via resumeFromPause/gesture (shell.js:262)');
 
     pumpPostResume(env, st, 40);
     assert.ok(env.log.voices.length > log0, 'the log advances again after resume');
@@ -597,7 +600,6 @@ test('L8 pause + tab-hide walks (boots A/B, the ONE shared audio seam): suspends
     env.document.hidden = false;
     env.handlers.window.visibilitychange(); // auto-resume through the lead-in
     assert.equal(ctx.state, 'running', 'tab-return re-arms through resumeFromPause/gesture');
-    assert.ok(env.log.gestures >= 2, 'the visible branch resumed via audio.gesture');
 
     pumpPostResume(env, st, 40);
     assert.ok(env.log.voices.length > log0, 'the log advances again after the tab returns');

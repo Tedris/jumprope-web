@@ -3,7 +3,7 @@ baseline_commit: 0f0236f
 ---
 # Story 5.5: Audio lifecycle regression sweep
 
-Status: review
+Status: done
 
 Note: Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-09).
 
@@ -234,3 +234,18 @@ lane-qwen38-ultra/qwen (omp worker `DevStory55`), 2026-11-09.
 - `_bmad-output/implementation-artifacts/deferred-work.md` (one RE-EXERCISED ledger stamp under :32)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (5-5 → review)
 - `_bmad-output/implementation-artifacts/5-5-audio-lifecycle-regression-sweep.md` (this record)
+
+## Review Record (2026-11-09)
+
+Two layers, parallel, both verdict **correct**, workspace verified untouched after all probes.
+
+- **Auditor**: all four ACs leg-pinned (AC2's new-voice routing half rides the Task 2b-sanctioned `__audio.handleEvent` shape; event routing stays pinned by the frozen ascentstinger/ropelossthud suites); disaster checks clean — product diff 0 bytes, L1-L4 single identical-oracle loops (no strawmen), `tests/audio.test.js` blob-identical (`e521555…`), R1 verbatim in both censuses (each file's entire diff = the +5-line hunk). Mutant re-kills independent: M2 → 513/514 sole-red L2; M4 → exactly {L3, L4, L9, AUD-04 ×2}; M8 → exactly {L8, polish :323/:324/:327/:345}. Baseline 503/505 reproduced at `72beb6b`. 1 finding: P3 typo (`chargeUs`, message string).
+- **Blind**: zero-delta + list-only census edits verified byte-level; censuses re-proven falsifiable live (game.js comment tamper → both §s red). 2 findings, both F3 vacuous-assert decorations with the kill power living in adjacent asserts: **F1** L1's pre-gesture counters couldn't fail (factory held no context reference); **F2** `log.gestures >= 2` can't police the resume seam (`shell.js:189` routes EVERY press through `gesture()`, so the counter is ~10 before resume; M8 variant with only the resume-seam call deleted → L8 red only via the state assert). 10 probes incl. stress (10 idle + 5 CPU-saturated runs, 0 flakes); boot census statically confirms 4 boots.
+
+**Patches applied (test-only, `tests/audiolifecycle.test.js`, 4):** (1) F1 fix — L1's factory now receives `context: ctx` (the shipped pendingContext slot, `audio.js:50`): the four pre-gesture counters become real witnesses, killing any "voice built off the pending slot" mutant; the post-gesture zero-starts assert keeps the no-queued-blast law. (2) F2 fix — both vacuous `log.gestures >= 2` asserts deleted (walks A/B); the state asserts carry the kill and now name the seam (`shell.js:262`). (3) Auditor typo fixed (`chargeUs` → `chargeUsed`, message string). (4) New arm in L2: redundant `audio.suspend()` re-call → `suspends` stays 1 — the state-guard's already-suspended arm (`audio.js:92`) was exercised nowhere (Blind observation). Gate **514/514 green**, solo 9/9, wall 8.56 s; frozen files beyond R1 byte-identical; zero product delta unchanged.
+
+## Change Log
+
+- 2026-11-09: Story created (analysis vs `0f0236f`; D1-D6 baked; ledger carry-in :32 embedded). Status ready-for-dev.
+- 2026-11-09: Dev round — 9-leg suite green first write, R1 verbatim both censuses, battery 8/8 (gold 514/514), live-browser 16/16 ×2 + float32 AudioParam discovery, ledger RE-EXERCISED stamp, status review. Commit `59a2bcc`.
+- 2026-11-09: Review — 2 layers correct, 3 findings (0 P0-P2, 3 P3-class), 4 patches applied (1 product-truth falsifiability fix F1, 2 vacuous-assert deletions F2, 1 typo + 1 new guard arm), gate 514/514. Status done.
