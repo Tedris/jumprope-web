@@ -837,6 +837,11 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     '_bmad-output/implementation-artifacts/4-5-summit-approach-one-way-guarantees.md',
     '_bmad-output/implementation-artifacts/sprint-status.yaml',
     '_bmad-output/implementation-artifacts/deferred-work.md',
+    // Story 5.1 sanctioned re-contract R2 (2026-11-09): the two new VOICES
+    // entries, the stinger suite, and its story artifact.
+    'js/audio.js',
+    'tests/ascentstinger.test.js',
+    '_bmad-output/implementation-artifacts/5-1-ascent-stinger-win-fanfare.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');

@@ -181,6 +181,13 @@ export function createAudio({ context, storage, fetchFn } = {}) {
     nearMiss: t => { tone('square', 880, t, 0.05); tone('square', 880, t + 0.07, 0.05); },
     trip: t => noiseHit(t, 0.25, 1600, 120),
     pick: t => { tone('triangle', 523, t, 0.07); tone('triangle', 659, t + 0.07, 0.08); },
+    // Story 5.1 (FR28): the deferred beat's audio half. Uniform voices —
+    // no per-area variant (a tier payload would widen handleEvent beyond
+    // the frozen one-parameter contract). Pure tone() stagger, scheduled
+    // on t0 + literal offsets only; signatures stay disjoint with the
+    // five v1 voices' (type,freq) set — fenced by ascentstinger §oracle.
+    ascend: t => { tone('square', 330, t, 0.09); tone('square', 440, t + 0.08, 0.09); tone('square', 587, t + 0.16, 0.09); },
+    win: t => { tone('triangle', 196, t, 0.11); tone('triangle', 392, t + 0.11, 0.11); tone('triangle', 494, t + 0.22, 0.12); tone('triangle', 784, t + 0.33, 0.22); },
   };
 
   function handleEvent(name) {

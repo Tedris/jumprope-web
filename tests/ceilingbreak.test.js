@@ -508,13 +508,13 @@ test('§5 crafted areas are data: the rope lands on the tier markerLine lands th
 // §6 Static fences + deferred evidence (AC2/AC4) — no boots
 // ---------------------------------------------------------------------------
 
-test('§6 js/audio.js VOICES carries NO ascend voice — the beat is audio-silent until Story 5.1 (AC4 ledger fence, kills M7)', async () => {
+test('§6 js/audio.js VOICES census is EXACTLY the seven shipped voices — the deferred beat\'s audio half landed, census pinned (AC4 ledger fence, re-contracted by Story 5.1)', async () => {
   const src = await sourceOf('audio.js');
   const m = src.match(/const VOICES = \{([\s\S]*?)\n  \};/);
   assert.ok(m, 'the VOICES literal is present in js/audio.js');
-  assert.ok(!/\bascend\s*:/.test(m[1]), "no 'ascend' voice may exist — the stinger is Story 5.1's deliverable");
   const names = [...m[1].matchAll(/^\s*(\w+):/gm)].map(x => x[1]).sort();
-  assert.deepEqual(names, ['jump', 'nearMiss', 'pick', 'skip', 'trip'], 'the v1 voice census is untouched');
+  assert.deepEqual(names, ['ascend', 'jump', 'nearMiss', 'pick', 'skip', 'trip', 'win'],
+    'the exact-name-set pin replaces 4.4\'s ascend-absence pin — the stinger + fanfare shipped, and nothing else may join the table (Story 5.1)');
 });
 
 test('§6 render3d.js imports EXACTLY {three, ./interpolate.js} — the boot wheel survives the beat (kills M9)', async () => {
@@ -574,7 +574,12 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // Story 4.5 sanctioned re-contract R2 (2026-11-08): the marker CSS rule, the
     // summit suite + its story artifact, and the R1 comment touch above.
     'css/style.css', 'tests/summitapproach.test.js', 'tests/ceilingmarker.test.js',
-    '_bmad-output/implementation-artifacts/4-5-summit-approach-one-way-guarantees.md'
+    '_bmad-output/implementation-artifacts/4-5-summit-approach-one-way-guarantees.md',
+    // Story 5.1 sanctioned re-contract R2 (2026-11-09): the two new VOICES
+    // entries, the stinger suite, and its story artifact.
+    'js/audio.js',
+    'tests/ascentstinger.test.js',
+    '_bmad-output/implementation-artifacts/5-1-ascent-stinger-win-fanfare.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
