@@ -474,6 +474,31 @@ test('L5 ghosts under reducedMotion (D2): per-slot visibility and opacity IDENTI
     'the whole judgment-relevant pose stays byte-identical with the ghosts LIVE (the inherited :313-351 proof extended to the 5.3 channels)');
 });
 
+test('L5b the blank OFF-edge restores construction values under BOTH flags: a reduced ON→OFF pair lands opacity and both body hexes byte-identical to the full-motion pair (kills the damp-on-restore mutant)', async () => {
+  const ROSE = await shippedConst('ROSE');
+  const FLOOR = await shippedConst('FLOOR');
+  const DIM_OP = await shippedConst('GHOST_OPACITY');
+  const BLANK_OP = await shippedConst('GHOST_OPACITY_BLANK');
+  const cycle = async (reduced) => {
+    const env = await bootRender();
+    const view = (t, iF) => rmView({ run: { status: 'running', area: 1, ropes: 3, iFrames: iF }, now: t, ...(reduced ? { reducedMotion: true } : {}) });
+    env.scene.render(view(1000, 2));                                     // blank ON edge
+    const onGhost = ghostGroupOf(env.world).children[0].material.opacity;
+    env.scene.render(view(9000, 0));                                     // blank OFF edge — the restore
+    const roseMat = env.reg.materials.find(m => m.birthHex === ROSE && m.customProgramCacheKey);
+    const limbMat = env.reg.materials.find(m => m.birthHex === FLOOR && m.customProgramCacheKey && m !== env.world.children[0].material);
+    return { onGhost, offGhost: ghostGroupOf(env.world).children[0].material.opacity, rose: roseMat.color.hex, limb: limbMat.color.hex };
+  };
+  const full = await cycle(false);
+  const reduced = await cycle(true);
+  assert.equal(full.onGhost, BLANK_OP, 'liveness (full): the ON edge lifted the ghosts (a dead blank channel would flatten the cycle)');
+  assert.equal(full.offGhost, DIM_OP, 'liveness (full): the OFF edge restored the shipped dim');
+  assert.deepEqual(reduced, full, 'the WHOLE ON→OFF restore pair — opacity and both body-material hexes — is byte-identical under reducedMotion (FR23 damps clocks, never a restore value; the OFF-branch else arm has no reduced term)');
+  assert.equal(reduced.offGhost, DIM_OP, 'the reduced OFF-edge restore is the construction dim, not any dampened variant');
+  assert.equal(reduced.rose, ROSE, 'roseMat restored to its construction hex under reducedMotion');
+  assert.equal(reduced.limb, FLOOR, 'limbMat restored to its construction hex under reducedMotion');
+});
+
 test('L6 per-event shake for the 5.3 rows: chargeUsed + win seeds hold uShake at the exact still vector under reducedMotion at every sample; the same seed jitters under full motion (gate proof)', async () => {
   const rows = await shippedJuice();          // derive-literals: shake/particles READ from js/shell.js
   for (const row of ['chargeUsed', 'win']) {
