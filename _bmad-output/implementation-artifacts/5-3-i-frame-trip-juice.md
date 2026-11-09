@@ -3,7 +3,7 @@ baseline_commit: 8c4f02c
 ---
 # Story 5.3: i-frame & trip juice
 
-Status: review
+Status: done
 
 Baseline: `8c4f02c` (Story 5.2 done — rope-loss thud + last-rope tension shipped, JUICE_TIERS at five rows, R1–R4 re-contracts landed; gate **476/476 green @ ~8.5 s**, tree clean, verified at authoring time 2026-11-09). Third story of Feel & Fidelity. This story **pays the extra-rope ledger debt** (below): 3D still draws ONE rope no matter how many are held, and the two events the sim has always emitted but juice never voiced — `chargeUsed` (`js/game.js:223`) and `win` (`js/game.js:273`) — get their JUICE_TIERS rows here.
 
@@ -234,3 +234,14 @@ qwen (lane-qwen38-ultra/qwen)
 ## Open notes (created at story creation; one question, reported not blocking)
 
 1. **Q for review (don't block dev):** R2 appends to the areavistas tube census identity-style — the leg's 4.4-Blind-F1 comment says "a NEW tube mesh must be added to the census here," but 4.4's author may have envisioned enumerating each identity explicitly rather than the rope-identity + count-of-rest form written here. Dev: implement R2 exactly as written; reviewer: if the enumeration shape is preferred, it's a 2-line diff to :262-264 with identical kill-power. Everything else in this file was `[DECIDED-BY-CREATE]` with evidence.
+
+## Review (2026-11-09, three layers @ 1ac6413 + parent gold adjudication)
+
+- **Open note 1 resolved:** identity-append is the right R2 shape — Edge verified ghosts pass the birthHex census honestly through the loop body (byte-identical); no enumeration rewrite.
+- **Blind (mutations):** (a) visible-always → 2 legs red (489/491) — Debug Log's "legs 2,3" corrected to {NFR1 census, clamp-mirror}; (b) Infinity-arm drop → leg 3 red; (c) sign-flip spacing → 489/491; interleave spacing SURVIVED pre-patch (491/491, gold byte-verified) — the F2 hole. Pool/trio/plane/second-writer classes all die.
+- **Edge (adversarial):** clamp mirror differential-exact vs `clampRopes` over 16 hostile inputs (a); edge-cache immunity to double-render/pause-replay, dim-on-over-view proven product-unreachable from the game.js blank-vs-trip arms (b); closure-contained boot lifecycle (c); areavistas loop byte-identical + ghosts pass birthHex honestly (e); win zero-freeze fenced by drain-arm math + pump-clock leg (f). **F1 (P2): ghost pool swept the SCENE origin, not the hands axis — extras ran 0.7 below the rope, through the floor; stub harnesses blind to transforms, 491/491 stayed green — APPLIED (construction-time `ghostGroup.position.y = HANDLE_HEIGHT`).** Also: R3 prose overpromises for UNTRACKED files (pre-existing blind spot, ledger-owned pre-6.6); same-tick row-precedence freeze law noted for 6.2.
+- **Auditor (AC/frozen):** AC map complete and falsifying (channel legs = real `game.tickRun` calls; NFR8 A/B real); R1/R2/R3 hunk-exact, ledger :89 PAID truthful; the "hyphenated files skipped" scare DISPROVED by parent PROBE run (ceilingbreak executes; mutation-claim anomalies root-caused to stale-clone state); §3.4 defense-in-depth sentence holds.
+- **Patches landed (this commit):** product P2 fix + 4 test legs/arms — ghost-height pin (:338), per-index spacing leg (N=2/3/5 interleaved), repeat/drop mid-window leg, source census arms (spacing formula ×1, roseMat/limbMat `.color.set` ×1), NFR1 census extended to straddle ropes edges. Gold mutants on the patched suite: zero-spacing 490/493, sign-flip 490/493, interleave 489/493 — **all formerly-surviving spacing mutants die**. Gate **493/493 green @ ~8.7 s** (476 + 17).
+- **Defers:** ghost area-tint vs the VISTAS rope-column ladder (birth-static per ratified Decision #3 — 6.2/UAT palette call); Infinity-ropes runtime arm (unreachable; pinned by census + table); chargeUsed `(40,60)` retune stays 6.2. **Dismissals:** the R4/R5 re-contract asks (both phantom), the vacuous-census claim (PROBE-disproved), the spacing symmetry-is-decorative reading (gold mutants say otherwise).
+
+- 2026-11-09: Story 5.3 review landed — 1 product patch (P2 hands-axis fix), 4 test patches, 3 defers named-owned, 3 dismissal classes; status done.

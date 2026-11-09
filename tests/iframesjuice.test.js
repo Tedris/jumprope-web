@@ -335,6 +335,8 @@ test('ghost pool census: boot registers 1 rope + 4 ghosts in ONE 4-children Grou
   assert.equal(pivot.children.length, 3, 'ropePivot keeps exactly [tube, handleL, handleR]');
   assert.ok(ghostGroup.children.every(g => !pivot.children.includes(g)), 'ghosts are NEVER children of ropePivot');
   assert.ok(env.world.children.includes(ghostGroup), 'the ghostGroup sits at the scene root');
+  assert.equal(ghostGroup.position.y, 0.7,   // HANDLE_HEIGHT (js/render3d.js:20) — a data-contract pin, like the DIM hex pin below
+    'review P2 pin: the pool rides the pivot hands axis (js/render3d.js:334) — at the origin the extras would sweep through the floor');
 });
 
 test('60 ghost-live frames + 2 bursts allocate NOTHING and keep the two-pass render (AC3/NFR1)', async () => {
@@ -349,7 +351,9 @@ test('60 ghost-live frames + 2 bursts allocate NOTHING and keep the two-pass ren
     const juice = k === 20 || k === 40
       ? { at: 100 + k * 16, shake: 1.6, particles: 11 }      // the chargeUsed seed magnitudes, crafted
       : undefined;
-    env.scene.render(ifrView({ ropes: 3 }, { now: 100 + k * 16, juice }));
+    env.scene.render(ifrView({ ropes: k < 50 ? 3 : (k % 2 === 0 ? 4 : 3) }, { now: 100 + k * 16, juice }));
+    // review F1 pin: straddle a ropes EDGE mid-census — allocation belongs at the
+    // cache-and-apply edges too; the frozen frame-count legs below stay exact.
   }
   assert.deepEqual(
     { meshes: env.reg.meshes.length, geometries: env.reg.geometries.length, materials: env.reg.materials.length, cameras: env.reg.cameras.length },
@@ -357,7 +361,21 @@ test('60 ghost-live frames + 2 bursts allocate NOTHING and keep the two-pass ren
   assert.equal(env.reg.cameras.length, 2, 'camera count unchanged (world + post, no new pass)');
   assert.equal(env.reg.renderCalls, 120, 'exactly two render passes per frame — no new render pass (NFR1)');
   const ghostGroup = ghostGroupOf(env.world);
-  assert.equal(ghostGroup.children.filter(g => g.visible).length, 2, 'ropes 3 -> two ghosts visible on the last frame (<= 4 writes per frame)');
+  assert.equal(ghostGroup.children.filter(g => g.visible).length, 2, 'ropes 3 (the census ends on an odd k after 10 edge pairs) -> two ghosts visible (<= 4 writes per frame)');
+});
+
+test('ghost spacing: every pool slot satisfies rotation.x = -k * 2π / ropes after an edge, N=2/3/5, interleaved (F2 pin: the visibility census cannot see spacing)', async () => {
+  const env = await bootRender();
+  const ghostGroup = ghostGroupOf(env.world);
+  assert.ok(ghostGroup, 'the ghost pool exists to measure');
+  let i = 0;
+  for (const ropes of [2, 3, 5, 2, 3]) {
+    env.scene.render(ifrView({ ropes }, { now: 1000 + i++ }));
+    ghostGroup.children.forEach((g, k) => {
+      assert.ok(Math.abs(g.rotation.x - (-k * (Math.PI * 2 / ropes))) < 1e-12,
+        `ropes ${ropes}: ghost ${k} at -${k}·2π/${ropes} — the FR3 even-spacing law, per-index (zero, sign, and interleave mutants die here)`);
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -382,6 +400,18 @@ test('ropes clamp mirror: hostile counts yield the clampRopes-arm ghost counts (
     assert.equal(ghostGroup.children.filter(g => g.visible).length, visible,
       `ropes ${String(ropes)} -> ${visible} visible ghosts (the js/game.js:41-46 arms mirrored inline, literal 5/1)`);
   });
+});
+
+
+test('ropes edge mid-window: spacing + visibility re-apply correctly when counts repeat and drop (the 11 ms write band, N=5 worst case)', async () => {
+  const env = await bootRender();
+  const ghostGroup = ghostGroupOf(env.world);
+  for (const [i, ropes] of [5, 5, 2, 5, 1, 5, 3, 3, 2].entries()) {
+    env.scene.render(ifrView({ ropes }, { now: 2000 + i }));
+    const expect = ropes === 1 ? 0 : Math.min(5, ropes) - 1;
+    assert.equal(ghostGroup.children.filter(g => g.visible).length, expect,
+      `ropes ${ropes} -> ${expect} visible after a repeat/drop sequence (edge cache, no drift)`);
+  }
 });
 
 test('iFrames active mirror: Number.isFinite && > 0 — Infinity reads OFF here while the ropes arm maps it ON (js/game.js:146,:170; the arms are NOT the same law, the leg names both)', async () => {
@@ -519,6 +549,12 @@ test('source census: render3d stays timer-free and keeps EXACTLY the two specifi
   const specs = [...src.matchAll(/\bfrom\s*['"]([^'"]+)['"]/g)].map(m => m[1]);
   assert.deepEqual(specs.sort(), ['./interpolate.js', 'three'],
     'a third specifier (e.g. clampRopes from ./game.js) breaks the two frozen data-URL boots — mirror inline, never import');
+  assert.equal((src.match(/-k \* \(Math\.PI \* 2 \/ ropes\)/g) ?? []).length, 1,
+    'the FR3 spacing law exists EXACTLY once in the module — the same-formula law that the runtime spacing leg pins, censused here too');
+  assert.equal((src.match(/roseMat\.color\.set\(/g) ?? []).length, 1,
+    'roseMat.color.set appears EXACTLY once (the iBlank edge block) — a second writer would silently override the blank dim');
+  assert.equal((src.match(/limbMat\.color\.set\(/g) ?? []).length, 1,
+    'limbMat.color.set appears EXACTLY once — the body-material single-writer law, mirroring the ropeMat census');
 });
 
 // ---------------------------------------------------------------------------

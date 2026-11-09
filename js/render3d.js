@@ -382,6 +382,11 @@ export function createScene(canvas) {
     ghosts.push(ghost);
   }
   scene.add(ghostGroup);
+  // Story 5.3 review P2 (Edge F1): the shared rope geometry is PIVOT-LOCAL, so the
+  // pool must ride the pivot's hands axis (js/render3d.js:334 HANDLE_HEIGHT) — at the
+  // scene origin the extras would sweep 0.7 below the rope, through the floor.
+  // Static write; the rig bob is deliberately NOT mirrored (edge-only frame budget).
+  ghostGroup.position.y = HANDLE_HEIGHT;
 
   const sun = new THREE.DirectionalLight(0xffffff, LIGHT_INTENSITY);   // D-05: the one light
   sun.position.set(-4, 7, 3);
