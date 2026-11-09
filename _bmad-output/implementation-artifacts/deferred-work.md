@@ -158,3 +158,8 @@
 ## Deferred from: story 4-5-summit-approach-one-way-guarantees dev round (2026-11-08)
 
 - **Blocked-marker dim FEEL — the blink-free read of the static `opacity: 0.35`** (`css/style.css` `.hud-marker.blocked`) — the headless suite fences the state-driven toggle (className write on the one display path) and the NFR8 timer/animation ban (§4.2 source fence + frozen `ceilingbreak` §6); only the perceptual claim "a smooth dim that lifts exactly on the blank-end tick, never a blink" remains. — **OWNER: browser UAT pass** (same lane as the 4.3/4.4 AC2 deferrals: trigger a rope-stripped blank with the line at `ceiling 0 ↑`, confirm the dim feels static-dim not strobing; never a new dependency).
+
+## Epic 5 entry — boundary dispositions (2026-11-09, per autopilot entry probe, user batch answers)
+
+- **UAT-lane items :154 (ascend-beat 60 FPS), :160 (blocked-marker blink-free) and the :32 live-browser re-exercise** — OWNER CONFIRMED: **UAT pass at Epic 5 close**, scheduled by the user at the entry probe (static server + headless browser drive; rAF-delta / blink-read / route-intercept evidence into the UAT report; never a new repo dependency).
+- **D-006 music direction RESOLVED at the entry probe (user answer 2026-11-09):** Story 5.6 = PS1 lo-fi chiptune floor — sparse square/tri material coherent with the procedural voices, free-running seamless loop, zero rhythmic relation to the rope (GDD pillar 2 / demake-ethics line). Sourcing = generated OFFLINE, one committed `audio/track.ogg` — repo stays zero-dependency, static-files-only (NFR6). Land order per sprint-status as listed: 5.1→5.7.
