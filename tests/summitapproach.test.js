@@ -871,6 +871,11 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     'tests/areavistas.test.js',
     'tests/iframesjuice.test.js',
     '_bmad-output/implementation-artifacts/5-3-i-frame-trip-juice.md',
+    // Story 5.4 sanctioned re-contract R1 (2026-11-09): the WR-02 one-line beat
+    // gate lands in js/render3d.js (in this set since 4.4); the new reduced-motion
+    // suite and this story's artifact join here — zero other paths.
+    'tests/reducedmotion.test.js',
+    '_bmad-output/implementation-artifacts/5-4-reduced-motion-for-new-states-the-wr-02-fix.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');

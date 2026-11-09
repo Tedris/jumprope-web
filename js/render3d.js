@@ -564,7 +564,7 @@ export function createScene(canvas) {
       rig.position.y = reduced ? 0 : Math.sin(now / 400) * 0.05;   // D-05/Open Q3: breath bob → still endpoint under reduced motion
       ropePivot.rotation.x = reduced ? 0 : now / 1400;            // D-05/Open Q3: idle twirl → frozen pose; rotation.z stays 0 either way
       ropePivot.rotation.z = 0;
-      beat = now / 1400;
+      beat = reduced ? 0 : now / 1400;                  // Story 5.4 / WR-02 (epics.md:101): the idle clock gates at the source — arms + scarf hold the zero-clock pose under reduced motion (Decision D1)
       armL.rotation.x = Math.sin(beat);
       armR.rotation.x = -Math.sin(beat);
       legL.rotation.x = 0;
