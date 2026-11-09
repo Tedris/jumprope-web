@@ -71,7 +71,7 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: The Ascent Ladder
-  epic-4: in-progress  # Epic 4 autopilot entry 2026-11-08
+  epic-4: done  # Epic 4 autopilot: 4.1-4.5 delivered 2026-11-08, 447/447 green; Ascent Ladder epic closed (FR6/FR8/FR9/FR15/FR16-complete, FR7 area-tempo)
   4-1-the-area-ladder-five-tiers-one-way-up: done
   4-2-area-pressure-rope-period-per-tier: done
   4-3-area-vistas-palette-fog-horizon: done
