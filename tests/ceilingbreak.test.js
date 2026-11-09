@@ -570,7 +570,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     '_bmad-output/implementation-artifacts/sprint-status.yaml',
     // The ledger row naming the 5.1/UAT owners of the two deferred halves is an
     // artifact write (loop contract), not a frozen-surface write.
-    '_bmad-output/implementation-artifacts/deferred-work.md'
+    '_bmad-output/implementation-artifacts/deferred-work.md',
+    // Story 4.5 sanctioned re-contract R2 (2026-11-08): the marker CSS rule, the
+    // summit suite + its story artifact, and the R1 comment touch above.
+    'css/style.css', 'tests/summitapproach.test.js', 'tests/ceilingmarker.test.js',
+    '_bmad-output/implementation-artifacts/4-5-summit-approach-one-way-guarantees.md'
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

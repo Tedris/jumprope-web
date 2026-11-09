@@ -90,3 +90,7 @@ canvas {
    in-flow inside the #hud column so the letterbox path carries it (NFR7). */
 /* DESIGN token `marker` (#8fd3ff) — HUD slot 3 identity, readiness M-1. */
 .hud-marker { font-size: 20px; color: #8fd3ff; }
+
+/* Story 4.5: blocked-at-ceiling — dimmed while a live i-frame blank holds the
+   ascend the line telegraphs. Static opacity, no transition/animation. */
+.hud-marker.blocked { opacity: 0.35; }

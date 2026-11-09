@@ -359,7 +359,7 @@ test('a crafted out-of-domain area clamps at read instead of throwing', async ()
     const env = await bootCeilingShell({ dom: true });
     try {
       startRunning(env);
-      env.script.forceAreaOut = area; // payload-only: the sim has no domain guard until 4.1
+      env.script.forceAreaOut = area; // payload-only: 4.1 shipped clampArea; this stand-in keeps the leg marker-side (story 4.5 sanctioned comment re-contract)
       env.script.forceScore = 40 / ALT_PER_POINT;
       for (let i = 0; i < 8; i++) tick(env); // land on t=450, the first sim tick
       const { run, player } = env.views.at(-1);

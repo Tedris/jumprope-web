@@ -558,6 +558,20 @@ export function startGame(canvas) {
     return (area === SUMMIT_AREA ? 'summit ' : 'ceiling ') + dist + ' \u2191';
   }
 
+  // Story 4.5 (deferred-work.md:61): blocked-at-ceiling — while a live i-frame
+  // blank gates the ascend OFF (game.js:263), the dist-0 line is promising a
+  // break the sim refuses. Live i-frames read exactly like tickRun :146 —
+  // finite AND positive: Infinity is non-finite, a crafted Infinity blank is
+  // dead (no suppression, so no dim; a > 0-only mutant would lie).
+  function markerBlocked(run, player) {
+    if (run.status !== 'running') return false;
+    // The markerLine clamp expression, textually identical — first regex match
+    // stays markerLine's copy, so the areavistas §5 pairing fence is unaffected.
+    const area = Math.min(Math.max(Math.round(Number.isFinite(run.area) ? run.area : 1), 1), AREAS.length);
+    return Number.isFinite(run.iFrames) && run.iFrames > 0
+      && run.altitude + player.y >= AREAS[area - 1].ceiling;
+  }
+
   function updateHud() {
     hudScore.textContent = String(Math.round(run.altitude));
     hudBest.textContent = 'best ' + Math.round(Math.max(best, run.altitude));
@@ -576,7 +590,10 @@ export function startGame(canvas) {
         : c.icon.repeat(owned[c.id]))
       .join(' ');
     if (cards) cards.render();
-    if (markerEl) markerEl.textContent = markerLine(run, player);
+    if (markerEl) {
+      markerEl.textContent = markerLine(run, player);
+      markerEl.className = 'hud-marker' + (markerBlocked(run, player) ? ' blocked' : '');
+    }
     let prompt = '';
     let roleClass = '';
     if (paused) {
