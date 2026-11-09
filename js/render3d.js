@@ -31,6 +31,16 @@ const JIGGLE_STIFF = 90;         // spring stiffness: ≈ 1.5 Hz wobble
 const JIGGLE_DAMP = 4;           // damping ratio ≈ 0.2: 2–3 visible hops, settles ≈ 1 s
 const JIGGLE_CLAMP = 0.15;       // max |offset| world units (~3 snap blocks, half the torso height)
 const CHEST_BASE_Y = 0.28;       // chestGroup rest height on torsoGroup (torso front face: local z ≈ 0.12)
+// Story 5.3 (FR3): held-rope ghosts — MAX_ROPES − 1 extras beyond the rope in
+// hand (js/game.js:25; R2's tube census counts exactly these meshes). During an
+// i-frame blank they lift to visible-through (the held extras sweep past the
+// dimmed skipper); outside a blank they stay dim-but-present. A STATIC pair —
+// no blink, no timer, so Story 5.4's reduced-motion pass inherits it as-is.
+const GHOST_POOL = 4;            // MAX_ROPES − 1 — 4 ≠ trio: the fingerprint law (review 4.4, Blind F1)
+const GHOST_OPACITY = 0.35;      // dim-but-present outside a blank
+const GHOST_OPACITY_BLANK = 0.85; // visible-through while protected
+const GHOST_DIM = 0x5a5a66;      // skipper dim (the two body materials) during the blank
+
 // Live look-tuning during UAT: append ?light=&fogNear=&fogFar= to override.
 // Browser-only read; Node/test import path always takes the shipped defaults.
 const LOOK_KNOBS = (() => {
@@ -354,6 +364,25 @@ export function createScene(canvas) {
   }
   scene.add(particleGroup);
 
+  // Held-rope ghosts (Story 5.3, AC1): ONE Group of GHOST_POOL tube Meshes, built
+  // ONCE at boot and hidden — visibility is the only on-edge, following the
+  // particle-pool precedent above (spawn toggles, zero allocation, NFR1). They
+  // SHARE the rope's TubeGeometry (zero new geometry) behind ONE shared basic
+  // material. Construction order matters: the rope tube above is the FIRST tube
+  // mesh ever built, which is how the areavistas §2 identity census (R2) keys on
+  // it; the 4-children Group never reads as a trio to the rig/pivot probe, and
+  // ghosts are NEVER children of ropePivot.
+  const ghostMat = new THREE.MeshBasicMaterial({ color: PALE, fog: false, transparent: true, opacity: GHOST_OPACITY });
+  const ghostGroup = new THREE.Group();
+  const ghosts = [];
+  for (let k = 0; k < GHOST_POOL; k++) {
+    const ghost = new THREE.Mesh(ropeTube.geometry, ghostMat);
+    ghost.visible = false;
+    ghostGroup.add(ghost);
+    ghosts.push(ghost);
+  }
+  scene.add(ghostGroup);
+
   const sun = new THREE.DirectionalLight(0xffffff, LIGHT_INTENSITY);   // D-05: the one light
   sun.position.set(-4, 7, 3);
   scene.add(sun);
@@ -410,6 +439,14 @@ export function createScene(canvas) {
   // VISTAS[0]'s very values (the SKY/FLOOR/PROP references), so area-less
   // payloads (every frozen-suite boot) never take the apply path.
   let appliedVista = 0;
+
+  // Ghost/i-frame caches (Story 5.3, the appliedVista/lastStatus cache-and-apply
+  // idiom): the boot state IS ropes 1 with no blank — the pool is built hidden at
+  // the shipped dim opacity — so a run that never loses a rope, and every crafted
+  // view without the two fields, takes ZERO write paths forever (byte-identical
+  // world for all frozen pose legs).
+  let lastGhostRopes = 1;
+  let lastIBlank = false;
 
   // Read-only juice-signal bookkeeping (D-N06): the shell's view.juice is
   // sampled here and NEVER written back (Phase-1 D-01). Everything decays
@@ -470,6 +507,34 @@ export function createScene(canvas) {
       appliedVista = vista;
     }
 
+    // Held-rope ghosts + the i-frame cosmetic read (Story 5.3, AC1): PURE state,
+    // cache-and-apply in the same idiom — zero view.now input (NFR8; the shake
+    // envelope below stays the module's only cosmetic clock). The clamp arms are
+    // mirrored INLINE (the vistaFor/clampArea law at the top of this file — a
+    // third import breaks the two frozen boots): exact mirror of clampRopes
+    // (js/game.js:41-46) — trunc for finite fractions, +Infinity -> 5 (MAX_ROPES),
+    // everything else non-finite -> 1 (MIN_ROPES) — and the game-side active test
+    // (js/game.js:146,:170) Number.isFinite(i) && i > 0, so Infinity reads NOT
+    // blank: the two arms are deliberately DIFFERENT laws (the 5.3 suite pins
+    // both). Edges-only (Decision #3): a ropes edge re-spaces the phase offsets
+    // once, a blank edge flips the static dim pair — nothing else per frame.
+    const ropesRaw = view.run.ropes;
+    const ropesHealed = Number.isFinite(ropesRaw) ? Math.trunc(ropesRaw) : ropesRaw === Infinity ? 5 : 1;
+    const ropes = Math.min(5, Math.max(1, ropesHealed));
+    const iBlank = Number.isFinite(view.run.iFrames) && view.run.iFrames > 0;
+    if (ropes !== lastGhostRopes) {
+      lastGhostRopes = ropes;
+      for (let k = 0; k < GHOST_POOL; k++) {
+        ghosts[k].rotation.x = -k * (Math.PI * 2 / ropes);        // even spacing: N ropes, N passes per revolution (FR3)
+      }
+    }
+    if (iBlank !== lastIBlank) {
+      lastIBlank = iBlank;
+      ghostMat.opacity = iBlank ? GHOST_OPACITY_BLANK : GHOST_OPACITY;   // one write on the shared pool material
+      roseMat.color.set(iBlank ? GHOST_DIM : ROSE);               // COLOR, never opacity — the blob shadow keeps
+      limbMat.color.set(iBlank ? GHOST_DIM : FLOOR);              // render()'s only animated opacity (probe law)
+    }
+
     // Single clock entry: canonical rope phase, interpolated prev -> curr.
     // Every running-pose quantity below derives from it — no mixer, no
     // second timing system (D-14 / T-02-08).
@@ -499,6 +564,7 @@ export function createScene(canvas) {
       armR.rotation.x = -Math.sin(beat);
       legL.rotation.x = 0;
       legR.rotation.x = 0;
+      for (let k = 0; k < GHOST_POOL; k++) ghosts[k].visible = false;   // Story 5.3: ghosts belong to a run — hidden outside it (same arm that freezes the pivot)
     } else if (status === 'over') {
       // Trip settle (D-11): rope frozen at the feet-at-rest angle with a
       // short damped shake — closed-form in view.now deltas, no RNG and no
@@ -513,6 +579,7 @@ export function createScene(canvas) {
       armR.rotation.x = 0;
       legL.rotation.x = 0;
       legR.rotation.x = 0;
+      for (let k = 0; k < GHOST_POOL; k++) ghosts[k].visible = false;   // Story 5.3: no run, no ghosts (settle pose is the rope alone)
     } else {
       rig.position.y = playerY * WORLD_PER_PIXEL;
       // Convention (PRES-03): theta = PI places the tube's sagged low point
@@ -523,6 +590,8 @@ export function createScene(canvas) {
       // travels over-head->front->feet->back (camera at +Z).
       ropePivot.rotation.x = theta;                     // forward sweep: rope top leads toward camera
       ropePivot.rotation.z = 0;
+      ghostGroup.rotation.x = theta;                    // Story 5.3: sibling of the pivot write — extras sweep on the SAME canonical clock (NFR8)
+      for (let k = 0; k < GHOST_POOL; k++) ghosts[k].visible = k < ropes - 1;   // ≤4 boolean writes per frame, N ≤ 5 law
       armL.rotation.x = Math.sin(theta) * 0.25;         // light antiphase sway; hands stay near the handles
       armR.rotation.x = -Math.sin(theta) * 0.25;
       const airborne = playerY > 0;                     // tuck keyed off sim height, never its own timer

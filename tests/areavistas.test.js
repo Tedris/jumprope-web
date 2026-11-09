@@ -259,7 +259,22 @@ test('§2 the 1..5 tour never recolors the character or particles — same stage
   const env = await bootVista();
   for (let t = 1; t <= AREAS.length; t++) env.scene.render(vistaView(t));
   const ropeMeshes = env.reg.meshes.filter(m => m.geometry?.constructor.name === 'TubeGeometry');
-  assert.equal(ropeMeshes.length, 1, 'exactly one tube mesh — the rope — exists at boot, so the re-contract carve-out below can key on its IDENTITY (review 4.4, Blind F1)');
+  // Two-part census (Story 5.3, R2): the ROPE stays identity-keyed — ropeTube is
+  // still the FIRST-registered tube mesh (construction order: js/render3d.js's
+  // rope precedes the ghost pool, pinned below), so ropeMeshes[0] in the loop
+  // keeps its exact meaning. The four held-rope ghosts are ENUMERATED, not
+  // exempted: identity-keyed (review 4.4, Blind F1), they join the census and
+  // pass it untouched because their material is birth-static (one shared
+  // ghostMat, no vista arm ever writes it).
+  assert.equal(ropeMeshes.length, 1 + 4,
+    'exactly one rope + exactly four ghosts (MAX_ROPES − 1, js/game.js:25) — a NEW tube mesh must be added to the census here, never covered by a geometry-class exemption (Story 5.3)');
+  const ghostMeshes = ropeMeshes.filter(m => m !== ropeMeshes[0]);
+  assert.equal(ghostMeshes.length, 4, 'the ghost identities are enumerated — not silently swept (Story 5.3)');
+  assert.ok(ghostMeshes.every(m => env.reg.meshes.indexOf(m) > env.reg.meshes.indexOf(ropeMeshes[0])),
+    'construction order pinned: the rope tube registers BEFORE every ghost, so ropeMeshes[0] below keys on the rope by IDENTITY');
+  assert.ok(ghostMeshes.every(m => m.material === ghostMeshes[0].material
+    && m.material.color.hex === m.material.color.birth),
+    'ghosts share ONE birth-static material — which is why the frozen loop below passes them untouched');
   const slabSet = new Set(env.horizon.children);
   const floorMat = env.floor.material;
   const slabMats = new Set(env.horizon.children.map(s => s.material));

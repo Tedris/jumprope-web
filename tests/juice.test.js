@@ -146,12 +146,12 @@ async function recordTimeline({ hitstop }) {
   }
 }
 
-test('JUICE_TIERS data pins: D-N12 seeds verbatim, magnitudes inside band, tier order skip < nearMiss < trip, no jump tier (FEEL-02)', async () => {
+test('JUICE_TIERS data pins: D-N12 seeds verbatim, magnitudes inside band, tier order skip < nearMiss < trip, no jump tier (FEEL-02; table extended by Story 5.3 — FR16 seam, the silent event names get their rows)', async () => {
   const env = await bootShell();
   try {
     const t = env.mod.JUICE_TIERS;
-    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'nearMiss', 'ropeLost', 'skip', 'trip'],
-      "the five juice tiers — table EXTENDED by Story 5.2 (FR28 ropeLost beat); 'jump' still gets no juice");
+    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'chargeUsed', 'nearMiss', 'ropeLost', 'skip', 'trip', 'win'],
+      "the seven juice tiers — table EXTENDED by Story 5.3 (FR16 seam: chargeUsed/win get their rows); 'jump' still gets no juice");
     assert.deepEqual(t.skip, { hitstop: 8, shake: 0.5, particles: 4 });
     assert.deepEqual(t.nearMiss, { hitstop: 40, shake: 1.5, particles: 10 });
     assert.deepEqual(t.trip, { hitstop: 80, shake: 2, particles: 16 });

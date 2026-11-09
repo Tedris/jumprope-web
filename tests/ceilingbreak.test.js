@@ -323,8 +323,8 @@ test('§1 JUICE_TIERS carries the ascend row: key census + seeds, extending not 
   const env = await bootBreakShell();
   try {
     const t = env.mod.JUICE_TIERS;
-    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'nearMiss', 'ropeLost', 'skip', 'trip'],
-      "the five juice tiers — the ladder is EXTENDED by Story 5.2 (FR28 ropeLost beat), 'jump' still gets no juice");
+    assert.deepEqual(Object.keys(t).sort(), ['ascend', 'chargeUsed', 'nearMiss', 'ropeLost', 'skip', 'trip', 'win'],
+      "the seven juice tiers — the ladder is EXTENDED by Story 5.3 (FR16 seam: chargeUsed/win get their rows), 'jump' still gets no juice");
     assert.deepEqual(t.ascend, { hitstop: 60, shake: 1.75, particles: 12 },
       'the beat row lands between nearMiss and trip on every axis');
   } finally { env.restore(); }
@@ -338,7 +338,7 @@ test('§1 v1 rows verbatim + significance order skip < nearMiss < ascend < trip 
   assert.deepEqual(t.skip, { hitstop: 8, shake: 0.5, particles: 4 }, 'skip verbatim (D-a: extend, never replace)');
   assert.deepEqual(t.nearMiss, { hitstop: 40, shake: 1.5, particles: 10 }, 'nearMiss verbatim');
   assert.deepEqual(t.trip, { hitstop: 80, shake: 2, particles: 16 }, 'trip verbatim — death stays the loudest event');
-  for (const [lo, hi] of [['skip', 'nearMiss'], ['nearMiss', 'ascend'], ['ascend', 'ropeLost'], ['ropeLost', 'trip']]) {
+  for (const [lo, hi] of [['skip', 'nearMiss'], ['nearMiss', 'chargeUsed'], ['chargeUsed', 'ascend'], ['ascend', 'ropeLost'], ['ropeLost', 'trip'], ['win', 'trip']]) {
     for (const axis of ['hitstop', 'shake', 'particles']) {
       assert.ok(t[lo][axis] < t[hi][axis], `${lo}.${axis} < ${hi}.${axis} — significance-scaled (FEEL-02)`);
     }
@@ -585,6 +585,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // juice.test.js already rides this set from 4.4).
     'tests/ropelossthud.test.js',
     '_bmad-output/implementation-artifacts/5-2-rope-loss-thud-last-rope-tension.md',
+    // Story 5.3 sanctioned re-contract R3 (2026-11-09): the held-rope ghost pool +
+    // i-frame cosmetic read land in js/render3d.js (allowed above since 4.4) and the
+    // two JUICE rows in js/shell.js — the new suite and its story artifact join here.
+    'tests/iframesjuice.test.js',
+    '_bmad-output/implementation-artifacts/5-3-i-frame-trip-juice.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

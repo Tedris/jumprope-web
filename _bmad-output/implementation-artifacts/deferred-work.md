@@ -87,6 +87,7 @@
 - **ADR-2's whole-record `applyCard` migration is owed** (`game-architecture.md:209,236-238,292` vs `js/game.js:218-225`) — `card.apply` receives only `run.effects`, so no card can raise `run.ropes` today. Story 3.2 pays it, and the run-shaped `apply` must stay shape-safe because `tests/headless-sim.test.js:144-148` calls `card.apply(freshEffects())` on every card.
   - **RESOLVED by Story 3.2** (2026-11-07): `applyCard`/`applyUpgrade` now route through the shared `patchedRun` dispatch (`js/game.js`) — `shape: 'run'` cards patch the whole record and the arm writes the `clampRopes`ed count; the run-shaped apply stays shape-safe (frozen `tests/headless-sim.test.js` legs pass unmodified).
 - **Extra ropes stay invisible in 3D until Story 5.3** (`js/render3d.js:267-294,454` poses one rope off the single clock) — HUD pips grow for free (`1-3-rope-count-on-the-hud.md:34`), so an added rope reads as health but not as N ropes sweeping the skipper. Any playtest before 5.3 will report "I didn't see anything change".
+  - **PAID by Story 5.3** (2026-11-09, `0e25197`+): held-rope ghost pool (4, tube-class, built once) + state-derived blank read shipped — extra ropes are now visible in 3D (N ropes sweep evenly-spaced on the one clock; during a blank the extras read visible-through the dimmed skipper). `run.ropes` drives the pool from the VIEW; the renderer still computes no gameplay truth. Gate 491/491.
 
 ## Deferred from: code review of story 2-5-ascent-economy-balance-harness (2026-11-06)
 

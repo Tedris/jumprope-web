@@ -15,8 +15,10 @@ const FLASH_MS = 150;
 export const JUICE_TIERS = {
   skip: { hitstop: 8, shake: 0.5, particles: 4 },
   nearMiss: { hitstop: 40, shake: 1.5, particles: 10 },
+  chargeUsed: { hitstop: 50, shake: 1.6, particles: 11 },  // FR16 seam: an absorbed hit out-juices a close call, stays under the ceiling break; seed provisional — 6.2 retunes (Story 5.3)
   ascend: { hitstop: 60, shake: 1.75, particles: 12 },  // FR16 ceiling-break beat; seed provisional — 6.2 retunes (Story 4.4)
   ropeLost: { hitstop: 65, shake: 1.9, particles: 14 },  // FR28 rope-loss thud beat; seed provisional — 6.2 retunes (Story 5.2)
+  win: { hitstop: 0, shake: 1.95, particles: 15 },  // FR16 seam: summit reached — leaf strictly under death, and hitstop 0 never freezes the tick that ENDS the run (design call, story scan B); seed provisional — 6.2 retunes (Story 5.3)
   trip: { hitstop: 80, shake: 2, particles: 16 }
 };
 

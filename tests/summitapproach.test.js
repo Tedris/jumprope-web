@@ -863,6 +863,14 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     'tests/ropelossthud.test.js',
     'tests/juice.test.js',
     '_bmad-output/implementation-artifacts/5-2-rope-loss-thud-last-rope-tension.md',
+    // Story 5.3 sanctioned re-contract R3 (2026-11-09): js/render3d.js joins THIS
+    // census because 4.5's base postdates the last renderer edit — the ghost pool +
+    // i-frame cosmetic read are that edit; tests/areavistas.test.js joins for the
+    // R2 tube-census identity-append; plus the new suite and the story artifact.
+    'js/render3d.js',
+    'tests/areavistas.test.js',
+    'tests/iframesjuice.test.js',
+    '_bmad-output/implementation-artifacts/5-3-i-frame-trip-juice.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');
