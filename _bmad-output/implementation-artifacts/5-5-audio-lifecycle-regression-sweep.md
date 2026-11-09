@@ -3,7 +3,7 @@ baseline_commit: 0f0236f
 ---
 # Story 5.5: Audio lifecycle regression sweep
 
-Status: ready-for-dev
+Status: review
 
 Note: Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-09).
 
@@ -118,20 +118,20 @@ Zero other changes in either file.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write `tests/audiolifecycle.test.js` Part A, legs L1-L7 (AC: 1, 2, 3). Header comment: harness-copy donor list (Context §5), "frozen suites are donors, never imports".
-  - [ ] 1a. L1 gesture-gate × 8 (names derived per D2): cold factory → `handleEvent(name)` → zero gains, zero oscillators, zero bufferSources, zero `started`, no throw; `gesture(ctx)` → still ZERO started (no queued blast, D-N08); then `handleEvent(name)` → `started >= 1` and every created voice node's connect trace reaches `master` → `destination` (single-bus assert per voice).
-  - [ ] 1b. L2 suspend-window + resume × 8 (D3): after gesture, `audio.suspend()` → state suspended, suspends===1; per name: `handleEvent(name)` → `resumes` frozen, state stays `suspended`, no throw; `gesture(ctx)` → running; `handleEvent(name)` → `started` advances (no lock-out).
-  - [ ] 1c. L3 mute × 8: `setMuted(true)` → master `gainNodes[0].gain.value === 0` AND storage write each call; every name attempted → gain stays EXACTLY 0; `toggleMute()` → gain === settings.volume (0.5 if set in-leg). L4 volume × 8: `setVolume(0.5)` → gain 0.5 + persisted `{muted:false, volume:0.5}`; every name attempted → gain unmoved (voices never write master); re-set write-through persists per call.
-  - [ ] 1d. L5 fences, no boots: VOICES names sorted === the derived eight (`chargeUsed` ABSENT); `handleEvent('chargeUsed')` starts zero; `'./audio.js'` specifier count in `js/` === 1 (`shell.js:64`); `audio/track.ogg` literal only at `audio.js:8`; `chargeUsed` appears in `js/` ONLY at `game.js:223` + the `shell.js:18` juice row.
-  - [ ] 1e. L6 restore legs (AC2): fresh factory over seeded Map storage — `{volume:0.3, muted:false}` → first gesture gain EXACTLY 0.3; `{volume:0.3, muted:true}` → EXACTLY 0; all eight names attempted after → unmoved; coerce trio: `volume:0` survives as 0 (zero-is-legal, `audio.js:10-16`), corrupt blob → `{muted:false, volume:1}`, crafted `{muted:false, volume:0.5, reducedMotion:true}` → EXACTLY `{muted:false, volume:0.5}` (the 5.4-L10 law, audio side).
-  - [ ] 1f. L7 track walk (AC3 restatement): rejecting `fetchFn` counter; gesture → count EXACTLY 1; suspend → gesture → setMuted → setVolume → settle → `trackMissing true`, `trackPlaying false`, count STILL 1 (zero retries); `fetchFn` throwing-sync variant → same flags, no unhandled rejection.
-- [ ] Task 2 — Part B boot legs, ≤4 boots (AC: 1, 2).
-  - [ ] 2a. L8 lifecycle walk with the voice log (boot A: P path; boot B: visibility path; Context §3 seams): running → tap(gesture, one context) → events drain to the log → P (or hidden+`visibilitychange`) → suspends log EXACTLY 1, state suspended, **log length frozen across the paused window while frames keep running** (the drain gate holds — no voice may cross a pause) → P/visible → state running via gesture → log advances again, no burst beyond live events. Focus-after-hidden-pause must NOT un-suspend (guard `shell.js:346-347`; donor `polish.test.js:407-436`).
-  - [ ] 2b. L9 reload × old+new (two boots, shared Map): boot A tap → `Minus`×5 → persisted `{muted:false, volume:0.5}`; boot B first tap → EXACTLY one context, master gain 0.5 BEFORE any voice; scripted jumper drains real `skip`/`jump` (old channel), direct `__audio.handleEvent` for `win`/`ascend`/`ropeLost` (new channel) → gain stays 0.5; every logged name ∈ the eight (no unknown name on the live channel — the AC1 event-set claim on a real run).
-- [ ] Task 3 — Run the gate; expect ALL legs green first write (D5 — any red = finding, stop-and-report). Land R1 verbatim in BOTH census files (restores the two creation-window reds). Full gate ≈513/513, wall time recorded.
-- [ ] Task 4 — Mutation battery on `/tmp` clones (every number in the Debug Log): **M1** `play()` drops its guard → L1 red. **M2** `handleEvent` revives a suspended ctx (`ctx.resume()` inside the dispatch) → L2 red. **M3** `setMuted` skips `applyGain()` → L3 red. **M4** `setVolume` drops `saveSettings` → L4 persistence assert red. **M5** `gesture()` hardcodes `master.gain.value = 1` → L6 + L9 red (restore dead). **M6** `playTrack` catch stops setting `trackMissing` (retry refetch) → L7 count red. **M7** a `chargeUsed` VOICES entry → L5 red AND `ceilingbreak §6` + `iframesjuice:596` red (name the cross-fence kill). **M8** `shell.js:246` suspend call deleted → L8 suspends-counter red. All eight die; gold survives green at the recorded count.
-- [ ] Task 5 — Live-browser re-run (carry-in, AC1's GUI face + AC3's 404 face): scratch static server + route-intercept, Chromium via bunx/uv (Decision D6, Context §6); drive the checklist D6 lists (audio surface: gesture-gate, pause/resume suspend, Mute persistence, reload settings-restore pre-gesture, `track.ogg` exactly-one-GET 404-graceful). Evidence N/N PASS lines → Debug Log; append the RE-EXERCISED stamp sub-bullet under `deferred-work.md:32`. Nothing enters the repo from this task but the ledger stamp.
-- [ ] Task 6 — Dev Agent Record: actual gate counts + wall time, mutation census table, Debug Log incl. live-run evidence, sha list; confirm untouched-green by inspection (`audio.test.js` twelve, boundary five, polish suspend pair `:260/:407`, both §6/§4.3 censuses); set status review.
+- [x] Task 1 — Write `tests/audiolifecycle.test.js` Part A, legs L1-L7 (AC: 1, 2, 3). Header comment: harness-copy donor list (Context §5), "frozen suites are donors, never imports".
+  - [x] 1a. L1 gesture-gate × 8 (names derived per D2): cold factory → `handleEvent(name)` → zero gains, zero oscillators, zero bufferSources, zero `started`, no throw; `gesture(ctx)` → still ZERO started (no queued blast, D-N08); then `handleEvent(name)` → `started >= 1` and every created voice node's connect trace reaches `master` → `destination` (single-bus assert per voice).
+  - [x] 1b. L2 suspend-window + resume × 8 (D3): after gesture, `audio.suspend()` → state suspended, suspends===1; per name: `handleEvent(name)` → `resumes` frozen, state stays `suspended`, no throw; `gesture(ctx)` → running; `handleEvent(name)` → `started` advances (no lock-out).
+  - [x] 1c. L3 mute × 8: `setMuted(true)` → master `gainNodes[0].gain.value === 0` AND storage write each call; every name attempted → gain stays EXACTLY 0; `toggleMute()` → gain === settings.volume (0.5 if set in-leg). L4 volume × 8: `setVolume(0.5)` → gain 0.5 + persisted `{muted:false, volume:0.5}`; every name attempted → gain unmoved (voices never write master); re-set write-through persists per call.
+  - [x] 1d. L5 fences, no boots: VOICES names sorted === the derived eight (`chargeUsed` ABSENT); `handleEvent('chargeUsed')` starts zero; `'./audio.js'` specifier count in `js/` === 1 (`shell.js:64`); `audio/track.ogg` literal only at `audio.js:8`; `chargeUsed` appears in `js/` ONLY at `game.js:223` + the `shell.js:18` juice row.
+  - [x] 1e. L6 restore legs (AC2): fresh factory over seeded Map storage — `{volume:0.3, muted:false}` → first gesture gain EXACTLY 0.3; `{volume:0.3, muted:true}` → EXACTLY 0; all eight names attempted after → unmoved; coerce trio: `volume:0` survives as 0 (zero-is-legal, `audio.js:10-16`), corrupt blob → `{muted:false, volume:1}`, crafted `{muted:false, volume:0.5, reducedMotion:true}` → EXACTLY `{muted:false, volume:0.5}` (the 5.4-L10 law, audio side).
+  - [x] 1f. L7 track walk (AC3 restatement): rejecting `fetchFn` counter; gesture → count EXACTLY 1; suspend → gesture → setMuted → setVolume → settle → `trackMissing true`, `trackPlaying false`, count STILL 1 (zero retries); `fetchFn` throwing-sync variant → same flags, no unhandled rejection.
+- [x] Task 2 — Part B boot legs, ≤4 boots (AC: 1, 2).
+  - [x] 2a. L8 lifecycle walk with the voice log (boot A: P path; boot B: visibility path; Context §3 seams): running → tap(gesture, one context) → events drain to the log → P (or hidden+`visibilitychange`) → suspends log EXACTLY 1, state suspended, **log length frozen across the paused window while frames keep running** (the drain gate holds — no voice may cross a pause) → P/visible → state running via gesture → log advances again, no burst beyond live events. Focus-after-hidden-pause must NOT un-suspend (guard `shell.js:346-347`; donor `polish.test.js:407-436`).
+  - [x] 2b. L9 reload × old+new (two boots, shared Map): boot A tap → `Minus`×5 → persisted `{muted:false, volume:0.5}`; boot B first tap → EXACTLY one context, master gain 0.5 BEFORE any voice; scripted jumper drains real `skip`/`jump` (old channel), direct `__audio.handleEvent` for `win`/`ascend`/`ropeLost` (new channel) → gain stays 0.5; every logged name ∈ the eight (no unknown name on the live channel — the AC1 event-set claim on a real run).
+- [x] Task 3 — Run the gate; expect ALL legs green first write (D5 — any red = finding, stop-and-report). Land R1 verbatim in BOTH census files (restores the two creation-window reds). Full gate ≈513/513, wall time recorded. (ACTUAL: 514/514 — nine new legs; L8's two boots share one test() so the census is 9, the runner counts 9; wall 8.6 s.)
+- [x] Task 4 — Mutation battery on `/tmp` clones (every number in the Debug Log): **M1** `play()` drops its guard → L1 red. **M2** `handleEvent` revives a suspended ctx (`ctx.resume()` inside the dispatch) → L2 red. **M3** `setMuted` skips `applyGain()` → L3 red. **M4** `setVolume` drops `saveSettings` → L4 persistence assert red. **M5** `gesture()` hardcodes `master.gain.value = 1` → L6 + L9 red (restore dead). **M6** `playTrack` catch stops setting `trackMissing` (retry refetch) → L7 count red. **M7** a `chargeUsed` VOICES entry → L5 red AND `ceilingbreak §6` + `iframesjuice:596` red (name the cross-fence kill). **M8** `shell.js:246` suspend call deleted → L8 suspends-counter red. All eight die; gold survives green at the recorded count.
+- [x] Task 5 — Live-browser re-run (carry-in, AC1's GUI face + AC3's 404 face): scratch static server + route-intercept, Chromium via bunx/uv (Decision D6, Context §6); drive the checklist D6 lists (audio surface: gesture-gate, pause/resume suspend, Mute persistence, reload settings-restore pre-gesture, `track.ogg` exactly-one-GET 404-graceful). Evidence N/N PASS lines → Debug Log; append the RE-EXERCISED stamp sub-bullet under `deferred-work.md:32`. Nothing enters the repo from this task but the ledger stamp.
+- [x] Task 6 — Dev Agent Record: actual gate counts + wall time, mutation census table, Debug Log incl. live-run evidence, sha list; confirm untouched-green by inspection (`audio.test.js` twelve, boundary five, polish suspend pair `:260/:407`, both §6/§4.3 censuses); set status review.
 
 ## Dev Notes
 
@@ -167,8 +167,70 @@ This story touches ZERO product code — if your diff shows a character of `js/`
 
 ### Agent Model Used
 
+lane-qwen38-ultra/qwen (omp worker `DevStory55`), 2026-11-09.
+
 ### Debug Log References
+
+- **Gate before (baseline, at `72beb6b` tree):** `503/505 passed`, `# duration_ms 8569.881652` — the two reds are the sanctioned creation-window diff-censuses (`ceilingbreak §6`, `summitapproach §4.3`), restored by R1.
+- **First solo run of the new suite (harness bugs, NOT product):** `# tests 10 / # pass 7 / # fail 3` — (a) missing `fileURLToPath` import (file-level ReferenceError, fixed), then boot-leg causes, all in MY harness: (b) pump read `views.at(-1)` before the first render (fixed: first-frame guard), (c) post-RESUME pumps asserted a live jumper, but `resumeFromPause` re-arms the D-07 lead-in lock on the WALL clock (`reentryAt = performance.now()`, 450 real ms) while the pump advances virtual time — holds are legitimately discarded and the run may die ropeLost→trip; added `pumpPostResume` (tolerates the honest death; log still advances), (d) boot env didn't expose the document stub for `document.hidden`, and the pause-prompt renders one frame later (donor polish:419-427 shape) — fixed. No product assertion was ever red: the red-first ordering is N/A in this story (`:69`, D5); all nine legs are observe-and-pin, GREEN by product behavior; falsification lives exclusively in the battery below.
+- **Leg count:** L8 ships as ONE leg with two boots (story Task 2a "boot A: P path; boot B: visibility path" inside a single L8) → new suite = 9 legs, `# tests 9 / # pass 9 / # fail 0` solo (87–106 ms).
+- **Gate after (green-first confirmed, 4 full runs):** `514/514 passed` ×4; `# duration_ms 8580.341013` / `8569`/`8596` — wall 8.6–8.7 s, under the NFR4 10 s budget (505 + 9). Boots added: exactly 4 (≤4 contract honored; no `setTimeout` chains — only `settle()`).
+- **Zero-delta verification:** `git diff js/ css/ index.html package.json run_tests.sh | wc -c` → `0`. `git diff --name-only` at dev = `tests/ceilingbreak.test.js`, `tests/summitapproach.test.js` (+untracked new suite + artifacts) — the story's exact set; both censuses green with R1.
+- **R1:** landed verbatim — `ceilingbreak.test.js` insert after :597, `summitapproach.test.js` insert after :878, same 3-line comment + two entries, both sets.
+- **Mutation battery (Task 4, `/tmp/mut55` full clone + synced working tree; gold tree untouched; anchors asserted before write):**
+
+| Mutant | File | Red count (of 514) | Named legs killed (story prediction) | Collateral frozen-premise reds (expected — shared law broken) |
+|---|---|---|---|---|
+| M1 `play()` guard dropped | audio.js | 25 | **L1** ✓ | audio.test.js inert-pre-gesture/voice-map, ascentstinger pre-gesture pair + NFR8 A/B legs, juice/feel timelines, v1parity, summitapproach drain legs |
+| M2 sneaky resume in `handleEvent` | audio.js | **1** | **L2** — SOLE kill ✓ | none (cleanest kill; the D3 law is 5.5-only coverage) |
+| M3 `setMuted` skips `applyGain` | audio.js | 6 | **L3** ✓ | audio.test.js one-bus, ascentstinger/ropelossthud muted-bus legs, AUD-04 c5 |
+| M4 `setVolume` drops `saveSettings` | audio.js | 5 | **L4** persistence ✓ + L3 write-through assert + **L9** | audio.test.js AUD-04 shell-seam reload, AUD-04 c5 |
+| M5 `gesture()` hardcodes gain 1 | audio.js | 5 | **L6 + L9** ✓ (restore dead) | audio.test.js settings round-trip, AUD-04 shell-seam, AUD-04 c5 |
+| M6 `trackMissing` never set | audio.js | 4 | **L7** count ✓ | audio.test.js D-N09 absent-file, AUD-02/D-N09 mechanism leg |
+| M7 `chargeUsed` VOICES entry | audio.js | 4 | **L5** ✓ + **ceilingbreak §6** + **iframesjuice:596-613** (summit `sim channel` leg) — the D4 double-death named | oracle-signature disjointness leg |
+| M8 `shell.js:246` suspend deleted | shell.js | 5 | **L8** suspends-counter ✓ (both boots) | polish manual-pause/resume/tab-hide/CR-01 legs |
+| GOLD control (clone, no mutant) | — | 0 | `# pass 514 / # fail 0` ✓ | — |
+
+  Mutant diffs are one-string replacements at the anchors named in Task 4 (`play()` guard line; `handleEvent` opener; `setMuted` body; `setVolume` body; `gesture()` master-gain line `:75`; async `catch` arm; VOICES before the `win:` entry; the `audio.suspend?.()` call). Script: `/tmp/battery55.sh` (scratch). Note: M5's first application anchor-missed on indentation (4 vs 6 spaces inside the `if (!ctx)` arm) and was re-run with the corrected anchor — recorded so the count `5` is traceable.
+- **Live-browser re-run (Task 5, D6):** driver attempts — (1) `bun add playwright` (1.65.0) failed launch: `Executable doesn't exist at ~/.cache/ms-playwright/chromium_headless_shell-1254/...` (package wants build 1254; cache has 1243/1248); (2) `chromium.launch({executablePath: ~/.cache/ms-playwright/chromium-1248/chrome-linux-arm64/chrome})` → LAUNCH OK. Scratch: static server on 127.0.0.1 ephemeral port + route-intercept `**/audio/track.ogg` → count + 404; page = real boot shape (importmap three@0.186.1 jsdelivr — reachable, HEAD 200; probe hook page-side only). **Run 1: 15/16 — sole FAIL `C5b persisted-volume-lands-at-creation {"n":1,"gain":0.8999999761581421}`: the REAL-browser law discovered — `master.gain` is a float32 AudioParam; the persisted double lands quantized. Not a bug; the live check was corrected to `gain === Math.fround(stored.volume)`.** **Run 2 + Run 3: 16/16 PASS** ×2, verbatim:
+
+  ```
+  PASS C1 no-context-before-gesture
+  PASS C2 tap-constructs-one-context — {"n":1,"state":"running","gain":1}
+  PASS C2b context-running-after-gesture — running
+  PASS C2c master-gain-default-1 — 1
+  PASS C3 pause-suspends — suspended
+  PASS C3b resume-running — running
+  PASS C4 mute-zeroes-master — 0
+  PASS C4b unmute-restores-master — 1
+  PASS C4c minus-persists-0.9 — 0.9
+  PASS C5 reload-no-context-before-gesture — {"n":0,"stored":{"muted":false,"volume":0.9}}
+  PASS C5b persisted-volume-lands-at-creation(float32 law) — {"gain":0.8999999761581421,"stored":{"muted":false,"volume":0.9}}
+  PASS C5b2 exactly-one-context-on-reloaded-boot — 1
+  PASS C6 track-gets-exactly-one-per-boot — total GETs=2 (2 boots)
+  PASS C6b zero-retries-after-settling — total GETs=2
+  PASS C6c no-page-errors-with-absent-track
+  PASS C7 shell-alive-under-track-absence — score='2' prompt='Missed! Altitude 2 best 2'
+  LIVE-BROWSER AUDIO SURFACE: 16/16 PASS
+  ```
+- **Ledger:** RE-EXERCISED stamp appended as sub-bullet under `deferred-work.md:32` (rides both allow-sets).
+- **Float law note (L9):** `Minus`×5 persists `0.5000000000000001` (repeated `-0.1`), verified; the leg asserts `gain === persisted value` (both sides of the seam) + a `~0.5` band — never a `deepEqual 0.5` literal.
+- **Untouched-green by inspection:** `audio.test.js` 12 legs, `boundary.test.js` 5 legs, `polish.test.js:260/:407` suspend pair, both diff-censuses — all green in the 514/514 runs; every `js/` byte identical.
 
 ### Completion Notes List
 
+- FR27 matrix now leg-pinned per voice: the guards are proven voice-AGNOSTIC by construction — L1-L4 loop over the SOURCE-DERIVED census (donor regex, never a retyped list), every name asserting the identical oracle shape. AC1/AC2/AC3/AC4 all mapped (see the story's AC map); AC4 green by zero-wiring-delta inheritance + L5's source censuses (`'./audio.js'` ×1 at `shell.js:64`, `audio/track.ogg` ×1 at `audio.js:8`, `chargeUsed` ×2 at `game.js:223`/`shell.js:18`).
+- Product delta ZERO verified byte-level; `tests/audio.test.js` and every frozen file untouched (copy-donors doctrine; harness fork documented in the suite header).
+- Falsification: 8/8 mutants killed with the story-predicted red sets (table above); M2 kills L2 alone; M7 dies twice at the frozen fences as D4 requires; gold clone control green.
+- Green-first doctrine honored literally: story :69/D5 override red-first — no leg was written red, none went red on the gold tree, no product patch exists or was sanctioned. Debug-Log round: L1/L2 shipped as honest observe-and-pin legs; red lives only in the battery (M1→L1, M2→L2).
+- Boot budget: 4 boots (L8 two + L9 two), suite wall 8.6–8.7 s — NFR4 met.
+- Surprise worth remembering (live): AudioParam float32 quantization — the headless double-stub cannot show it; the live lane caught it by being real (exactly why D6 exists).
+
 ### File List
+
+- `tests/audiolifecycle.test.js` (NEW — the 9-leg matrix suite)
+- `tests/ceilingbreak.test.js` (R1 census append only)
+- `tests/summitapproach.test.js` (R1 census append only)
+- `_bmad-output/implementation-artifacts/deferred-work.md` (one RE-EXERCISED ledger stamp under :32)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (5-5 → review)
+- `_bmad-output/implementation-artifacts/5-5-audio-lifecycle-regression-sweep.md` (this record)

@@ -595,6 +595,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // suite and this story's artifact join here — zero other paths.
     'tests/reducedmotion.test.js',
     '_bmad-output/implementation-artifacts/5-4-reduced-motion-for-new-states-the-wr-02-fix.md',
+    // Story 5.5 sanctioned re-contract R1 (2026-11-09): zero product-code delta —
+    // the audio-lifecycle matrix suite and this story's artifact join the set;
+    // the live-browser re-run lands Debug-Log evidence + the ledger stamp only.
+    'tests/audiolifecycle.test.js',
+    '_bmad-output/implementation-artifacts/5-5-audio-lifecycle-regression-sweep.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
