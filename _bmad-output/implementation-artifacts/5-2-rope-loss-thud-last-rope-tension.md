@@ -3,7 +3,7 @@ baseline_commit: 7a87ccb
 ---
 # Story 5.2: Rope-loss thud & last-rope tension
 
-Status: review
+Status: done
 
 Baseline: `7a87ccb` (Story 5.1 done — ascend stinger + win fanfare shipped, ceilingbreak §6 census re-contracted to seven names; gate **460/460 green @ ~8.5 s**, tree clean, verified at authoring time 2026-11-09). Second story of Feel & Fidelity. This story **pays the Epic-1 ledger debt** (below): a strip trip is audio-visually silent today, and `js/audio.js` has **no rope-count surface at all** — the last-rope tension treatment needs a shell→audio state seam, and it is the ONLY new seam this story may open.
 
@@ -188,7 +188,7 @@ qwen (lane-qwen38-ultra/qwen)
 - **Task 1 RED (new suite against shipped tree): gate 464/476.** ropelossthud reds = legs 1, 3, 4, 10, 11, 12, 13, 14, 15, 16 (10 of 16 — material, oracle, mute, all four tension-state, both boot legs); green-by-guard from the start: pre-gesture drop (2), baseline-skip identity (5), the four channel-truth legs (6-9) + the 2 standing census reds.
 - **Tasks 2-3:** R1/R3 censuses flipped red BY DESIGN (4 legs); R2 appends restored the two creation-red census legs.
 - **Tasks 4-5 GREEN:** product delta landed; mid-round gate 473/476 with exactly three reds — my two boot legs (own-harness bugs: missing `document.createElement` in the pip-capable stub made updateHud throw inside `frame()`'s try → stale views; the honest once-per-change log is `[1,1,2,1]` incl. the sanctioned resetPips run-start re-fire; the reversal pump had to outlast the strip's own 65 ms freeze) and **`summitapproach` §3.4** — a genuine AC conflict, not a code bug: the row (ladder-pinned hitstop ∈ (60,80)) freezes ≥1 of the leg's 50 ms strides after the strip tick; any such value reds it. Conflict proof: 3/3 deterministic red with the row, green with the row deleted; no authorized code satisfies both. Escalated; parent approved **R4** (stepped-frame gate on the blank-phase loop, `s.steps` wrapper counter); landed exactly as authorized.
-- **Task 6 mutation-proof (4/4 red on `/tmp` clones):** M1 trip-noiseHit body copied into `ropeLost` → legs 3+4 red (the `'noise'`-tag trap armed, terminal-variant fence bites); M2 `jump` material copy (`square 220`) → 3+4 red; M3 register raise (`square 300`) → leg 4 red; M4 tension always-on (`let tension = true`) → baseline-skip leg 5 + Spare-Rope-reversal leg 13 red.
+- **Task 6 mutation-proof (4/4 red on `/tmp` clones):** M1 trip-noiseHit body copied into `ropeLost` → legs 3+4 red (the `'noise'`-tag trap armed, terminal-variant fence bites); M2 `jump` material copy (`square 220`) → 3+4 red; M3 register raise (`square 300`) → leg 4 red; M4 tension always-on (`let tension = true` **plus** a never-disarm `setRopes` body — review-fixed attribution, Blind+Edge both reproduced: the initial-`true` constant alone reddens leg 5 only, leg 13's `setRopes(2)` legitimately disarms it) → baseline-skip leg 5 + Spare-Rope-reversal leg 13 red; the disarm-class mutant alone → leg 13 red. Coverage intact for both classes; only the original attribution was wrong.
 - **Final gate: `./run_tests.sh` 476/476 passed, duration_ms ≈ 8500** (460 baseline + 16 new; R1/R3 1-in/1-out; NFR4 < 10 s).
 
 ### Completion Notes List
@@ -223,3 +223,12 @@ qwen (lane-qwen38-ultra/qwen)
 4. **[DECIDED-BY-CREATE] Tension treatment = taut double-tick skip variant (660+1320), no gain layer** — the epics-sanctioned "working default" for the GDD's open mix question (`gdd.md:530`); **designer may override at review** (material-only change; the reverse/disjointness legs keep any override honest).
 5. **[DECIDED-BY-CREATE] JUICE_TIERS `ropeLost` seed 65/1.9/14, D-N12-provisional** — 6.2 retunes; ladder placement fenced by R3.
 6. Boundary stated in-file: `chargeUsed`/`win` tier rows + i-frame visuals are Story 5.3's; this story's JUICE delta is one row, its renderer delta is zero.
+
+## Review (2026-11-09, three layers @ 5744803)
+
+- **Blind (mutations):** 12 full-gate mutant runs — zero product defects; tension machine strict-equality fail-safe, lifecycle-clean; ropeLost voice mutants all die (noise-tag trap bites exactly); R4 gate still lethal on both original mutants (latching-dim and no-refuse reds proven); parity green in all 12. F1(P3, record): M4 kill-set attribution overstated — **APPLIED** (Debug Log reworded; coverage itself intact).
+- **Edge (adversarial):** every cell fenced or proven unreachable — setRopes surface idempotent/garbage-safe/suspend-safe; second strip inside a blank proven impossible (game.js:170-173); §3.4 is the ONLY frozen leg driving a real strip through a pumped per-frame loop (9 stepped frames assert, 1 frozen conflict frame is the real 3/3 red, blank-end stepped — R4 empirically AC-preserving and falsifiable); win has no tier row; ladder transitivity + pools clean; census liveness proven. F1 = same M4 record slip — merged with Blind's. 0 product defects.
+- **Auditor (AC/frozen):** AC-map complete with falsifying legs named per AC; R1-R4 hunk-by-hunk = exactly the four authorizations; R4 AC-preservation independently re-derived (blank-end frame necessarily stepped); D-N02/D-N09 clean, game.js byte-identical; ledger stamps truthful, 5.3 lanes byte-intact. F1(P3, docs): the AC2 tension-mix default + override lane invisible to a ledger-first reader — **APPLIED** (deferred-work :37 stamp extended).
+
+- **Defers:** none new (D-05 flake + census blind spot already ledger-owned pre-6.6). **Dismissals:** none. Designer override on Open note 4 (tension mix): NOT exercised — working default stands; retune lane recorded in ledger.
+- 2026-11-09: Story 5.2 review landed — 2 record/doc patches (M4 attribution; ledger override-lane line), 0 product patches, 0 defers, 0 dismissals; status done.

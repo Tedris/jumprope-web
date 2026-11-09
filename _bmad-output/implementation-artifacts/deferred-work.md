@@ -34,7 +34,7 @@
 
 ## Retro assignment pass (Epic 1 retrospective, 2026-11-05)
 
-- **`ropeLost` event→cue wiring (items at :13 and :18)** — OWNED by Story 5.2 per Epic 1 retro: 1.3 shipped the visual-state cue (ghost pip), so the remaining audio thud + JUICE_TIERS/VOICES wiring claims whichever of the two lands first = 5.2. Write it into 5.2's story text at creation. — **PAID by Story 5.2** (2026-11-09): written into the story text AND shipped there — thud + JUICE_TIERS ropeLost row + audio thud wiring; 5.3 retains the i-frame visual + other events' tier rows.
+- **`ropeLost` event→cue wiring (items at :13 and :18)** — OWNED by Story 5.2 per Epic 1 retro: 1.3 shipped the visual-state cue (ghost pip), so the remaining audio thud + JUICE_TIERS/VOICES wiring claims whichever of the two lands first = 5.2. Write it into 5.2's story text at creation. — **PAID by Story 5.2** (2026-11-09): written into the story text AND shipped there — thud + JUICE_TIERS ropeLost row + audio thud wiring; 5.3 retains the i-frame visual + other events' tier rows. Last-rope tension mix default DECIDED in 5.2 Decision #4 (taut double-tick 660+1320, material-only; GDD open audio item #4 closed-by-implementation) — designer override lane stays open: material-only diff via the 6.2 retune lane (D-N12).
 - **`updateHud()` outside the frame try/catch (item at :19)** — CLAIMED by Story 2.1, Task 5 (added to the story file 2026-11-05). Closes at 2.1.
 - **Physics-constant exports for `nearmiss`/`v1parity` rigs (item at :23)** — confirmed Epic 6 balance-pass territory; no change.
 - **AGENTS.md re-contract exception (item at :14)** — RESOLVED 2026-11-05: Conventions block amended (interim-fence exception, citing Story 1.2).
