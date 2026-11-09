@@ -86,7 +86,7 @@ development_status:
   5-3-i-frame-trip-juice: done
   5-4-reduced-motion-for-new-states-the-wr-02-fix: done
   5-5-audio-lifecycle-regression-sweep: done
-  5-6-track-1-music-content: review  # dev 2026-11-09: audio/track.ogg + tests/track1.test.js, gate 521/521; closes TRACK-1
+  5-6-track-1-music-content: done  # dev 2026-11-09: audio/track.ogg + tests/track1.test.js, gate 521/521; closes TRACK-1
   5-7-pause-menu-audio-config: backlog  # from readiness audit 2026-11-07 (D-006); land early — mechanism shipped
   epic-5-retrospective: optional
 

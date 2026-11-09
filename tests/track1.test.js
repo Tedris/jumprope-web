@@ -224,7 +224,8 @@ test('track1 census re-arms: the URL literal, the sole-consumer specifier, the e
     });
     specifierHits += (src.match(/['"]\.\/audio\.js['"]/g) ?? []).length;
   }
-  assert.equal(files.includes('track.ogg'), false, 'the census walks js/*.js only — the audio/ dir is invisible to it');
+  assert.deepEqual((await readdir(resolve(jsDir, '..', 'audio'))).sort(), ['track.ogg'],
+    'audio/ contains EXACTLY the committed asset — nothing else shipped beside it');
   assert.deepEqual(trackHits, ['audio.js:8'],
     'the audio/track.ogg literal lives ONLY at js/audio.js:8 — one URL, one owner');
   assert.equal(trackUrl, 'audio/track.ogg', 'and that literal is what these legs fetch');
