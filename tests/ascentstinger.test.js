@@ -114,6 +114,7 @@ function makeRecordingContext(sampleRate = 8000) {
     sampleRate,
     destination: { name: 'destination' },
     voiceLog: [],
+    schedLog: [],
     gainNodes: [],
     bufferSources: [],
     buffers: [],
@@ -145,7 +146,11 @@ function makeRecordingContext(sampleRate = 8000) {
         exponentialRampToValueAtTime() {},
       },
       connect(t) { rec.connectedTo = t; },
-      start() { ctx.voiceLog.push(`osc:${rec.type}:${rec.frequency._f0}`); },
+      start(t) {
+        const sig = `osc:${rec.type}:${rec.frequency._f0}`;
+        ctx.voiceLog.push(sig);
+        ctx.schedLog.push({ sig, t: t ?? 0 });
+      },
       stop() {},
     };
     return rec;
@@ -210,8 +215,9 @@ test('ascend post-gesture starts oscillators on the master bus (AC1)', () => {
   const master = ctx.gainNodes[0];
   const before = ctx.started;
   audio.handleEvent('ascend');
-  assert.ok(ctx.started - before >= 1,
-    `handleEvent('ascend') must start at least one voice node post-gesture (got ${ctx.started - before})`);
+  const n = ctx.started - before;
+  assert.ok(n >= 2 && n <= 3,
+    `the stinger is a 2-3 note rise per the story — bounded so a swapped or bloated voice goes red (got ${n})`);
   for (const g of ctx.gainNodes.slice(1)) {
     assert.equal(g.connectedTo, master, 'every voice envelope rides the ONE master gain (FR27)');
   }
@@ -224,8 +230,9 @@ test('win post-gesture starts at least three oscillators on the master bus (AC2)
   const master = ctx.gainNodes[0];
   const before = ctx.started;
   audio.handleEvent('win');
-  assert.ok(ctx.started - before >= 3,
-    `the fanfare is the biggest moment: >= 3 oscillators post-gesture (got ${ctx.started - before})`);
+  const n = ctx.started - before;
+  assert.ok(n >= 3 && n <= 4,
+    `the fanfare is the biggest moment: 3-4 oscillators — bounded so a swapped voice goes red (got ${n})`);
   for (const g of ctx.gainNodes.slice(1)) {
     assert.equal(g.connectedTo, master, 'the fanfare rides the same master bus (FR27)');
   }
@@ -280,6 +287,33 @@ test('oracle: the win signature set is non-empty and disjoint with every other v
   for (const other of ['jump', 'skip', 'nearMiss', 'trip', 'pick', 'ascend']) {
     assert.deepEqual(intersect(sets.win, sets[other]), [],
       `the win fanfare must share no (type,freq) signature with ${other}`);
+  }
+});
+// Review round 5.1 (Blind F1): the Set-oracle is permutation-blind and the
+// count floors were one-sided — a verbatim swap of the ascend/win bodies or a
+// reversed (descending) fanfare shipped green. Bounded counts above + these
+// ordered-schedule legs fence the voices' rising identities (the story's own
+// "I went up / I won"): strictly increasing f0 over strictly increasing t,
+// derived from the shipped module's scheduling, never a hard-coded table.
+function voiceSched(name) {
+  const ctx = makeRecordingContext();
+  const audio = createAudio({ storage: { getItem: () => null, setItem: () => {} } });
+  audio.gesture(ctx);
+  const before = ctx.schedLog.length;
+  audio.handleEvent(name);
+  return ctx.schedLog.slice(before).map(e => ({ t: e.t, f0: parseFloat(e.sig.split(':')[2]) }));
+}
+
+test('identity: ascend and win note lines are strictly rising in f0 over rising t (Blind F1)', () => {
+  for (const name of ['ascend', 'win']) {
+    const notes = voiceSched(name);
+    assert.ok(notes.length >= 2, `${name} must schedule a multi-note line (got ${notes.length})`);
+    for (let i = 1; i < notes.length; i++) {
+      assert.ok(notes[i].t > notes[i - 1].t,
+        `${name} note ${i}: starts must be strictly staggered (${notes[i].t} <= ${notes[i - 1].t})`);
+      assert.ok(notes[i].f0 > notes[i - 1].f0,
+        `${name} note ${i}: the line must rise (${notes[i].f0} <= ${notes[i - 1].f0} — a descending or swapped voice reds here)`);
+    }
   }
 });
 

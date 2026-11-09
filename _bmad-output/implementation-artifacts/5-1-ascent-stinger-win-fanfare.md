@@ -3,7 +3,7 @@ baseline_commit: 569f5ce
 ---
 # Story 5.1: Ascent stinger & win fanfare
 
-Status: review
+Status: done
 
 Baseline: `569f5ce` (Epic 5 entry probe committed — boundary dispositions + D-006 music direction RESOLVED; gate **447/447 green @ ~8.5 s**, tree clean, verified at authoring time 2026-11-09). First story of Feel & Fidelity: the ceiling-break beat shipped visually in 4.4 with its audio half **explicitly deferred** — `js/audio.js` VOICES has no `ascend` voice, and both `'ascend'` and `'win'` already flow on the event channel **silent** (no VOICES key at `js/audio.js:178-184`). This story adds exactly two procedural voices; it is the smallest possible product delta: **one file** (`js/audio.js`).
 
@@ -171,7 +171,7 @@ lane-qwen38-ultra/qwen (dev round, 2026-11-09)
 ### File List
 
 - `js/audio.js` — modified: VOICES gains `ascend` + `win` (2 voice lines + 6 attribution-comment lines; nothing else in the file changes)
-- `tests/ascentstinger.test.js` — new: 12 legs (Part A module/oracle/channel-truth ×9, Part B real-shell boots ×3)
+- `tests/ascentstinger.test.js` — new: 13 legs (Part A module/oracle/channel-truth ×9 + Blind-F1 identity leg, Part B real-shell boots ×3)
 - `tests/ceilingbreak.test.js` — modified: R1 rewrite of the §6 VOICES-census leg; R2 three-path append to the §6 diff-census allow-set
 - `tests/summitapproach.test.js` — modified: R2 three-path append to the §4.3 diff-census allow-set
 - `_bmad-output/implementation-artifacts/5-1-ascent-stinger-win-fanfare.md` — this story file (checkboxes, Dev Agent Record, Change Log, Status)
@@ -180,3 +180,4 @@ lane-qwen38-ultra/qwen (dev round, 2026-11-09)
 ### Change Log
 
 - 2026-11-09 — Story 5.1 implemented: two procedural voices (ascend stinger, win fanfare) on the shipped silent channel + 12-leg ascentstinger suite + R1/R2 re-contracts; gate 445/447 (carried census reds) → 459/459 green; status review.
+- 2026-11-09 — Review round (Blind / Edge / Acceptance-Auditor layers, all /tmp-mutation-proven): 1 patch applied (Blind F1 — bounded voice note-counts 2..3 / 3..4 + new strictly-rising identity leg; swap and reversal mutants now red, both proven on /tmp clones), 1 patch applied in-record (Auditor F1 — tier-variant future-diff ledgered), 3 DEFER with named owners (ledger: tier-variant voice — unassigned/Epic-6 candidate; `polish.test.js:546` D-05 boot-harness flake — pre-6.6 harness chore; diff-census untracked/comment blind spots — pre-6.6 census re-pin), 1 dismissal (Edge F3 oracle timbre blind spot — accepted by decided contract: the (type,freq) oracle is material-identity, not melody-identity; shipped material genuinely distinct, the new rising-line leg closes the ordering half). Auditor reproduced every Debug Log number incl. the honest red states; Edge: 0 introduced findings, merge-clean. Gate 459/459 → 460/460 green; status done.
