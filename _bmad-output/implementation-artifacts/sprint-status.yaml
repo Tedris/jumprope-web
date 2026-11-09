@@ -1,5 +1,5 @@
 # generated: 2026-10-28
-# last_updated: 2026-11-08
+# last_updated: 2026-11-09
 # project: jumprope-web
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-10-28
-last_updated: 2026-11-08
+last_updated: 2026-11-09
 project: jumprope-web
 project_key: NOKEY
 tracking_system: file-system
@@ -80,8 +80,8 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Feel & Fidelity
-  epic-5: backlog
-  5-1-ascent-stinger-win-fanfare: backlog
+  epic-5: in-progress
+  5-1-ascent-stinger-win-fanfare: ready-for-dev
   5-2-rope-loss-thud-last-rope-tension: backlog
   5-3-i-frame-trip-juice: backlog
   5-4-reduced-motion-for-new-states-the-wr-02-fix: backlog
