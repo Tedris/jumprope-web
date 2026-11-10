@@ -1,5 +1,5 @@
 # generated: 2026-10-28
-# last_updated: 2026-11-09
+# last_updated: 2026-11-10
 # project: jumprope-web
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-10-28
-last_updated: 2026-11-09
+last_updated: 2026-11-10
 project: jumprope-web
 project_key: NOKEY
 tracking_system: file-system
@@ -88,7 +88,7 @@ development_status:
   5-5-audio-lifecycle-regression-sweep: done
   5-6-track-1-music-content: done  # dev 2026-11-09: audio/track.ogg + tests/track1.test.js, gate 521/521; closes TRACK-1
   5-7-pause-menu-audio-config: done  # review 2026-11-09: 5 patches (1 product diag-consume, 4 test/harden incl. new L6), gate 529/529; dev: shell panel + 5 CSS rules + tests/pausemenu.test.js, battery 6/6, live lane 18/18
-  epic-5-retrospective: optional
+  epic-5-retrospective: done  # retro run 2026-11-10 — epic-5-retro-2026-11-10.md
   # Pre-Epic-6 chores — created at the Epic 5 close ledger check (2026-11-09, user batch answers)
   chore-pre-66-polish: done  # delivered 2026-11-09: leadInHop one-shot grace + digit stopUntil gate; review 0 patches (F2/F3 dismissed); 535/535
   chore-test-harness-ci-consolidation: done  # delivered 2026-11-09: primitives + 7 boot folds, D-best, CI matrix/filters, porcelain arm; review 2 patches (F1/F2), 544/544

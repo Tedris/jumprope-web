@@ -912,6 +912,10 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     'tests/ascent.test.js', 'tests/uxpolish.test.js', 'tests/shell.test.js',
     'tests/pausemenu.test.js', 'tests/leadinhop.test.js',
     '.github/workflows/test.yml',
+    // Epic 5 retrospective (2026-11-10): the retro document artifact joins the
+    // census by this file's own written authorization — the same R-series
+    // bookkeeping rule the stories used; list-only, tripwire stays armed.
+    '_bmad-output/implementation-artifacts/epic-5-retro-2026-11-10.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');
