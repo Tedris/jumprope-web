@@ -139,6 +139,8 @@ export function startGame(canvas) {
   // Start disarmed: a press inside the first LEAD_IN_MS of process life must
   // not be swallowed by the D-07 lock (performance.now() ≈ 0 under node:test).
   let reentryAt = -LEAD_IN_MS;
+  // D1 (ledger :136): true while a constructed lead-in hop is airborne.
+  let leadInHop = false;
   let flashUntil = 0;
   let flashName = '';
   // Story 1.4: at most one CLOSE! callout per revolution. The gate counts
@@ -162,6 +164,9 @@ export function startGame(canvas) {
   // The snap to START_PHASE lands inside the handlers, invisible to the
   // drain's wrap compare. One shared handler, no per-path duplication.
   const rearmCalloutGate = (sim) => { revCount++; return sim; };
+  // Ledger :136 — the auto-hop is airborne, so the :384 press-arm and :401
+  // release gates would deny (or spend) a press begun inside it. One handler.
+  const armLeadInHop = () => { leadInHop = true; };
   // The one permadeath start: fresh baseline record, pips reset, best snapshot.
   // A hold charged in the dying run must not cross the boundary — a stale
   // holdFrom lets releaseEverything fire a phantom jump inside the fresh run.
@@ -171,6 +176,7 @@ export function startGame(canvas) {
     pressIntent = null;
     resetPips();
     ({ rope, player, run } = rearmCalloutGate(startRun()));
+    armLeadInHop(); // one write covers the cold-boot and death-restart callers
   }
   let acc = 0;
   let stopUntil = 0;
@@ -283,6 +289,7 @@ export function startGame(canvas) {
     pausedByVis = false;
     ({ rope, player, run } = rearmCalloutGate(resumeRun({ ...run, buffer: 0 })));
     reentryAt = performance.now(); // D-07 re-entry lock, same as the pick-confirm path
+    armLeadInHop();
     holdFrom = null;
     pressIntent = null;
     releaseIntent = false;
@@ -333,6 +340,7 @@ export function startGame(canvas) {
     // (EXPERIENCE.md:62 "everything else inert"). Numpad codes are the same
     // keys for numpad-only players (review 3.5, Blind nit).
     if (run.status === 'choose' && run.offer && !e.repeat
+        && performance.now() >= stopUntil // ledger :143 — the freeze gates BOTH paths
         && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3'
           || e.code === 'Numpad1' || e.code === 'Numpad2' || e.code === 'Numpad3')) {
       const k = Number(e.code.charAt(e.code.length - 1));
@@ -406,7 +414,8 @@ export function startGame(canvas) {
           // PERMITTED launches only, no voice, no juice). The decision
           // instant is player.grounded here; a hold that lands became a
           // ground jump, charge untouched.
-          const grounded = player.grounded;
+          const grounded = player.grounded || leadInHop; // D1: a hop release lands
+          if (grounded) leadInHop = false; // R2: one-shot grace, launch retires it
           const airLaunch = !grounded && clampAirJumps(run.airJumps) >= 1;
           if (grounded || airLaunch) {
             player = jump(player, (performance.now() - holdFrom) / 1000, run.effects.launchMul ?? 1);
@@ -452,6 +461,7 @@ export function startGame(canvas) {
     run = applyCard(run, picked);
     ({ rope, player, run } = rearmCalloutGate(resumeRun(run)));
     reentryAt = performance.now();
+    armLeadInHop();
     holdFrom = null;
     pickIdx = 0;
     pickPressedAt = null;

@@ -444,10 +444,13 @@ test('denied press forgives nothing (shell): the forced crossing trips instead o
     pump(env, 3);
     assert.equal(view(env).run.status, 'running', 'the opening Space started the run');
     env.handlers.window.keyup({ code: 'Space' });
-    // The lead-in hop's descent is the no-card airborne window, pressed LOW
-    // (16..24 px) so the forced crossing lands INSIDE the D-N01 buffer's
-    // ~0.1 phase-second life — a denial that leaked a buffer arm would still
-    // be alive at the crossing and forgive it.
+    // R2 (chore pre-6.6): the no-card airborne window is the LAUNCH flight's
+    // descent — the groundedJumpAtWindow tap below consumes the story's
+    // one-shot hop-grace flag at its launch, so pressCycle is a v1 airborne
+    // press. Pressed LOW (16..24 px) so the forced crossing lands INSIDE the
+    // D-N01 buffer's ~0.1 phase-second life — a denial that leaked a buffer
+    // arm would still be alive at the crossing and forgive it.
+    groundedJumpAtWindow(env);
     let found = false;
     for (let g = 0; g < 200 && !found; g += 1) {
       const p = view(env).player;

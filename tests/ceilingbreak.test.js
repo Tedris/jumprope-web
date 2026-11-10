@@ -612,6 +612,9 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // lineage); the new suite and this story's artifact join here — zero other paths.
     'tests/pausemenu.test.js',
     '_bmad-output/implementation-artifacts/5-7-pause-menu-audio-config.md',
+    '_bmad-output/implementation-artifacts/pre-66-polish.md',
+    'tests/secondwind.test.js',
+    'tests/leadinhop.test.js',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
