@@ -90,7 +90,7 @@ development_status:
   5-7-pause-menu-audio-config: done  # review 2026-11-09: 5 patches (1 product diag-consume, 4 test/harden incl. new L6), gate 529/529; dev: shell panel + 5 CSS rules + tests/pausemenu.test.js, battery 6/6, live lane 18/18
   epic-5-retrospective: optional
   # Pre-Epic-6 chores — created at the Epic 5 close ledger check (2026-11-09, user batch answers)
-  chore-pre-66-polish: review  # dev round landed 2026-11-09: leadInHop one-shot grace + digit stopUntil gate; 535/535; R1/R2 re-contracts in story
+  chore-pre-66-polish: done  # delivered 2026-11-09: leadInHop one-shot grace + digit stopUntil gate; review 0 patches (F2/F3 dismissed); 535/535
   chore-test-harness-ci-consolidation: backlog  # ledger :53/:64/:189 fork dedup, :177/:178 performance stub, :48 dead best-write, :115/:116 CI, :179 census re-pin
 
   # Epic 6: Balance & Prove

@@ -3,7 +3,7 @@ baseline_commit: 2474e27
 ---
 # Chore: pre-6.6 polish — the auto-hop press window + the digit/hitstop gate
 
-Status: review
+Status: done
 
 Ledger origin (verbatim, both items owned here by the user's Epic 5 close batch answer, 2026-11-09):
 
@@ -110,3 +110,4 @@ Deviation notes for review: (1) Task 2's "comment-only" phrase superseded in dev
 
 ### Change Log
 - 2026-11-09 dev: D1 (one-shot leadInHop grace) + D2 (digit freeze guard) in `js/shell.js`; R1 + R2-extension census appends; R2 leg-9 window move; NEW `tests/leadinhop.test.js` (6 legs / 3 boots; fork #6 counted); mutation battery M1-M6 all killed (gold 535/535 both controls); gate 527/529 → 529/529 → 535/535. Status review.
+- 2026-11-09 review: blind layer, 0 patches, 3 findings — F1 process (sprint key lagged the story status; fixed here: key `done`), F2 nit DISMISSED (secondwind :457 "lead-in descent window" message wording — R2's stricter clause holds every :451-466 byte-identical, red-run-only surface), F3 nit DISMISSED (L3/L4 need L6's lazy boot3 — inert under run_tests.sh serial order, documented consequence of the D4 3-boot budget). Battery independently re-run by the reviewer (M1/M2/M4/M5/M6 kills reproduced; M3 kill set wider under their reconstruction — L5 also dies). airLaunch+flag proof, interleave audit (pause/hitstop/releaseEverything/pick-chain), leg-9 non-tautology mutant all CLEAN. Gate 535/535. Status done; ledger PAID stamps (:137/:144) + fork-#6 row landed.
