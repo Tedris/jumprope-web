@@ -844,6 +844,12 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     if (/not a git repository/i.test(String(err.stderr) + String(err.message))) return; // no VCS: nothing to census
     throw err;
   }
+  // porcelain arm (chore consolidation 2026-11-09, ledger :186): git diff is
+  // blind to UNTRACKED paths — merge git status --porcelain so a new file goes
+  // red at CREATE time, not at commit. Strip the XY/?? status prefixes.
+  for (const line of (await run1('git', ['status', '--porcelain'])).stdout.split('\n').filter(Boolean)) {
+    changed.push(line.slice(3).split(' -> ').pop().split('"').join(''));
+  }
   const allowed = new Set([
     'js/shell.js', 'css/style.css',
     'tests/summitapproach.test.js',
@@ -896,6 +902,16 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     '_bmad-output/implementation-artifacts/pre-66-polish.md',
     'tests/secondwind.test.js',
     'tests/leadinhop.test.js',
+    // chore consolidation 2026-11-09: the shared harness primitives, the new
+    // harness fence/behavior suite, and this chore's artifact.
+    'tests/support/shell-harness.js',
+    'tests/harness.test.js',
+    '_bmad-output/implementation-artifacts/chore-test-harness-ci-consolidation.md',
+    'tests/polish.test.js',
+    'tests/altitude.test.js',
+    'tests/ascent.test.js', 'tests/uxpolish.test.js', 'tests/shell.test.js',
+    'tests/pausemenu.test.js', 'tests/leadinhop.test.js',
+    '.github/workflows/test.yml',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');

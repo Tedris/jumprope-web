@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import {
+  bootModule, captureConsoleErrors, fileHref, installStage, installVirtualClock,
+  makeGameWrapHref, makeRenderStubHref, mapStorage, settle, shellSrc,
+} from './support/shell-harness.js';
 import * as game from '../js/game.js';
 import { CARDS } from '../js/upgrades.js';
 import { jump } from '../js/player.js';
@@ -13,12 +14,6 @@ import { jump } from '../js/player.js';
 // Expectations derive from the exported ALT_PER_POINT + the card records,
 // never a hardcoded table (house rule). Namespace import (startrun idiom) so
 // a missing export surfaces as a failing assertion, not a module link error.
-
-const testsDir = dirname(fileURLToPath(import.meta.url));
-const jsDir = resolve(testsDir, '..', 'js');
-const fileHref = name => pathToFileURL(resolve(jsDir, name)).href;
-const settle = () => new Promise(r => setTimeout(r, 0));
-let bootCount = 0;
 
 // ---------- sim legs (hand-built records, startrun.test.js:20-37 idiom) ----------
 
@@ -112,98 +107,37 @@ test('invariant: altitude === ALT_PER_POINT × score on every tick of a 1000-tic
 
 // ---------- shell harness (bootShell pattern, shell.test.js:30-105) ----------
 
+const ALT_GAME_WRAP = `
+  export const tickRun = (...args) => {
+    const s = globalThis.__altScript;
+    let a = args;
+    if (s.forceRopes) a = [{ ...args[0], ropes: s.forceRopes }, ...args.slice(1)];
+    let out = real.tickRun(...a);
+    if (s.forceScore !== undefined) {
+      out = { ...out, run: { ...out.run, score: s.forceScore, altitude: s.forceScore * real.ALT_PER_POINT } };
+    }
+    return out;
+  };`;
+
 // The tickRun wrapper manufactures score/choose-state VALUES the real state
 // machine also reaches (uxpolish precedent); altitude is stamped consistently
 // with score — forceScore × ALT_PER_POINT — so the HUD legs pin the SOURCE,
 // not the arithmetic.
 async function bootAltShell({ preSeed = {}, throws = false } = {}) {
-  const frames = [];
-  const handlers = { window: {}, canvas: {} };
-  const hud = {
-    'hud-score': { textContent: '' },
-    'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' },
-    'hud-owned': { textContent: '' },
-  };
-  const canvas = {
-    width: 0, height: 0, style: {},
-    addEventListener: (type, fn) => { handlers.canvas[type] = fn; },
-  };
-  const errors = [];
-  const views = [];
-  globalThis.__shellTestViews = views;
-
   const map = new Map(Object.entries(preSeed));
-  const storageStub = throws
-    ? {
-        getItem() { throw new Error('denied'); },
-        setItem() { throw new Error('denied'); },
-      }
-    : {
-        getItem: k => (map.has(k) ? map.get(k) : null),
-        setItem: (k, v) => { map.set(k, v); },
-      };
   const script = { forceRopes: null, forceScore: undefined };
-  globalThis.__altScript = script;
-
-  const clock = { t: 0 };
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    requestAnimationFrame: globalThis.requestAnimationFrame,
-    localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
-    performance: Object.getOwnPropertyDescriptor(globalThis, 'performance'),
-    consoleError: console.error,
-  };
-  globalThis.document = { hidden: false, getElementById: id => (id === 'game' ? canvas : hud[id]) };
-  globalThis.window = {
-    addEventListener: (type, fn) => { handlers.window[type] = fn; },
-    innerWidth: 480, innerHeight: 640,
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
-  };
-  globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
-  Object.defineProperty(globalThis, 'localStorage', { value: storageStub, configurable: true });
-  globalThis.performance = { now: () => clock.t };
-  console.error = (...args) => { errors.push(args); };
-
-  const gameWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    `export * from "${fileHref('game.js')}";`,
-    'import * as real from "' + fileHref('game.js') + '";',
-    'export const tickRun = (...args) => {',
-    '  const s = globalThis.__altScript;',
-    '  let a = args;',
-    '  if (s.forceRopes) a = [{ ...args[0], ropes: s.forceRopes }, ...args.slice(1)];',
-    '  let out = real.tickRun(...a);',
-    '  if (s.forceScore !== undefined) {',
-    '    out = { ...out, run: { ...out.run, score: s.forceScore, altitude: s.forceScore * real.ALT_PER_POINT } };',
-    '  }',
-    '  return out;',
-    '};',
-  ].join('\n'));
-
-  const src = (await readFile(resolve(jsDir, 'shell.js'), 'utf8'))
-    .replace(/from\s*['"]\.\/render3d\.js['"]/, `from 'data:text/javascript,${encodeURIComponent(
-      'export function createScene() { return { render(view) { globalThis.__shellTestViews.push(view); } }; }')}'`)
-    .replace(/from\s*['"]\.\/game\.js['"]/, `from '${gameWrapHref}'`)
-    .replace(/from\s*['"]\.\/rope\.js['"]/, `from '${fileHref('rope.js')}'`)
-    .replace(/from\s*['"]\.\/player\.js['"]/, `from '${fileHref('player.js')}'`);
-
-  await import('data:text/javascript,' + encodeURIComponent(`${src}\n//alt-boot ${++bootCount}`));
+  const denied = () => { throw new Error('denied'); };
+  const stage = installStage({
+    storage: throws ? { getItem: denied, setItem: denied } : mapStorage(map),
+    clock: installVirtualClock(), errors: captureConsoleErrors(), metrics: true,
+    globals: { __altScript: script },
+  });
+  await bootModule(await shellSrc({
+    render3d: makeRenderStubHref(),
+    game: makeGameWrapHref(fileHref('game.js'), ALT_GAME_WRAP),
+  }), 'alt-boot');
   await settle(); // the (failing, caught) dynamic audio import lands here
-
-  const restore = () => {
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.requestAnimationFrame = saved.requestAnimationFrame;
-    if (saved.localStorage) Object.defineProperty(globalThis, 'localStorage', saved.localStorage);
-    else delete globalThis.localStorage;
-    if (saved.performance) Object.defineProperty(globalThis, 'performance', saved.performance);
-    else delete globalThis.performance;
-    delete globalThis.__altScript;
-    delete globalThis.__shellTestViews;
-    console.error = saved.consoleError;
-  };
-  return { frames, handlers, hud, views, map, script, clock, errors, restore };
+  return { ...stage, map, script };
 }
 
 function tick(env, ms = 50) {

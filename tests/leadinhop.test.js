@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import {
+  bootModule, captureConsoleErrors, dataUrl, fileHref, installStage, installVirtualClock,
+  makeAudioWrapHref, makeGameWrapHref, makeRenderStubHref, settle, shellSrc,
+} from './support/shell-harness.js';
 import { CARDS } from '../js/upgrades.js';
 import { jumpVelocity } from '../js/player.js';
 
@@ -33,12 +37,53 @@ import { jumpVelocity } from '../js/player.js';
 
 const testsDir = dirname(fileURLToPath(import.meta.url));
 const jsDir = resolve(testsDir, '..', 'js');
-const fileHref = (name) => pathToFileURL(resolve(jsDir, name)).href;
-const settle = () => new Promise((r) => setTimeout(r, 0));
 const FR = 4; // fake ms per pumped frame (secondwind pump idiom)
 const CARD = (id) => CARDS.find((c) => c.id === id);
 
 let bootCount = 0;
+
+// Wrapper authors (the fork's data-URL seams; per-boot keys keep a later
+// boot's restore() from blinding an earlier live boot).
+const lhGameWrapHref = (scriptKey, seedBits) => makeGameWrapHref(fileHref('game.js'), `
+  export const startRun = ${seedBits.length > 0
+    ? `() => {
+    const s = real.startRun();
+    return { ...s, run: { ...s.run, ${seedBits.join(', ')} } };
+  }`
+    : '() => real.startRun()'};
+  export const tickRun = (...a) => {
+    const s = globalThis["${scriptKey}"];
+    if (s.forcePhase !== null) {
+      a = [a[0], { ...a[1], phase: s.forcePhase }, ...a.slice(2)];
+      s.forcePhase = null;
+    } else if (s.park) {
+      a = [a[0], { ...a[1], phase: 0.05, period: 100 }, ...a.slice(2)];
+    }
+    const out = real.tickRun(...a);
+    if (s.stamp && out.run.status === "running") {
+      s.stamp = false;
+      return { ...out,
+        run: { ...out.run, status: "choose", offer: s.chooseOffer },
+        events: [...(out.events ?? []), ...(s.injectEvents ?? [])] };
+    }
+    return out;
+  };`);
+// Player spy wrapper: logs every player-driven jump's hold/vy; the
+// constructed hop built inside game.js leadIn() never transits it.
+const lhPlayerWrapHref = (jumpKey) => dataUrl(`
+import * as real from "${fileHref('player.js')}";
+export const createPlayer = real.createPlayer;
+export const jumpVelocity = real.jumpVelocity;
+export const jump = (player, hold, mul) => {
+  const out = real.jump(player, hold, mul);
+  globalThis["${jumpKey}"].push({ hold, vy: out.vy });
+  return out;
+};`);
+const lhAudioWrapHref = (voiceKey) => makeAudioWrapHref(fileHref('audio.js'), `
+  return { ...a, handleEvent(n) {
+    globalThis["${voiceKey}"].push(n);
+    return a.handleEvent(n);
+  } };`);
 
 // One boot of the REAL js/shell.js frame loop: render3d -> recording stub,
 // game.js -> wrapper (startRun seeding + rope parking + forced-phase trip rig
@@ -48,164 +93,28 @@ let bootCount = 0;
 // logging every handleEvent NAME (feelcap/secondwind audioWrap precedent).
 async function bootLH({ own = null, airJumps = null } = {}) {
   const id = `lh${++bootCount}`;
-  const frames = [];
-  const handlers = { window: {}, canvas: {} };
-  const hud = {
-    'hud-score': { textContent: '' },
-    'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' },
-    'hud-owned': { textContent: '' },
-  };
-  const canvas = {
-    width: 0, height: 0, style: {},
-    addEventListener: (type, fn) => { handlers.canvas[type] = fn; },
-  };
-  // pickerhud.test.js mk() element stub (the fire() dispatch idiom).
-  const created = [];
-  const mk = (tag) => {
-    const el = {
-      tag, children: [], listeners: {}, style: {}, textContent: '', _cn: '',
-      get className() { return this._cn; },
-      set className(v) { this._cn = v; },
-      appendChild(c) { this.children.push(c); return c; },
-      replaceChildren(...cs) { this.children = cs; },
-      addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); },
-      fire(type, ev = {}) { for (const fn of this.listeners[type] ?? []) fn(ev); },
-    };
-    created.push(el);
-    return el;
-  };
-  const views = [];
+  const [viewKey, voiceKey, jumpKey, scriptKey] =
+    [`__lhViews_${id}`, `__lhVoices_${id}`, `__lhJumps_${id}`, `__lhScript_${id}`];
   const voices = [];
   const jumps = [];
   const script = { park: false, forcePhase: null, stamp: false, chooseOffer: null, injectEvents: [] };
-  const viewKey = `__lhViews_${id}`;
-  const voiceKey = `__lhVoices_${id}`;
-  const jumpKey = `__lhJumps_${id}`;
-  const scriptKey = `__lhScript_${id}`;
-  globalThis[viewKey] = views;
-  globalThis[voiceKey] = voices;
-  globalThis[jumpKey] = jumps;
-  globalThis[scriptKey] = script;
-
   const seedBits = [];
   if (own !== null) seedBits.push(`owned: ${JSON.stringify(own)}`);
   if (airJumps !== null) seedBits.push(`airJumps: ${JSON.stringify(airJumps)}`);
-  const gameWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    `export * from "${fileHref('game.js')}";`,
-    'import * as real from "' + fileHref('game.js') + '";',
-    seedBits.length > 0
-      ? ['export const startRun = () => {', '  const s = real.startRun();',
-         `  return { ...s, run: { ...s.run, ${seedBits.join(', ')} } };`, '}'].join('\n')
-      : 'export const startRun = () => real.startRun();',
-    'export const tickRun = (...a) => {',
-    `  const s = globalThis.${scriptKey};`,
-    '  if (s.forcePhase !== null) {',
-    '    a = [a[0], { ...a[1], phase: s.forcePhase }, ...a.slice(2)];',
-    '    s.forcePhase = null;',
-    '  } else if (s.park) {',
-    '    a = [a[0], { ...a[1], phase: 0.05, period: 100 }, ...a.slice(2)];',
-    '  }',
-    '  const out = real.tickRun(...a);',
-    '  if (s.stamp && out.run.status === "running") {',
-    '    s.stamp = false;',
-    '    return { ...out,',
-    '      run: { ...out.run, status: "choose", offer: s.chooseOffer },',
-    '      events: [...(out.events ?? []), ...(s.injectEvents ?? [])] };',
-    '  }',
-    '  return out;',
-    '};',
-  ].join('\n'));
-
-  const playerWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    'import * as real from "' + fileHref('player.js') + '";',
-    'export const createPlayer = real.createPlayer;',
-    'export const jumpVelocity = real.jumpVelocity;',
-    'export const jump = (player, hold, mul) => {',
-    '  const out = real.jump(player, hold, mul);',
-    `  globalThis.${jumpKey}.push({ hold, vy: out.vy });`,
-    '  return out;',
-    '};',
-  ].join('\n'));
-
-  const audioWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    'import * as real from "' + fileHref('audio.js') + '";',
-    'export function createAudio(opts) {',
-    '  const a = real.createAudio(opts);',
-    '  return { ...a, handleEvent(n) {',
-    `    globalThis.${voiceKey}.push(n);`,
-    '    return a.handleEvent(n);',
-    '  } };',
-    '}',
-    'export const loadSettings = real.loadSettings;',
-    'export const saveSettings = real.saveSettings;',
-  ].join('\n'));
-
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    requestAnimationFrame: globalThis.requestAnimationFrame,
-    performance: Object.getOwnPropertyDescriptor(globalThis, 'performance'),
-    AudioContext: globalThis.AudioContext,
-    localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
-    consoleError: console.error,
-  };
-  const clock = { t: 0 }; // the virtual performance clock (pickerhud :93 idiom)
-  globalThis.document = { hidden: false, createElement: mk, getElementById: (name) => (name === 'game' ? canvas : hud[name]) };
-  globalThis.window = {
-    addEventListener: (type, fn) => { handlers.window[type] = fn; },
-    innerWidth: 480, innerHeight: 640,
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
-  };
-  globalThis.requestAnimationFrame = (cb) => { frames.push(cb); return frames.length; };
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: { getItem: () => null, setItem: () => {} }, configurable: true,
+  const stage = installStage({
+    storage: { getItem: () => null, setItem: () => {} },
+    clock: installVirtualClock(), errors: captureConsoleErrors(),
+    metrics: true, createElement: true, deleteAudioContext: true,
+    viewsKey: viewKey, globals: { [voiceKey]: voices, [jumpKey]: jumps, [scriptKey]: script },
   });
-  Object.defineProperty(globalThis, 'performance', {
-    value: { now: () => clock.t }, configurable: true,
-  });
-  delete globalThis.AudioContext; // silent degradation; the wrapper still logs
-  console.error = () => {};
-
-  const renderStubHref = 'data:text/javascript,' + encodeURIComponent([
-    'export function createScene() {',
-    '  return {',
-    '    render(view) {',
-    `      globalThis.${viewKey}.push(view);`,
-    '    }',
-    '  };',
-    '}',
-  ].join('\n'));
-
-  let src = (await readFile(resolve(jsDir, 'shell.js'), 'utf8'))
-    .replace(/from\s*['"]\.\/render3d\.js['"]/, `from '${renderStubHref}'`)
-    .replace(/from\s*['"]\.\/game\.js['"]/, `from '${gameWrapHref}'`)
-    .replace(/from\s*['"]\.\/rope\.js['"]/, `from '${fileHref('rope.js')}'`)
-    .replace(/from\s*['"]\.\/player\.js['"]/, `from '${playerWrapHref}'`)
-    .replace(/import\(\s*['"]\.\/audio\.js['"]\s*\)/, `import('${audioWrapHref}')`);
-
-  await import('data:text/javascript,' + encodeURIComponent(`${src}\n//leadinhop-boot ${id}`));
+  await bootModule(await shellSrc({
+    render3d: makeRenderStubHref({ viewsKey: viewKey }),
+    game: lhGameWrapHref(scriptKey, seedBits),
+    player: lhPlayerWrapHref(jumpKey),
+    audio: lhAudioWrapHref(voiceKey),
+  }), 'leadinhop-boot');
   await settle(); // the shell's dynamic audio import lands one microtask later
-
-  const restore = () => {
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.requestAnimationFrame = saved.requestAnimationFrame;
-    if (saved.performance) Object.defineProperty(globalThis, 'performance', saved.performance);
-    else delete globalThis.performance;
-    globalThis.AudioContext = saved.AudioContext;
-    if (saved.localStorage) {
-      Object.defineProperty(globalThis, 'localStorage', saved.localStorage);
-    } else {
-      delete globalThis.localStorage;
-    }
-    console.error = saved.consoleError;
-    delete globalThis[viewKey];
-    delete globalThis[voiceKey];
-    delete globalThis[jumpKey];
-    delete globalThis[scriptKey];
-  };
-  return { frames, handlers, hud, views, voices, jumps, script, clock, created, restore };
+  return { ...stage, voices, jumps, script };
 }
 
 // ---------- kit (secondwind donor idioms) ----------
@@ -521,4 +430,12 @@ test('L5 fences: three arming sites, two retire-site writes, the D-07 writes sta
   const codes = [...new Set([...src.matchAll(/e\.code === '([A-Za-z0-9_]+)'/g)].map((m) => m[1]))].sort();
   assert.deepEqual(codes, ['ArrowLeft', 'ArrowRight', 'Digit1', 'Digit2', 'Digit3', 'Equal', 'Escape', 'KeyP', 'Minus', 'Mute', 'Numpad1', 'Numpad2', 'Numpad3', 'Space'],
     'the keyboard map is frozen — this chore adds no binding (NFR5)');
+});
+
+test('leadinhop: boot logged no console.error', async () => {
+  const env = await bootLH();
+  try {
+    assert.deepEqual(env.errors, [],
+      'the consolidated boot surfaced nothing through the console.error capture (chore error leg)');
+  } finally { env.restore(); }
 });

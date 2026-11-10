@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { bootModule, captureConsoleErrors, installStage, makeRenderStubHref, shellSrc } from './support/shell-harness.js';
 
 // Regression pins for the T-01-08 belt (plan 01-03 Task 3): a throw inside
 // scene.render used to kill the rAF loop before requestAnimationFrame
@@ -22,86 +23,16 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const testsDir = dirname(fileURLToPath(import.meta.url));
 const jsDir = resolve(testsDir, '..', 'js');
 
-let bootCount = 0;
-
 // Builds a fresh shell instance under stubbed browser globals. Returns the
 // captured rAF queue, event handlers, HUD spans, console.error log, render
 // view log, and a restore() that puts the globals back.
 async function bootShell({ renderThrows }) {
-  const frames = [];
-  const handlers = { window: {}, canvas: {} };
-  const hud = {
-    'hud-score': { textContent: '' },
-    'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' },
-    'hud-owned': { textContent: '' }
-  };
-  const canvas = {
-    width: 0,
-    height: 0,
-    style: {},
-    addEventListener: (type, fn) => { handlers.canvas[type] = fn; }
-  };
-  const errors = [];
-  const views = [];
-  globalThis.__shellTestViews = views;
-
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    requestAnimationFrame: globalThis.requestAnimationFrame,
-    // Descriptor, not value: reading Node 26's experimental localStorage
-    // getter emits an ExperimentalWarning through console.error and would
-    // pollute the error spy the T-01-08 assertions read.
-    localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
-    consoleError: console.error
-  };
-  globalThis.document = { getElementById: id => (id === 'game' ? canvas : hud[id]) };
-  globalThis.window = {
-    addEventListener: (type, fn) => { handlers.window[type] = fn; }
-  };
-  globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: { getItem: () => null, setItem: () => {} }, configurable: true
+  const stage = installStage({
+    storage: { getItem: () => null, setItem: () => {} },
+    errors: captureConsoleErrors(), hidden: false,
   });
-  console.error = (...args) => { errors.push(args); };
-
-  // One stub export per boot (unique data: URL); records the view, then
-  // throws when renderThrows is set — mimicking a broken renderer.
-  const renderStubHref = 'data:text/javascript,' + encodeURIComponent([
-    'export function createScene() {',
-    '  return {',
-    '    render(view) {',
-    '      globalThis.__shellTestViews.push(view);',
-    renderThrows ? '      throw new Error("forced renderer failure");' : '',
-    '    }',
-    '  };',
-    '}'
-  ].filter(Boolean).join('\n'));
-
-  const fileHref = name => pathToFileURL(resolve(jsDir, name)).href;
-  const src = (await readFile(resolve(jsDir, 'shell.js'), 'utf8'))
-    .replace(/from\s*['"]\.\/render3d\.js['"]/, `from '${renderStubHref}'`)
-    .replace(/from\s*['"]\.\/game\.js['"]/, `from '${fileHref('game.js')}'`)
-    .replace(/from\s*['"]\.\/rope\.js['"]/, `from '${fileHref('rope.js')}'`)
-    .replace(/from\s*['"]\.\/player\.js['"]/, `from '${fileHref('player.js')}'`);
-
-  // Each boot must be a distinct module instance so the bootstrap guard
-  // re-runs; a unique trailing comment makes the data: URL unique.
-  await import('data:text/javascript,' + encodeURIComponent(`${src}\n//boot ${++bootCount}`));
-
-  const restore = () => {
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.requestAnimationFrame = saved.requestAnimationFrame;
-    if (saved.localStorage) {
-      Object.defineProperty(globalThis, 'localStorage', saved.localStorage);
-    } else {
-      delete globalThis.localStorage;
-    }
-    console.error = saved.consoleError;
-  };
-  return { frames, handlers, hud, errors, views, restore };
+  await bootModule(await shellSrc({ render3d: makeRenderStubHref({ throws: renderThrows }) }), 'boot');
+  return stage;
 }
 
 test('T-01-08: frame loop re-arms after scene.render throws', async () => {

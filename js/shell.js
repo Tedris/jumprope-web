@@ -440,8 +440,6 @@ export function startGame(canvas) {
         // Story 2.4 (AC4): a release alone — e.g. a key held across the death
         // — must never launch the new run; only a press begun while over arms it.
         restartArmed = false;
-        best = Math.max(best, Math.round(run.altitude));
-        saveBest(localStorage, best);
         startFreshRun(); // permadeath-clean row for the restarted run
       }
       releaseIntent = false;

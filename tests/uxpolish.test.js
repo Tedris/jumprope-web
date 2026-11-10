@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import {
+  bootModule, captureConsoleErrors, fileHref, installStage, installVirtualClock,
+  makeGameWrapHref, makeRenderStubHref, mapStorage, settle, shellSrc,
+} from './support/shell-harness.js';
 import { createRun, tickRun, ROPE_PERIOD, ALT_PER_POINT } from '../js/game.js';
 import { CARDS } from '../js/upgrades.js';
 
@@ -23,136 +24,39 @@ import { CARDS } from '../js/upgrades.js';
 // reaches — the rig manufactures VALUES, the production code does the
 // formatting, rendering, and confirming).
 
-const testsDir = dirname(fileURLToPath(import.meta.url));
-const jsDir = resolve(testsDir, '..', 'js');
-const fileHref = name => pathToFileURL(resolve(jsDir, name)).href;
-const settle = () => new Promise(r => setTimeout(r, 0));
-let bootCount = 0;
-
-// Minimal DOM: enough for the overlay layer (createElement, replaceChildren,
-// addEventListener, className/style/textContent). No querySelector/dataset —
-// the production overlay deliberately avoids them.
-function makeDom() {
-  const created = [];
-  const mk = tag => {
-    const el = {
-      tag,
-      children: [],
-      listeners: {},
-      style: {},
-      textContent: '',
-      _cn: '',
-      get className() { return this._cn; },
-      set className(v) { this._cn = v; },
-      appendChild(c) { this.children.push(c); return c; },
-      replaceChildren(...cs) { this.children = cs; },
-      addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); },
-      fire(type, ev = {}) { for (const fn of this.listeners[type] ?? []) fn(ev); },
-    };
-    created.push(el);
-    return el;
-  };
-  return { created, mk };
-}
+// tickRun wrapper over the REAL sim: same surface; the script block can stamp
+// ropes into the INPUT (like v1parity's wrapper) and score/choose states onto
+// the OUTPUT — values the real state machine also produces.
+const UX_GAME_WRAP = `
+  export const tickRun = (...args) => {
+    const s = globalThis.__uxScript;
+    let a = args;
+    if (s.forceRopes) a = [{ ...args[0], ropes: s.forceRopes }, ...args.slice(1)];
+    let out = real.tickRun(...a);
+    if (s.forceScore !== undefined) out = { ...out, run: { ...out.run, score: s.forceScore, altitude: s.forceScore * real.ALT_PER_POINT } };
+    if (s.chooseOffer && !s.armed && out.run.status === "running") {
+      s.armed = true;
+      out = { ...out, run: { ...out.run, status: "choose", offer: s.chooseOffer } };
+    }
+    return out;
+  };`;
 
 async function bootUxShell({ dom }) {
-  const frames = [];
-  const handlers = { window: {}, canvas: {} };
-  const hudEls = {
-    'hud-score': { textContent: '' },
-    'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' },
-    'hud-owned': { textContent: '' },
-  };
-  const canvas = {
-    width: 0, height: 0, style: {},
-    addEventListener: (type, fn) => { handlers.canvas[type] = fn; },
-  };
-  const { created, mk } = makeDom();
-  const hudRoot = mk('div');
-  if (dom) hudEls['hud-ropes'] = mk('span'); // the pip row needs createElement
-  const documentStub = dom
-    ? {
-        hidden: false,
-        createElement: mk,
-        getElementById: id => (id === 'game' ? canvas : id === 'hud' ? hudRoot : hudEls[id]),
-      }
-    : { hidden: false, getElementById: id => (id === 'game' ? canvas : hudEls[id]) };
-
   const map = new Map();
-  const storageStub = {
-    getItem: k => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => { map.set(k, v); },
-  };
   const script = { forceRopes: null, forceScore: undefined, chooseOffer: null, armed: false };
-  globalThis.__uxScript = script;
-  const views = [];
-  globalThis.__shellTestViews = views;
-
-  const clock = { t: 0 };
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    requestAnimationFrame: globalThis.requestAnimationFrame,
-    localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
-    performance: Object.getOwnPropertyDescriptor(globalThis, 'performance'),
-    __uxScript: globalThis.__uxScript,
-    consoleError: console.error,
-  };
-  globalThis.document = documentStub;
-  globalThis.window = {
-    addEventListener: (type, fn) => { handlers.window[type] = fn; },
-    innerWidth: 480, innerHeight: 640,
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
-  };
-  globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
-  Object.defineProperty(globalThis, 'localStorage', { value: storageStub, configurable: true });
-  globalThis.performance = { now: () => clock.t };
-  console.error = () => {};
-
-  // tickRun wrapper over the REAL sim: same surface; the script block can
-  // stamp ropes into the INPUT (like v1parity's wrapper) and score/choose
-  // states onto the OUTPUT — values the real state machine also produces.
-  const gameWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    `export * from "${fileHref('game.js')}";`,
-    'import * as real from "' + fileHref('game.js') + '";',
-    'export const tickRun = (...args) => {',
-    '  const s = globalThis.__uxScript;',
-    '  let a = args;',
-    '  if (s.forceRopes) a = [{ ...args[0], ropes: s.forceRopes }, ...args.slice(1)];',
-    '  let out = real.tickRun(...a);',
-    '  if (s.forceScore !== undefined) out = { ...out, run: { ...out.run, score: s.forceScore, altitude: s.forceScore * real.ALT_PER_POINT } };',
-    '  if (s.chooseOffer && !s.armed && out.run.status === "running") {',
-    '    s.armed = true;',
-    '    out = { ...out, run: { ...out.run, status: "choose", offer: s.chooseOffer } };',
-    '  }',
-    '  return out;',
-    '};',
-  ].join('\n'));
-
-  const src = (await readFile(resolve(jsDir, 'shell.js'), 'utf8'))
-    .replace(/from\s*['"]\.\/render3d\.js['"]/, `from 'data:text/javascript,${encodeURIComponent(
-      'export function createScene() { return { render(view) { globalThis.__shellTestViews.push(view); } }; }')}'`)
-    .replace(/from\s*['"]\.\/game\.js['"]/, `from '${gameWrapHref}'`)
-    .replace(/from\s*['"]\.\/rope\.js['"]/, `from '${fileHref('rope.js')}'`)
-    .replace(/from\s*['"]\.\/player\.js['"]/, `from '${fileHref('player.js')}'`);
-
-  await import('data:text/javascript,' + encodeURIComponent(`${src}\n//ux-boot ${++bootCount}`));
+  const stage = installStage({
+    storage: mapStorage(map),
+    clock: installVirtualClock(), errors: captureConsoleErrors(),
+    metrics: true, createElement: dom, hudRoot: true,
+    globals: { __uxScript: script },
+  });
+  if (dom) stage.hud['hud-ropes'] = stage.mk('span'); // the pip row needs createElement
+  await bootModule(await shellSrc({
+    render3d: makeRenderStubHref(),
+    game: makeGameWrapHref(fileHref('game.js'), UX_GAME_WRAP),
+  }), 'ux-boot');
   await settle(); // the (failing, caught) dynamic audio import lands here
-
-  const restore = () => {
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.requestAnimationFrame = saved.requestAnimationFrame;
-    if (saved.localStorage) Object.defineProperty(globalThis, 'localStorage', saved.localStorage);
-    else delete globalThis.localStorage;
-    if (saved.performance) Object.defineProperty(globalThis, 'performance', saved.performance);
-    else delete globalThis.performance;
-    delete globalThis.__uxScript;
-    delete globalThis.__shellTestViews;
-    console.error = saved.consoleError;
-  };
-  return { frames, handlers, hud: hudEls, views, map, script, clock, created, hudRoot, restore };
+  return { ...stage, map, script };
 }
 
 // 50 ms fake-clock frames — the same pump idiom as polish.test.js, but the

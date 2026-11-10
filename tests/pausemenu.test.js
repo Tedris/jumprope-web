@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import {
+  bootModule, captureConsoleErrors, fileHref, installStage, installVirtualClock,
+  makeAudioWrapHref, makeGameWrapHref, makeRenderStubHref, mapStorage, settle, shellSrc,
+} from './support/shell-harness.js';
 
 // Story 5.7 (FR30/FR27/FR22/FR24/NFR6/NFR7): the pause menu — the audio config
 // surface. Product delta: js/shell.js (setupMenu factory + the ONE bumpVolume
@@ -53,7 +57,6 @@ const jsDir = resolve(testsDir, '..', 'js');
 const rootDir = resolve(testsDir, '..');
 
 let bootCount = 0;
-const settle = () => new Promise(r => setTimeout(r, 0));
 
 // ---------- harness: bootMenuShell (fork #5 — see the donor map above) ----------
 
@@ -82,162 +85,58 @@ function makeMenuContext() {
   };
 }
 
-async function bootMenuShell({ storageMap, dom = true, audioCtx = false } = {}) {
-  const frames = [];
-  const handlers = { window: {}, canvas: {} };
-  const created = [];
-  const mk = tag => {
-    const el = {
-      tag, children: [], listeners: {}, style: {}, textContent: '', _cn: '',
-      get className() { return this._cn; },
-      set className(v) { this._cn = v; },
-      appendChild(c) { this.children.push(c); return c; },
-      insertBefore(c, ref) { const i = this.children.indexOf(ref); if (i < 0) this.children.push(c); else this.children.splice(i, 0, c); return c; },
-      replaceChildren(...cs) { this.children = cs; },
-      addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); },
-      fire(type, ev = {}) { for (const fn of this.listeners[type] ?? []) fn(ev); },
-    };
-    created.push(el);
-    return el;
-  };
-  const hudEls = {
-    'hud-score': mk('span'), 'hud-best': mk('span'),
-    'hud-prompt': mk('span'), 'hud-owned': mk('span'),
-  };
-  const canvas = {
-    width: 0, height: 0, style: {},
-    addEventListener: (type, fn) => { handlers.canvas[type] = fn; },
-  };
-  const hudRoot = mk('div');
-  if (dom) hudEls['hud-ropes'] = mk('span');
-  // Seed index.html's real #hud children (ceilingmarker:64-67) so the marker's
-  // insertBefore slot resolves by identity and the menu's trailing append is
-  // observable as ONE new last child.
-  for (const el of [hudEls['hud-score'], hudEls['hud-best'], hudEls['hud-ropes'],
-    hudEls['hud-prompt'], hudEls['hud-owned']]) if (el) hudRoot.appendChild(el);
-  const documentStub = dom
-    ? {
-        hidden: false,
-        createElement: mk,
-        getElementById: id => (id === 'game' ? canvas : id === 'hud' ? hudRoot : hudEls[id]),
-      }
-    : { hidden: false, getElementById: id => (id === 'game' ? canvas : hudEls[id]) };
+// Offer-stripping tickRun wrapper (the pickerhud __phScript inverse, :98-110
+// family): the ~300-frame lock battery would otherwise freeze into the 10th-
+// skip choose status mid-walk — the offer flow is Story 3.x's domain.
+const MENU_GAME_WRAP = `
+  export const tickRun = (...a) => {
+    const o = real.tickRun(...a);
+    return o.run.status === "choose" ? { ...o, run: { ...o.run, status: "running", offer: null } } : o;
+  };`;
+// Wrapper over the REAL js/audio.js (bootLifecycleShell:419-434 shape): the
+// stash exposes the LIVE settings source of truth and the voice log is the
+// launch WITNESS — shell.js fires handleEvent('jump') only on player-driven
+// launches, while resumeRun's constructed lead-in hop emits nothing.
+const MENU_AUDIO_WRAP = `
+  const voices = [];
+  const w = Object.assign({}, a, { handleEvent(name) { voices.push(name); return a.handleEvent(name); } });
+  globalThis.__menuAudio = w;
+  globalThis.__menuVoices = voices;
+  return w;`;
 
-  const map = storageMap ?? new Map();
-  const storageStub = {
-    getItem: k => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => { map.set(k, v); },
-  };
-  const clock = { t: 0 };
-  const views = [];
-  const viewsKey = '__pausemenuViews#' + (bootCount + 1); // per-boot key: a later boot's restore() must never blind an earlier live boot
-  globalThis[viewsKey] = views;
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    requestAnimationFrame: globalThis.requestAnimationFrame,
-    fetch: globalThis.fetch,
-    localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
-    performance: Object.getOwnPropertyDescriptor(globalThis, 'performance'),
-    consoleError: console.error,
-    audio: globalThis.__menuAudio,
-    voices: globalThis.__menuVoices,
-    audioContext: globalThis.AudioContext,
-  };
-  globalThis.document = documentStub;
-  globalThis.window = { addEventListener: (type, fn) => { handlers.window[type] = fn; } };
-  globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
-  Object.defineProperty(globalThis, 'localStorage', { value: storageStub, configurable: true });
-  globalThis.performance = { now: () => clock.t }; // pickerhud:93 virtual clock
-  globalThis.fetch = () => Promise.reject(new Error('no track in the sandbox'));
-  if (audioCtx) globalThis.AudioContext = makeMenuContext(); // review F5
-  console.error = () => {};
-
-  const renderStubHref = 'data:text/javascript,' + encodeURIComponent([
-    'export function createScene() {',
-    '  return { render(view) { globalThis["' + viewsKey + '"].push(view); } };',
-    '}',
-  ].join('\n'));
-  const fileHref = name => pathToFileURL(resolve(jsDir, name)).href;
-  // Wrapper over the REAL js/audio.js (bootLifecycleShell:419-434 shape) —
-  // the stash lets the legs read getVolume()/isMuted() as the LIVE source of
-  // truth, and the voice log is the launch WITNESS: shell.js:384 fires
-  // handleEvent('jump') on exactly the grounded->airborne launches the AC3
-  // lock forbids, while resumeRun's canonical lead-in hop (game.js:96-100,
-  // a CONSTRUCTED airborne state) emits nothing. With jumpVelocity(hold) =
-  // 350+500*hold, lead-in 0.1s -> 400, a 50ms mutant jump -> 375: vy alone
-  // cannot distinguish them — the voice channel can, and it is physics-free.
-  const audioWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    'import * as real from "' + fileHref('audio.js') + '";',
-    'export function createAudio(opts) {',
-    '  const a = real.createAudio(opts);',
-    '  const voices = [];',
-    '  const w = Object.assign({}, a, {',
-    '    handleEvent(name) { voices.push(name); return a.handleEvent(name); },',
-    '  });',
-    '  globalThis.__menuAudio = w;',
-    '  globalThis.__menuVoices = voices;',
-    '  return w;',
-    '}',
-    'export const loadSettings = real.loadSettings;',
-    'export const saveSettings = real.saveSettings;',
-  ].join('\n'));
-  // Offer-stripping tickRun wrapper (the pickerhud __phScript inverse, :98-110
-  // family): the ~300-frame lock battery would otherwise freeze into the 10th-
-  // skip choose status mid-walk — the offer flow is Story 3.x's domain, not
-  // this AC's, and a choose freeze would silently end every resume window.
-  const gameWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    `export * from "${fileHref('game.js')}";`,
-    'import * as real from "' + fileHref('game.js') + '";',
-    'export const tickRun = (...a) => {',
-    '  const o = real.tickRun(...a);',
-    '  return o.run.status === "choose"',
-    '    ? { ...o, run: { ...o.run, status: "running", offer: null } } : o;',
-    '};',
-  ].join('\n'));
-
-  const src = (await readFile(resolve(jsDir, 'shell.js'), 'utf8'))
-    .replace(/from\s*['"]\.\/render3d\.js['"]/, `from '${renderStubHref}'`)
-    .replace(/from\s*['"]\.\/game\.js['"]/, `from '${gameWrapHref}'`)
-    .replace(/from\s*['"]\.\/rope\.js['"]/, `from '${fileHref('rope.js')}'`)
-    .replace(/from\s*['"]\.\/player\.js['"]/, `from '${fileHref('player.js')}'`)
-    .replace(/import\(\s*['"]\.\/audio\.js['"]\s*\)/, `import('${audioWrapHref}')`);
-
-  await import('data:text/javascript,' + encodeURIComponent(`${src}\n//pausemenu-boot ${++bootCount}`));
-  await settle(); // the shell's dynamic audio import lands one microtask later
-
-  const wrap = hudRoot.children.find(el => el.className.startsWith('hud-menu'));
+// The D1 witness: the .hud-menu subtree under #hud, located on the trailing
+// append and destructured to the seven nodes the legs drive.
+function menuNodes(root) {
+  const wrap = root.children.find(el => el.className.startsWith('hud-menu'));
   assert.ok(wrap, 'the boot built the .hud-menu node under #hud (D1 trailing append)');
-  const row = wrap.children[1];
-  const env = {
-    frames, handlers, hud: hudEls, canvas, hudRoot, created, views, map, clock, document: documentStub,
+  const [resume, row, mute] = wrap.children;
+  return { wrap, resume, row, mute, down: row.children[0], read: row.children[1], up: row.children[2] };
+}
+
+async function bootMenuShell({ storageMap, dom = true, audioCtx = false } = {}) {
+  const map = storageMap ?? new Map();
+  const viewsKey = '__pausemenuViews#' + (++bootCount); // per-boot: a later boot's restore() must never blind an earlier live boot
+  const stage = installStage({
+    storage: mapStorage(map), clock: installVirtualClock(), errors: captureConsoleErrors(),
+    viewsKey, createElement: dom, insertBefore: true, spans: true, hudRoot: true,
+    fetchReject: true, stash: ['__menuAudio', '__menuVoices'],
+    ...(audioCtx ? { AudioContextStub: makeMenuContext() } : {}),
+  });
+  if (dom) stage.hud['hud-ropes'] = stage.mk('span');
+  // Seed index.html's real #hud children (ceilingmarker:64-67): the insertBefore
+  // slot resolves by identity; the menu's append stays ONE new last child.
+  for (const el of [stage.hud['hud-score'], stage.hud['hud-best'], stage.hud['hud-ropes'],
+    stage.hud['hud-prompt'], stage.hud['hud-owned']]) if (el) stage.hudRoot.appendChild(el);
+  await bootModule(await shellSrc({
+    render3d: makeRenderStubHref({ viewsKey }), game: makeGameWrapHref(fileHref('game.js'), MENU_GAME_WRAP),
+    audio: makeAudioWrapHref(fileHref('audio.js'), MENU_AUDIO_WRAP),
+  }), 'pausemenu-boot');
+  await settle(); // the shell's dynamic audio import lands one microtask later
+  return {
+    ...stage, map, st: { t: 0 }, audio: () => globalThis.__menuAudio,
     get voices() { return globalThis.__menuVoices ?? []; },
-    menu: {
-      wrap, resume: wrap.children[0], row, mute: wrap.children[2],
-      down: row.children[0], read: row.children[1], up: row.children[2],
-    },
-    st: { t: 0 },
-    audio: () => globalThis.__menuAudio,
-    restore() {
-      globalThis.document = saved.document;
-      globalThis.window = saved.window;
-      globalThis.requestAnimationFrame = saved.requestAnimationFrame;
-      globalThis.fetch = saved.fetch;
-      if (saved.localStorage) Object.defineProperty(globalThis, 'localStorage', saved.localStorage);
-      else delete globalThis.localStorage;
-      if (saved.performance) Object.defineProperty(globalThis, 'performance', saved.performance);
-      else delete globalThis.performance;
-      console.error = saved.consoleError;
-      if (saved.audio === undefined) delete globalThis.__menuAudio;
-      else globalThis.__menuAudio = saved.audio;
-      if (saved.voices === undefined) delete globalThis.__menuVoices;
-      else globalThis.__menuVoices = saved.voices;
-      delete globalThis[viewsKey];
-      if (saved.audioContext === undefined) delete globalThis.AudioContext;
-      else globalThis.AudioContext = saved.audioContext;
-    },
+    menu: menuNodes(stage.hudRoot),
   };
-  return env;
 }
 
 // ---------- pumps (the shared tick idiom, audiolifecycle:462-465 donor) ----------
@@ -728,4 +627,12 @@ test('L5 factory reuse shape: the setupMenu source slice over a DETACHED stub ro
   menu.render();
   assert.equal(wrap.className, 'hud-menu hidden', 'visibility is re-rendered, never a second source of truth (D3)');
   assert.equal(menu.render.length, 0, 'the factory closes over NOTHING else — render takes no arguments');
+});
+
+test('pausemenu: boot logged no console.error', async () => {
+  const env = await bootMenuShell();
+  try {
+    assert.deepEqual(env.errors, [],
+      'the consolidated boot surfaced nothing through the console.error capture (chore error leg)');
+  } finally { env.restore(); }
 });

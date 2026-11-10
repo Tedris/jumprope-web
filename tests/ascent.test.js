@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
+import {
+  bootModule, captureConsoleErrors, fileHref, installStage, installVirtualClock,
+  makeGameWrapHref, makeRenderStubHref, mapStorage, settle, shellSrc,
+} from './support/shell-harness.js';
 import * as game from '../js/game.js';
 import { AREAS } from '../js/areas.js';
 import { freshEffects } from '../js/upgrades.js';
@@ -14,12 +15,6 @@ import { jump, createPlayer, updatePlayer } from '../js/player.js';
 // the card records; the ONE explicit table is the ladder contract leg itself
 // (ALT_PER_POINT-precedent: the table's own contract is pinned, every rig
 // derives from AREAS). Namespace game import (startrun idiom).
-
-const testsDir = dirname(fileURLToPath(import.meta.url));
-const jsDir = resolve(testsDir, '..', 'js');
-const fileHref = name => pathToFileURL(resolve(jsDir, name)).href;
-const settle = () => new Promise(r => setTimeout(r, 0));
-let bootCount = 0;
 
 const STEP = 1 / 120;
 const DT = 1 / 60;
@@ -286,94 +281,37 @@ test('a 1000-tick headless run never ascends: the new check perturbs nothing', (
 // ---------- shell legs (FOURTH bootShell fork — sanctioned by story 2.2;
 // extraction is a separate chore per deferred-work.md:44) ----------
 
+const ASC_GAME_WRAP = `
+  export const tickRun = (...args) => {
+    const s = globalThis.__ascScript;
+    const out = real.tickRun(...args);
+    if (s.winAt !== null && !s.done) {
+      s.ticks += 1;
+      if (s.ticks >= s.winAt) {
+        s.done = true;
+        return { ...out, tripped: false,
+          run: { ...out.run, status: "over", outcome: "summit", altitude: s.winAlt } };
+      }
+    }
+    return out;
+  };`;
+
 // The tickRun wrapper stamps a summit-win record the real state machine also
 // reaches (altitude fixed so the storage leg pins the SOURCE value).
 async function bootAscentShell({ preSeed = {} } = {}) {
-  const frames = [];
-  const handlers = { window: {}, canvas: {} };
-  const hud = {
-    'hud-score': { textContent: '' },
-    'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' },
-    'hud-owned': { textContent: '' },
-  };
-  const canvas = {
-    width: 0, height: 0, style: {},
-    addEventListener: (type, fn) => { handlers.canvas[type] = fn; },
-  };
-  const errors = [];
-  const views = [];
-  globalThis.__shellTestViews = views;
-
   const map = new Map(Object.entries(preSeed));
-  const storageStub = {
-    getItem: k => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => { map.set(k, v); },
-  };
   const script = { winAt: null, winAlt: 123.4, ticks: 0, done: false };
-  globalThis.__ascScript = script;
-
-  const clock = { t: 0 };
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    requestAnimationFrame: globalThis.requestAnimationFrame,
-    localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
-    performance: Object.getOwnPropertyDescriptor(globalThis, 'performance'),
-    consoleError: console.error,
-  };
-  globalThis.document = { hidden: false, getElementById: id => (id === 'game' ? canvas : hud[id]) };
-  globalThis.window = {
-    addEventListener: (type, fn) => { handlers.window[type] = fn; },
-    innerWidth: 480, innerHeight: 640,
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
-  };
-  globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
-  Object.defineProperty(globalThis, 'localStorage', { value: storageStub, configurable: true });
-  globalThis.performance = { now: () => clock.t };
-  console.error = (...args) => { errors.push(args); };
-
-  const gameWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    `export * from "${fileHref('game.js')}";`,
-    'import * as real from "' + fileHref('game.js') + '";',
-    'export const tickRun = (...args) => {',
-    '  const s = globalThis.__ascScript;',
-    '  const out = real.tickRun(...args);',
-    '  if (s.winAt !== null && !s.done) {',
-    '    s.ticks += 1;',
-    '    if (s.ticks >= s.winAt) {',
-    '      s.done = true;',
-    '      return { ...out, tripped: false,',
-    '        run: { ...out.run, status: "over", outcome: "summit", altitude: s.winAlt } };',
-    '    }',
-    '  }',
-    '  return out;',
-    '};',
-  ].join('\n'));
-
-  const src = (await readFile(resolve(jsDir, 'shell.js'), 'utf8'))
-    .replace(/from\s*['"]\.\/render3d\.js['"]/, `from 'data:text/javascript,${encodeURIComponent(
-      'export function createScene() { return { render(view) { globalThis.__shellTestViews.push(view); } }; }')}'`)
-    .replace(/from\s*['"]\.\/game\.js['"]/, `from '${gameWrapHref}'`)
-    .replace(/from\s*['"]\.\/rope\.js['"]/, `from '${fileHref('rope.js')}'`)
-    .replace(/from\s*['"]\.\/player\.js['"]/, `from '${fileHref('player.js')}'`);
-
-  await import('data:text/javascript,' + encodeURIComponent(`${src}\n//asc-boot ${++bootCount}`));
+  const stage = installStage({
+    storage: mapStorage(map),
+    clock: installVirtualClock(), errors: captureConsoleErrors(), metrics: true,
+    globals: { __ascScript: script },
+  });
+  await bootModule(await shellSrc({
+    render3d: makeRenderStubHref(),
+    game: makeGameWrapHref(fileHref('game.js'), ASC_GAME_WRAP),
+  }), 'asc-boot');
   await settle(); // the (failing, caught) dynamic audio import lands here
-
-  const restore = () => {
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.requestAnimationFrame = saved.requestAnimationFrame;
-    if (saved.localStorage) Object.defineProperty(globalThis, 'localStorage', saved.localStorage);
-    else delete globalThis.localStorage;
-    if (saved.performance) Object.defineProperty(globalThis, 'performance', saved.performance);
-    else delete globalThis.performance;
-    delete globalThis.__ascScript;
-    delete globalThis.__shellTestViews;
-    console.error = saved.consoleError;
-  };
-  return { frames, handlers, hud, views, map, script, clock, errors, restore };
+  return { ...stage, map, script };
 }
 
 function tick(env, ms = 50) {
@@ -416,5 +354,13 @@ test('shell: the summit win saves best-altitude on the win tick, shows no Missed
     assert.equal(r.outcome, null);
     assert.equal(env.map.get('jumprope-best'), String(Math.round(env.script.winAlt)),
       'the restart-site Math.max re-save is idempotent');
+  } finally { env.restore(); }
+});
+
+test('ascent: boot logged no console.error', async () => {
+  const env = await bootAscentShell();
+  try {
+    assert.deepEqual(env.errors, [],
+      'the consolidated boot surfaced nothing through the console.error capture (chore error leg)');
   } finally { env.restore(); }
 });

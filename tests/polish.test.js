@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import {
+  bootModule, captureConsoleErrors, fileHref, installStage, installVirtualClock,
+  makeAudioWrapHref, makeRenderStubHref, mapStorage, settle, shellSrc,
+} from './support/shell-harness.js';
 import { START_PHASE } from '../js/game.js';
 
 // Plan 05-01 (UI-01): the pause/resume lifecycle over the REAL js/shell.js,
@@ -86,139 +90,38 @@ function makeAudioContext() {
   return ctx;
 }
 
-const settle = () => new Promise(r => setTimeout(r, 0));
-
-let bootCount = 0;
+// Wrapper over the REAL js/audio.js: call log; the suspend leg optional-chains
+// a.suspend?.() so the boot never depends on the shipped surface carrying it.
+const POLISH_AUDIO_WRAP = `
+  const log = globalThis.__polishAudio;
+  return Object.assign({}, a, {
+    handleEvent(name) { log.voices.push(name); return a.handleEvent(name); },
+    gesture(...args) { log.gestures++; return a.gesture(...args); },
+    suspend(...args) { log.suspends++; return a.suspend?.(...args); },
+  });`;
 
 async function bootPolishShell() {
-  const frames = [];
-  const handlers = { window: {}, canvas: {} };
-  const hud = {
-    'hud-score': { textContent: '' },
-    'hud-best': { textContent: '' },
-    'hud-prompt': { textContent: '' },
-    'hud-owned': { textContent: '' }
-  };
-  const canvas = {
-    width: 0,
-    height: 0,
-    style: {},
-    addEventListener: (type, fn) => { handlers.canvas[type] = fn; }
-  };
-  const documentStub = {
-    hidden: false,
-    getElementById: id => (id === 'game' ? canvas : hud[id])
-  };
-  const views = [];
-  globalThis.__shellTestViews = views;
-  // UI-02 (D-06): stubbed MediaQueryList with a test-visible emit hook
-  // (RESEARCH harness shape) — mq.matches = v; mq.listeners.forEach(...)
-  const mq = {
-    matches: false,
-    listeners: [],
-    addEventListener(type, fn) { if (type === 'change') this.listeners.push(fn); },
-  };
-  // Wrapper-visible call log: every gesture()/suspend()/handleEvent() the
-  // shell routes through the audio seam, plus the live ctx stubs.
   const log = { voices: [], suspends: 0, gestures: 0 };
-  globalThis.__polishAudio = log;
   const contexts = [];
   const map = new Map();
-  const storageStub = {
-    getItem: k => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => { map.set(k, v); },
-  };
-
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    requestAnimationFrame: globalThis.requestAnimationFrame,
-    AudioContext: globalThis.AudioContext,
-    fetch: globalThis.fetch,
-    localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
-    consoleError: console.error
-  };
-  globalThis.document = documentStub;
-  // UI-03: the window metrics are settable so the resize legs can drive the
-  // band math through the real listener; the defaults mirror the windowSize()
-  // 480×640 fallback, so every existing leg keeps booting into the
-  // letterbox-free passthrough.
-  const windowStub = {
-    addEventListener: (type, fn) => { handlers.window[type] = fn; },
-    innerWidth: 480,
-    innerHeight: 640,
-    // UI-02: the reduced-motion query resolves to the live mq stub; every
-    // other query is a dead false/false pair.
+  // UI-02 (D-06): stubbed MediaQueryList with a test-visible emit hook.
+  const mq = { matches: false, listeners: [], addEventListener(t, fn) { if (t === 'change') this.listeners.push(fn); } };
+  const stage = installStage({
+    storage: mapStorage(map), clock: installVirtualClock(), errors: captureConsoleErrors(),
+    metrics: true, fetchReject: true, globals: { __polishAudio: log },
     matchMedia: q => (q === '(prefers-reduced-motion: reduce)'
-      ? mq
-      : { matches: false, addEventListener() {} }),
-  };
-  globalThis.window = windowStub;
-  globalThis.requestAnimationFrame = cb => { frames.push(cb); return frames.length; };
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: storageStub, configurable: true
+      ? mq : { matches: false, addEventListener() {} }),
+    AudioContextStub: function StubAudioContext() { const ctx = makeAudioContext(); contexts.push(ctx); return ctx; },
   });
-  globalThis.AudioContext = function StubAudioContext() {
-    const ctx = makeAudioContext();
-    contexts.push(ctx);
-    return ctx;
-  };
-  globalThis.fetch = () => Promise.reject(new Error('no track in the sandbox'));
-  console.error = () => {};
-
-  const renderStubHref = 'data:text/javascript,' + encodeURIComponent([
-    'export function createScene() {',
-    '  return {',
-    '    render(view) {',
-    '      globalThis.__shellTestViews.push(view);',
-    '    }',
-    '  };',
-    '}'
-  ].join('\n'));
-
-  const fileHref = name => pathToFileURL(resolve(jsDir, name)).href;
-  // Wrapper over the REAL js/audio.js: same surface, plus the call log. The
-  // suspend leg optional-chains a.suspend?.() so the boot never depends on
-  // the shipped surface already carrying it.
-  const audioWrapHref = 'data:text/javascript,' + encodeURIComponent([
-    'import * as real from "' + fileHref('audio.js') + '";',
-    'export function createAudio(opts) {',
-    '  const a = real.createAudio(opts);',
-    '  const log = globalThis.__polishAudio;',
-    '  return Object.assign({}, a, {',
-    '    handleEvent(name) { log.voices.push(name); return a.handleEvent(name); },',
-    '    gesture(...args) { log.gestures++; return a.gesture(...args); },',
-    '    suspend(...args) { log.suspends++; return a.suspend?.(...args); },',
-    '  });',
-    '}',
-    'export const loadSettings = real.loadSettings;',
-    'export const saveSettings = real.saveSettings;',
-  ].join('\n'));
-
-  const src = (await readFile(resolve(jsDir, 'shell.js'), 'utf8'))
-    .replace(/from\s*['"]\.\/render3d\.js['"]/, `from '${renderStubHref}'`)
-    .replace(/from\s*['"]\.\/game\.js['"]/, `from '${fileHref('game.js')}'`)
-    .replace(/from\s*['"]\.\/rope\.js['"]/, `from '${fileHref('rope.js')}'`)
-    .replace(/from\s*['"]\.\/player\.js['"]/, `from '${fileHref('player.js')}'`)
-    .replace(/import\(\s*['"]\.\/audio\.js['"]\s*\)/, `import('${audioWrapHref}')`);
-
-  await import('data:text/javascript,' + encodeURIComponent(`${src}\n//polish-boot ${++bootCount}`));
+  await bootModule(await shellSrc({
+    render3d: makeRenderStubHref(),
+    game: fileHref('game.js'),
+    // Wrapper over the REAL js/audio.js; suspend optional-chains so the boot
+    // never depends on the shipped surface already carrying it.
+    audio: makeAudioWrapHref(fileHref('audio.js'), POLISH_AUDIO_WRAP),
+  }), 'polish-boot');
   await settle(); // the shell's dynamic audio import lands one microtask later
-
-  const restore = () => {
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.requestAnimationFrame = saved.requestAnimationFrame;
-    globalThis.AudioContext = saved.AudioContext;
-    globalThis.fetch = saved.fetch;
-    if (saved.localStorage) {
-      Object.defineProperty(globalThis, 'localStorage', saved.localStorage);
-    } else {
-      delete globalThis.localStorage;
-    }
-    console.error = saved.consoleError;
-  };
-  return { frames, handlers, hud, views, log, contexts, mq, canvas, window: windowStub, document: documentStub, map, restore };
+  return { ...stage, log, contexts, mq, map };
 }
 
 // ---------- pumping helpers (pickflow / bootAudioShell idiom) ----------
@@ -964,6 +867,16 @@ test('tab hidden during a sub-confirm card hold cancels — no auto-confirm on r
     assert.ok(!prompt.includes('['), 'the fill cue is gone — the hidden leg cancelled the hold');
     assert.ok(!env.log.voices.includes('pick'), 'the audio log shows no pick event');
     assert.match(prompt, /^> /m, 'the offer prompt still lists the offer');
+  } finally {
+    env.restore();
+  }
+});
+
+test('polish: boot logged no console.error', async () => {
+  const env = await bootPolishShell();
+  try {
+    assert.deepEqual(env.errors, [],
+      'the consolidated boot surfaced nothing through the console.error capture (chore error leg)');
   } finally {
     env.restore();
   }
