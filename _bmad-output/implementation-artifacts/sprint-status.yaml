@@ -97,6 +97,6 @@ development_status:
   epic-6: in-progress
   6-1-policy-bot-summit-gate-the-balance-master-dial: done # dev 2026-11-10: harness N-window+build-seed+iFrames-parity+run-fold, summit-gate.js batch runner, summitgate.test.js, R1/R2/R3 re-contracts (2 story amendments be11c9f/e2a23e2); review 2026-11-10: 6 patches (BH-F1 cross-check leg, F2/F3/F8, A61-1/A61-5), 9 dismissals, 1 deferral (BH-F6 → 6.3); gate 561/561
   6-2-real-tunables-retire-the-placeholders: done # dev+review 2026-11-10: retune V1 (ALT 2.5, ceilings 250/600/900/1350/2100, periods 1.00/.95/.88/.82/.76 — gate 0.142 in, every-shape medSum 290.8/279.9/297.2 s PRIMARY), cadence check-gap + offercadence witness, GRAVITY/CLEAR_MIN_HEIGHT exports, R1-R4 + A1, amendments C1-C3; review: 7 patches, 1 INFO, 0 deferrals, 3 layers agreed on the batch; gate 565/565
-  6-3-offer-pacing-verdict-card-09: backlog
+  6-3-offer-pacing-verdict-card-09: ready-for-dev # created 2026-11-10 (ACs epics.md:923-939): instrumented two-arm offer-pacing sweep (summit-gate offeredTally/firstTally/offerEvents + finalRopes split, R1/A1), CARD-09 verdict per pinned decision rule, PRD row + C1 census appends pre-authorized; create probes: arm A = shipped batch bit-exact, escalated %6-after-30 0.0333 out-low → close-limb evidence
   6-4-docs-provenance-pass: backlog
   epic-6-retrospective: optional

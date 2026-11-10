@@ -1,0 +1,183 @@
+---
+baseline_commit: 5541d7c448cbaa688ce3b0bbb3798f036e8fa201
+---
+
+# Story 6.3: Offer pacing verdict (CARD-09)
+
+Status: ready-for-dev
+
+*Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-10).*
+
+## Story
+
+As the designer,
+I want a data-backed verdict on escalating offer pacing,
+So that CARD-09 is either promoted or closed with evidence, not vibes.
+
+## Acceptance Criteria
+
+1. **Instrumented comparison sweep.** Given gate runs instrumented for offer frequency, card pick rates, and build-shape diversity, when sweeps run at current pacing (every 10th skip, 2→3 after skip 30) and at one escalated variant, then the comparison report shows dead-card incidence (any card picked <30% when offered) and build legibility proxies per variant. [epics.md:931-933]
+2. **PRD verdict recorded.** Given the completed verdict, when it is written up, then the PRD Open Items table is updated — CARD-09 promoted into the FR set (with a follow-up change), or explicitly closed with the evidence cited. [epics.md:935-937]
+3. **Shipped pacing untouched.** And the current v1 pacing remains the shipped behavior regardless — this story changes pacing only via a follow-up if promoted (FR10 protected). [epics.md:939]
+
+**And** — per the ledger (embedded verbatim below): the offer-PACING verdict half of the cadence/N-scaling item lands here (:11-12, PARTIAL by 6.2 → owner 6.3); the "offer frequency is the difficulty thermostat" half of the extra-rope item gets its number here (:98-101, "the instrument now exists, the number does not"); the `terminalRopes` weak-counter fix (BH-F6, :238) lands here with its live consumers; the seed-sensitivity rule stands and the surface stays open (:239-240); the owned-cap buy-back class is DISPOSITIONED here — decide or re-point with reason (:147-150, :233); the rising-edge conditional is untouched (no product code in this story; 6.2's revisit stamp at :8-9 stands).
+
+### Decided interpretations (do not re-litigate)
+
+1. **Lanes and files. ZERO product code.** `js/` is read-only in this story — pacing lives at `js/upgrades.js:105-112` (`shouldOfferUpgrade` `skips % 10`, `offerCount` `skips > 30 ? 3 : 2`) consumed at the offer site `js/game.js:199-211` (state args `{ ropes: ropeCount, charged }` at `:202-203`), and per AC3 it MUST NOT change. Tests: `tests/support/summit-gate.js` gets the Decided-3 instrumentation (support file, written authorization below — this story is the first existing-file touch since 6.1 created it); `tests/summitgate.test.js` gets re-contract R1 (two regions) + leg-append A1 — nothing else in it, and NOTHING in any other `tests/*.test.js`, changes. Docs: the PRD CARD-09 row (`_bmad-output/planning-artifacts/prd.md:91`), this story, `deferred-work.md` stamps, `sprint-status.yaml`. Census: the C1 list-only appends in `tests/ceilingbreak.test.js` §6 + `tests/summitapproach.test.js` §4.3 (below) make the story md and prd.md legal changed-paths. Pacing variants are swept ONLY in a /tmp sandbox with patched `js/` copies — never in the repo.
+
+2. **"The one escalated variant" = %6 after skip 30 (CARD-09 literal).** Definition: keep v1 exactly (`% 10`, 2→3 at 30) and ESCALATE the cadence mid-run: `shouldOfferUpgrade` becomes `skips > 0 && (skips > 30 ? skips % 6 === 0 : skips % 10 === 0)` in a sandbox copy of `js/upgrades.js`. `offerCount` stays 2→3 (width is not pacing; frontier-63's `cnt4` shows width-escalation goes out-HIGH — 0.250 — a different lever, out of scope). This is the AC's escalated variant because CARD-09 is "escalating offer pacing" (PRD :91) — an escalation LAYERS on the FR10 floor; the uniform cad8/cad6/cad4 variants from the parent probe REPLACE the every-10th law (pacing-change candidates, not escalations) and are already measured in `/tmp/e62/frontier-63.md` — cite them as context, do not re-sweep them into the AC's two arms. Arms: **A = current shipped pacing** (repo js, no patch — must reproduce the 6.2 final batch bit-exact), **B = escalated**. Each arm × 3 shapes × seeds 0..39 × 43,200 ticks, recorded TWICE (determinism deep-equal). The escalation patch is applied to `js/upgrades.js` ONLY, and only after a blanket `cp -f /home/ed/jumprope-web/js/*.js <sandbox>/js/` reset — the frontier-63 law: a missed `upgrades.js` reset once produced a bogus non-monotone row; reset ALL js files before EVERY candidate, patch second.
+
+3. **Instrumentation contract (the AC's "instrumented gate runs") — field shapes + assertion-free rule.** In `tests/support/summit-gate.js` `runSeed`: at the choose-resolution site (before `pickHeuristic`), count the offer — the choose state pauses the sim until resolved (tickRun `break`s at `:209`), so this site sees EVERY offer exactly once. New returns: `offers` (int, choose count this run), `offered` (map cardId→offer count), `firsts` (map cardId→count of offers where the card sits at `offer[0]`), and `finalRopes: clampRopes(run.ropes)` REPLACING `terminalRopes`. New per-shape aggregates (same merge idiom as `picksTally`): `offeredTally`, `firstTally`, `offerEvents` (sum of `offers`), and `finalRopes: { [outcome]: { [ropes]: count } }` — outcome ∈ `summit|tripped|horizon`, outer keys only for outcomes that occurred, inner a ropes→count histogram. `terminalRopes` is DELETED (rename+split, Decided 4); every other key of every report level is byte-for-byte unchanged, `gateFailureReport` and the top-level `verdict`/`rate`/`tunables` law stay as-is, and `runs[]` entry keys are unchanged. **Assertion-free report rule:** the support module COUNTS and NEVER JUDGES — no rates, no 30% threshold, no dead-card lists, no verdict strings, no `Math.min` of ratios inside `summit-gate.js`; every derived metric (below) is computed by the sweep scripts from the raw fields. Determinism, POJO returns, no `console.*`, relative-imports-only: all 6.1 header laws still hold.
+   **Denominator law:** pick-rate-when-offered(card, shape) = `picksTally[card] / offeredTally[card]`, batch-wide over the shape's 40 runs; dead(card, shape) := `offeredTally[card] > 0 ∧ ratio < 0.30` (AC threshold). `offeredTally[card] === 0` → report **never-offered** (an availability finding, NOT a dead card). Variant-aggregate tallies = the three shapes' tallies merged; report per-shape AND aggregate.
+
+4. **`terminalRopes` → `finalRopes`, outcome-split (ledger :238, BH-F6 — the report-shape fix this story owns).** The flat histogram measured the STRIP, not the build: tripped runs die at 1 rope by construction (6.2 batch {1:36,…}), so shapes looked identical. The outcome split makes the instrument say what it knows: tripped `{1:32}` (stripped-out wrecks) vs summit `{1:6}` (won-at-one — a build never HELD into the summit) vs horizon `{1:1, 2:1}` (the only live multi-rope builds). Rename, don't dual-report: keeping the weak field alive would leave a misleading consumer in the report shape (clean-cutover law). The split exposes the deeper finding (build-shape diversity is largely ILLUSORY under shipped physics — five-rope builds self-strip toward the bare trajectory; ledger :238's own framing) — that IS an AC-1 build-shape-diversity read, reportable verbatim.
+
+5. **Build-legibility proxies + the verdict decision rule (evidence-decided, not a user question).** Per variant × shape, the report table derives exactly five proxies from the raw fields — (a) **dead-card list** (Decided 3 law; AC-named metric); (b) **offerCoverage** = distinct ids in `offeredTally` ÷ `CARDS.length` (record-derived, no literal 12); (c) **topPickShare** = max(picksTally)/Σ(picksTally) — dominance proxy: does one card swallow the build space; (d) **finalRopes split** (Decided 4) — real-build-path diversity; (e) **coalescence** — whether shape tallies are identical/near-identical (report the fact + the strip-law reading, e.g. bare vs ropeHeavy `offeredTally` — probe: NEAR-identical at 40 seeds, not bit-identical; the 8-seed parent probe saw exact identity, so do NOT claim exact stream coalescence at full batch). **Promotion rule:** PROMOTE CARD-09 only if arm B is (i) band verdict `in` at the shipped tunables AND (ii) a strict legibility gain: Σ-shapes dead-card count LOWER than arm A, no shape ≥ 2 worse, coverage not lower anywhere. Anything else ⇒ **CLOSE with evidence** — the out-of-band limb alone decides it, because promoting a frequency escalation whose shipped experience violates NFR9's band is promoting a regression (the AC3 clause protects v1 either way, so the verdict is about the FR set, not this repo). Create-round measurement already lands squarely on the close limb (B: 0.0333 `out-low`, dead-count 5/5/5 → 4/4/6 — noise across the threshold, zero coverage/dominance gain); the dev round re-measures and the measurement governs. Write the PRD row as CLOSED with the cited numbers ONLY IF the dev re-measurement confirms; if B lands `in` band (would contradict every probe — STOP and report, don't promote on a surprise).
+   **Honest reading caveat (must appear in the verdict write-up):** under the Decided-2 policy bot (picks `offer[0]` unless `extrarope` offered ∧ live ropes < 3 — 6.1 Decided 2), pick-when-offered measures DRAW-ORDER-AND-OVERRIDE, not card desirability; a card is "dead" under this instrument iff it rarely lands first. This is the AC's metric run on the gate's documented competence model — state that in the verdict, and use `firstTally` to separate the two causes: `picks[id] ≤ firstTally[id]` for every id ≠ `extrarope` (A1 legs it), so "never picked first ≠ never offered" is a draw/availability story (rarity weights + availability filter), and the ONLY place bot preference overrides order is the `extrarope` rule — whose 100% pick-rate-when-offered is mechanical (it is offered only under 3 held, where the bot always takes it), not an enjoyment datum.
+
+6. **Owned-cap buy-back class (ledger :147-150, :233) — DISPOSITION: explicit re-point with reason + one measured fact.** The class (Spare Rope cap 4 / Steel Cord cap 2 / Second Wind cap 2 lifetime-owned lock hiding the card even after strips/charge-spend) is stamped "Story 6.1/6.3 balance decision"; 6.1 didn't take it (its scope was the instrument), so it lands here. This story changes NO product code (AC3 + Decided 1), and recovery-via-repurchase vs cap-as-lifetime-purchases is a `js/upgrades.js`/`js/game.js` behavior decision needing its own deal-site tests — a verdict story cannot honestly ship it. Re-point: **the decision half → post-v2 correct-course** (smallest honest owner; it is a shipped-behavior change with an economy dial, not a docs item); **the documentation half → Story 6.4** records the wall as as-built fact either way (its pass owns exactly that). Measured input from THIS story's arm A (put the number in the stamp): `extrarope` picks/run ≈ 135/40 ≈ 3.4 against cap 4 (arm B 142/40 ≈ 3.6) — the bot-side build space brushes the Spare-Rope wall but rarely hits it; `reinforce` picks/run ≈ 1.05 vs cap 2 — the class is reachable-but-marginal for the bot's build patterns, and invisible-to-recovery (the bot never models "buy back health") is exactly why the bot cannot decide this class.
+
+7. **Sweep mechanics + budget.** Sandbox `/tmp/e63` is pre-staged with the instrumented fork + `run63.mjs` (arm switch: `{name, escalate}`); rebuild freely — the create-round Debug-Log tables are the reproduction target. Each full arm batch ~2 s on this box (`bun`), 4 processes total (2 arms × 2 determinism runs). The SUITE cost is ~0 s: A1 rides `summitgate.test.js`'s ONE memoized lazy batch (`:33-36`) per the 6.2 A1 append precedent; R1 edits existing legs in place. Baseline suite **565/565 @ 8.56 s** @ HEAD `5541d7c`; expect 566 after A1; if wall > ~9.5 s (not expected — one lazy-batch leg cannot cost more than the batch it reuses) name the Decided ladder from 6.2: seeds 40→30→20 first, horizon last, shapes never — but a >0.5 s jump here means a second batch was built somewhere: FIX that first.
+
+8. **Seed honesty + reading laws (ledger :239-240).** New legs carry ZERO seed-specific current-build numerics — the A1 laws are mechanism/structure only (offer-events/pick-order/histogram-sum laws); per-run outcomes and ratios are data for the Debug Log, never assertions. Run the arm-A batch and the final gate; the Debug-Log tables ARE the verdict's evidence base. Reading laws (both probe-verified): (a) `medianRunSecs` near ~300 s is horizon-mass (horizon runs pin EXACTLY at 360.0 s on the 43,200-tick clock) — for pacing reads use `medianSummitSecs` + the T/H/S outcome counts, never medianRun alone; (b) arm A MUST reproduce the 6.2 shipped batch (aggregate 0.142, shapes 0.150/0.150/0.125, medSum 290.8/279.9/297.2) — instrumentation is a pure-read delta, so ANY batch movement means the counting changed behavior or the sandbox js copies are stale: STOP, fix the probe, don't re-annotate the tunables.
+
+9. **Census pre-authorization (learned the hard way in 6.2 — no dev-STOP this time).** The by-tree diff censuses — `tests/summitapproach.test.js` §4.3 (base `2c3e693`) and `tests/ceilingbreak.test.js` §6 (base `5659fd4`) — diff EVERY changed path (plus the porcelain arm, so new/untracked files go red at CREATE) against list-only allow-sets. Verified facts: `deferred-work.md`, `sprint-status.yaml`, `tests/support/summit-gate.js`, `tests/summitgate.test.js` are ALREADY in both allow-sets (no append needed); NO planning-artifacts path is in any allow-set, and `_bmad-output/planning-artifacts/prd.md` is UNCHANGED since both bases (so its edit is what turns those censuses red). Hence **C1 below** and the rule for the record: every planning-doc edit needs a census append; Story 6.4 (epics.md/architecture.md/GDD refresh) will need the same treatment for THREE more planning paths — that lane inherits this finding (see Project Structure Notes).
+
+## Ledger items embedded (every 6.3 owner, deferred-work.md line cites)
+
+**1. Offer-pacing half of the cadence/N-scaling item (deferred-work.md:11-12) — DISPOSITION: verdict rendered (this story); the callout-density sub-half → recorded for the UAT feel lane:**
+> - **Offer cadence + streak escalation scale with rope count** — first offer ≈1.85 revolutions at N=5; `CLOSE! ×N` callouts accumulate N× per revolution. Assigned to Epic 6 (balance pass) by GDD §163-186.
+>   - **PARTIAL by Story 6.2** (2026-11-10): the rope-heavy band half is PAID … The offer-PACING/N-scaling verdict is CARD-09 — **owner Story 6.3** (its instrument shipped in 6.1 …).
+The verdict (this story's sweep + PRD row) is the disposition of the offer-pacing half: measured at rope-heavy builds (shape `ropeHeavy`), both arms, with the strip-law reading of why rope-count scaling collapses toward the bare trajectory. The `CLOSE! ×N` callout-DENSITY half needs ears (callout density under N ropes is a juice/feel question, no batch derives it) — same recorded-for-UAT lane as 6.2's items 4/5; write the split stamp.
+
+**2. The "offer frequency is the difficulty thermostat" half (deferred-work.md:98-101) — DISPOSITION: implement — the number lands here; the thermostat CLAIM lands corrected:**
+> - … the GDD's "offer frequency is the difficulty thermostat" (`gdd.md:229-231`) still has **no number and no owner**.
+>   - **PAID by Story 6.1** (2026-11-10): … The "offer frequency thermostat" half of this item remains open by design: **owner Story 6.3** (CARD-09 verdict — the instrument now exists, the number does not).
+The number: the cadence↔summit-rate table (create round: current 0.1417 `in`; escalated %6-after-30 0.0333 `out-low`; uniform context cad8 0.058 / cad6 0.067 / cad4 0.117 in-band-but-sub-window — `/tmp/e62/frontier-63.md`, dev re-measures the AC's two arms at shipped tunables). The claim as written is WRONG AS A LAW: frequency is a TRIP lever, not a difficulty dial — faster offers → earlier `extrarope` → past-2-ropes strip (6.1 strip law) → MORE deaths and a LOWER summit rate, non-monotone across uniform cadences. Record that with citations (GDD quote lives at `_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md:229-231`; the prose refresh is 6.4's docs lane — leave the GDD untouched here).
+
+**3. `terminalRopes` weak build-shape counter (deferred-work.md:238, review BH-F6) — DISPOSITION: implement (Decided 4: rename+split `finalRopes`, R1 re-contract, A1 laws).** The story text above is BH-F6's prescribed "report-shape change with live 6.3 consumers"; close it.
+
+**4. Seed-sensitivity flake surface (deferred-work.md:239-240) — DISPOSITION: implement the rule (Decided 8); the surface itself STAYS OPEN (unchanged owner: Epic 6 balance pass — 6.3 is its last scheduled sweeper; the note survives for the next one).**
+
+**5. Owned-cap buy-back class (deferred-work.md:147-150 + :233; :233's internal cites ":122/:123/:124" resolve to those drifted lines) — DISPOSITION: re-point with reason + measured fact (Decided 6): decision → post-v2 correct-course; as-built documentation → Story 6.4.**
+> - … Spare Rope / Steel Cord / Second Wind undealable once the owned cap is reached, even after strips/spends … Balance parity … Epic 6 decides recovery-via-repurchase vs. cap-as-lifetime-purchases … **CONFIRMED owner: Story 6.1/6.3 balance decision** (2026-11-09).
+>   - Epic 5 close: "owned-cap buy-back class … **Story 6.1/6.3 balance decision CONFIRMED** (wall stands until 6.x, accepted)".
+The reason (write it in the stamp): the class is a PRODUCT-behavior decision this verdict story is forbidden to ship (zero product code, Decided 1); the bot instrument cannot model the recovery decision it would change (Decided 6's measured fact bounds how much it matters).
+
+**6. Rising-edge crossing blind spots (deferred-work.md:8-9) — DISPOSITION: untouched; 6.2's revisit stamp stands.** This story lands no product code and moves no crossing clock; the "revisit-if-touched" conditional never fires here.
+
+## Re-contract authorizations (written here, per the frozen-test discipline — AGENTS.md:52)
+
+Exactly these existing-file changes are authorized; every other line of every other existing file stays byte-identical, and the diff must show no other existing-file change.
+
+- **R1 — `tests/summitgate.test.js`, TWO regions (the Decided-3/4 report-shape change makes them structurally false, not merely stale):**
+  (a) the shape-keys census line (inside the factory-contract leg, `:67-68`): the sorted-keys literal becomes `['finalRopes', 'firstTally', 'medianRunSecs', 'medianSummitSecs', 'offerEvents', 'offeredTally', 'picksTally', 'rate', 'rngDraws', 'runs']`. Every other line of that leg (`:63-71`) byte-identical.
+  (b) the live-batch `terminalRopes` loop (`:92-95`): becomes the nested read — for each outcome key of `shape.finalRopes`, for each ropes bucket: counts finite and positive, ropes within `MIN_ROPES..MAX_ROPES` — plus one derived law `Σ counts over all outcomes === shape.runs.length`. `picksTally` loop (`:96-99`) and all other legs byte-identical.
+- **A1 — `tests/summitgate.test.js` ONE-LEG APPEND (the 6.2 A1 precedent — reads the file's ONE memoized lazy batch (`:33-36`), ~0 s wall, constructs no second batch):** one leg, "offer instrumentation is mechanism-honest", asserting ONLY laws (Decided 5/8): for each shape — `offerEvents === Σ picksTally` (one pick per choose); `Σ firstTally === offerEvents` (exactly one first-card per offer); `picksTally[id] ≤ firstTally[id]` for every id ≠ `extrarope` (the first-card law + the documented extrarope override); `offeredTally` keys ⊆ `CARDS` ids; `offeredTally[id] ≥ picksTally[id]` (every pick was offered); `finalRopes` sums to `runs.length` (already in R1(b) — do not double-assert; A1 covers the tally laws). No numerics, no thresholds. Every existing line of the file stays byte-identical (the R1 regions excepted).
+- **C1 — census allow-list appends, `tests/ceilingbreak.test.js` §6 + `tests/summitapproach.test.js` §4.3 (list-only, comment-attributed, tripwire stays armed — precedent: 6.2's amendment commit `26e595e`, 6.1/6.2 appends at `:930-950`/`:643-663`):** append exactly two paths per set: `'_bmad-output/implementation-artifacts/6-3-offer-pacing-verdict-card-09.md'` and `'_bmad-output/planning-artifacts/prd.md'` (the FIRST planning-artifacts entry in either set — the comment must say so: authorized by THIS story for the CARD-09 Open-Items row edit, and it pre-authorizes nothing else in `planning-artifacts/`). LAND C1 IN THE FIRST DEV COMMIT: the create commit that landed this story md already trips both censuses + the porcelain arm (exactly 6.2's `f15e8ba`→C1 story — this time the authorization is pre-written, so it is a routine append, not an amendment STOP). Do NOT touch `deferred-work.md`/`sprint-status.yaml`/`summit-gate.js`/`summitgate.test.js` census membership — already listed.
+
+## Tasks
+
+- [ ] Task 0: Kickoff. `time node --test tests/` → expect **565/565, ~8.6 s** at baseline `5541d7c`. Land C1 (first commit, with this story's status bookkeeping), then gate must read 565/565 green again. Reproduce arm A on the instrumented sandbox copy BEFORE instrumenting the repo file: aggregate 0.1417 `in`, shapes 0.150/0.150/0.125, medSum 290.8/279.9/297.2 s, dead lists per the Debug Log table (parent + create probes agree bit-exact; any mismatch = stale js — fix the probe). Record both in the Debug Log.
+- [ ] Task 1: Instrument `tests/support/summit-gate.js` per Decided 3 exactly (runSeed site + aggregates + `finalRopes` split replacing `terminalRopes`; header comment updated), R1 edits to `tests/summitgate.test.js`, append A1. Gate green (expect 566); diff confinement = the two files. **Behavior-neutrality law (Decided 8b): the repo-live batch numbers must be bit-identical to the 6.2 table after instrumentation** — the A1/census legs read them, so the gate itself is the witness.
+- [ ] Task 2: The two-arm sweep (AC1). Sandbox (re)build per Decided 2's reset law; arms A and B × 2 determinism runs each; produce the comparison report: per arm × shape {rate, verdict, T/H/S, medSum (NOT medRun alone — Decided 8a), offerEvents, offersPerRun, offeredTally, picksTally, firstTally, per-card pick-rate-when-offered, dead list, coverage, topPickShare, finalRopes split} + the coalescence reading + the never-offered check. Full tables into the Debug Log; apply the promotion rule (Decided 5) and RE-MEASURE the extrarope/reinforce picks-per-run facts for the Decided-6 stamp.
+- [ ] Task 3: Verdict write-up + docs (AC2). Decide promote/close strictly by the rule (evidence says CLOSED: B `out-low` + zero legibility gain; the write-up carries the bot-bound caveat + the thermostat correction); update `prd.md:91` — CLOSED form: `| CARD-09 | Escalating offer pacing | **CLOSED** — Story 6.3 verdict: rejected at the 6.2 tunables — escalated %6-after-skip-30 measured <rate> <verdict>, <T>/<40> trips, no dead-card/legibility gain (<n>→<m> dead cards); v1 pacing stands (FR10) — see 6-3-offer-pacing-verdict-card-09.md (2026-11-10) |` (fill measured values; PRDrow edit authorized by this text + C1). Stamp `deferred-work.md` items 1-6 with dispositions; add the ledger's new 6.3-review-section note: none — do not invent ledger lines; stamps go under the existing owner bullets.
+- [ ] Task 4: Final gate + confinement (AC3's proof): full `./run_tests.sh` green once; `git diff --stat` shows ONLY: `tests/support/summit-gate.js`, `tests/summitgate.test.js`, the two census files (C1 list-only), `prd.md`, this story, `deferred-work.md`, `sprint-status.yaml`. **Zero `js/` changes — that IS AC3.** Timing pair + arm-A batch ×2 deep-equal witness; Completion Notes + File List + Change Log filled; flip this story's status.
+
+## Dev Notes
+
+### Current state (verified 2026-11-10 @ 5541d7c)
+
+- Suite **565/565 @ 8.56 s** (6.2 review-round gate; gate law < 10 s, zero deps).
+- Instrument: `tests/support/summit-gate.js` — `runSeed` (per-run loop, choose resolution ~`:96-102`, report return `:123-128`), `summitGate` (per-shape aggregation `:150-181`), `gateFailureReport` (`:199-205`). Options steer the post-hoc EVALUATOR only (6.1 Decided 5) — pacing cannot be swept via options, only via patched js copies (Decided 2).
+- Pacing sites (READ-ONLY): `js/upgrades.js:105-112`; offer site `js/game.js:199-211` (state-aware `pickOffers(CARDS, owned, offerCount(skips), rng, {ropes, charged})`, non-empty guard — an exhausted pool never arms `choose`, so `offers` counts only REAL offers). Availability filter: `js/upgrades.js:67-75` (`owned`-cap arm + `stateCap` arm) — this is what `offeredTally` measures underneath (a hidden card gets 0 offers; a dead pick per FR10 never reaches the player).
+- Report consumers: ONLY `tests/summitgate.test.js` (`:68` keys census, `:92-95` terminalRopes, `:96-99` picksTally — grep-proven sole consumer). The two by-tree censuses: `summitapproach.test.js:833-954`, `ceilingbreak.test.js:546-667`.
+- Sandbox `/tmp/e63`: instrumented fork + `run63.mjs` (arm A/B, reset law baked in; per-card ratio tables + coalescence flags emitted). `/tmp/e62/frontier-63.md`: parent's uniform-cadence context table.
+
+### Baseline measurements (create-round probes @ 5541d7c — your kickoff targets)
+
+Full tables in the Debug Log; headlines: arm A = 6.2 shipped batch reproduced bit-exact (instrumentation neutral); arm A dead set = {doublejump, multi, reinforce, window, windup} in ALL three shapes, sorted rates 23.7→29.2% then a clean gap to 30.5% (threshold currently well-separated on these seeds); arm B = 0.0333 `out-low`, 39/40 trips, dead {4,4,6}; coverage 12/12 and topPickShare 0.155 IDENTICAL in both arms; finalRopes split proves the strip-vs-build read (arm A tripped {1:32} vs summit {1:6}).
+
+### Pitfalls
+
+- **Sweeps via patched js ONLY** (6.2 Decided 5 law; `summitGate({options})` never moves the sim) — and **reset ALL js files per candidate** before patching (frontier-63: a missed `upgrades.js` reset produced a bogus row once).
+- `medianRunSecs` ≈ 300 s ≈ horizon-mass (horizon runs pin at exactly 360.0 s) — pace reads use `medianSummitSecs` + T/H/S.
+- `extrarope` 100%-when-offered is MECHANICAL (offered only under 3 held; bot takes it) — never report it as a fun/desirability finding.
+- Bare vs ropeHeavy tallies are near-identical (strip law) — that is coalescence, not a broken shape build; report it as the AC-1 diversity finding it is.
+- The census goes RED the moment this story md exists (porcelain arm). Task 0 lands C1 first; a "why is the gate red at kickoff" moment is expected and already answered.
+- Do NOT "fix" the GDD thermostat prose or `epics.md` — docs refresh is 6.4's lane; this story edits EXACTLY the prd.md CARD-09 row.
+- Never import `tests/*.test.js` in sweep scripts; sweeps live in /tmp; the support module keeps POJO returns, no `console.*`, no judgments (Decided 3's assertion-free rule).
+- 30% threshold edge: if a card sits at 29.x/30.x% the probes say the cluster is separated — if the dev batch MOVES one across (js did not change, so it cannot), the batch is broken, not the threshold: STOP and report the batch diff.
+
+### Precedents to follow
+
+- 6.1/6.2 story discipline: Decided-N with evidence; Debug-Log measurement tables = the handoff; `time node --test` pair; diff-census honesty (`git diff --stat` quoted in the story); A1 lazy-batch leg append; C-series census appends as amendments-with-reason (`26e595e`).
+- Ledger stamp idiom: `**PAID by Story 6.3** (2026-11-10): …` under the existing owner bullet; dispositions that re-point cite the reason and the new owner in the same bullet.
+
+### AC → test/artifact mapping
+
+| AC | Where |
+|---|---|
+| 1 instrumented comparison report | `summit-gate.js` instrumentation + R1/A1 legs (mechanism honesty); Debug-Log two-arm tables (dead-card + 5 proxies per variant) |
+| 2 PRD verdict recorded | `prd.md:91` row edit (C1-censused); this story's verdict section; ledger stamps |
+| 3 pacing unchanged | ZERO `js/` files in the diff; arm A reproduces the shipped batch bit-exact; offercadence/FR10 legs green unedited |
+| Ledger 1 (offer-pacing verdict) | this sweep + PRD row; callout half → UAT lane stamp |
+| Ledger 2 (thermostat number) | cadence↔rate table + corrected-claim paragraph, cited |
+| Ledger 3 (BH-F6) | `finalRopes` split + R1/A1 |
+| Ledger 5 (owned-cap class) | Decided-6 re-point stamp + picks/run facts |
+
+### Project Structure Notes / Context Rules
+
+- Zero new paths; zero product code; no `index.html`/`package.json`/`.github`/`css`/`audio` touches. AGENTS.md laws in force: pure sim core untouched, inline constants, named exports, no `console.*` in pure modules, frozen-test discipline with the written-authorization exception (AGENTS.md:52), NFR4 < 10 s, zero deps.
+- **Census inheritance (for Story 6.4's brief):** the only by-tree censuses are the two C1 files (bases `2c3e693`/`5659fd4`); NO planning-artifacts path is allow-listed (as of this story, only `prd.md` joins, via C1). 6.4's refresh of `epics.md`, `architecture.md`, and the GDD (`_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md`) needs the SAME list-only appends pre-authorized in its story text. Also inherited for 6.4: `epics.md:361`'s "altitude-per-skip = 2 placeholder" text is STALE (6.2 shipped 2.5 — the exemplar drift); and 60-FPS/first-jump browser metrics are NOT executable on this box (no linux/arm64 Chromium) — logged-follow-up lane per epics.md:957.
+- Known-debt honesty: `terminalRopes` disappears in this cutover (no dual-reporting); the seed-sensitivity surface stays open by design (ledger :239-240).
+
+### References
+
+- [Source: _bmad-output/planning-artifacts/epics.md#Story 6.3 :923-939; Story 6.1/6.2 :885-921]
+- [Source: _bmad-output/implementation-artifacts/deferred-work.md :8-12, :98-102, :147-150, :233, :238-240]
+- [Source: _bmad-output/implementation-artifacts/6-1-policy-bot-summit-gate-the-balance-master-dial.md — Decided 2/5/7, strip law, BH-F6 deferral]
+- [Source: _bmad-output/implementation-artifacts/6-2-real-tunables-retire-the-placeholders.md — Decided 2/5/10, final batch table, C1 precedent]
+- [Source: _bmad-output/planning-artifacts/prd.md:91 (CARD-09 row) — the edit target]
+- [Source: js/upgrades.js:36-48,67-97,105-112; js/game.js:193-211 — pacing + filter sites (read-only)]
+- [Source: tests/support/summit-gate.js:79-193; tests/summitgate.test.js:63-101 — the instrument + its sole consumer]
+- [Source: /tmp/e62/frontier-63.md (parent cadence probe); /tmp/e63/out-{A,B}-{1,2}.json (create-round instrumented sweep, this story's Debug Log)]
+- [Source: _bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md:229-231 — thermostat prose (cite, don't edit; 6.4 lane)]
+
+## Dev Agent Record
+
+### Agent Model Used
+
+{{agent_model_name_version}}
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List
+
+- tests/support/summit-gate.js (instrumentation: offeredTally/firstTally/offerEvents/finalRopes; terminalRopes retired)
+- tests/summitgate.test.js (R1 two regions + A1 append — nothing else)
+- tests/ceilingbreak.test.js, tests/summitapproach.test.js (C1 census allow-list appends ONLY)
+- _bmad-output/planning-artifacts/prd.md (CARD-09 Open-Items row — the one authorized line)
+- _bmad-output/implementation-artifacts/6-3-offer-pacing-verdict-card-09.md (this story)
+- _bmad-output/implementation-artifacts/deferred-work.md (disposition stamps, items 1-6)
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- ZERO `js/` changes — that is AC3.
+
+## Debug Log
+
+- 2026-11-10 (create round): Census reconnaissance — by-tree censuses at `summitapproach.test.js:833` (base `2c3e693`) and `ceilingbreak.test.js:546` (base `5659fd4`); grep + allow-set reads prove: no planning-artifacts entry anywhere; `deferred-work.md`/`sprint-status.yaml`/`tests/support/summit-gate.js`/`tests/summitgate.test.js` already listed in BOTH sets; `prd.md` unchanged since both bases → C1 pre-authorized two-path appends (see Decided 9).
+- 2026-11-10 (create round): Sandbox `/tmp/e63` (5-point runSeed patch on a gate fork; repo untouched) instrumented sweep, 3 shapes × seeds 0..39 × 43,200 ticks @ shipped 6.2 tunables; each arm ×2, byte-identical (DETERMINISM-OK). Arm A reproduced the 6.2 final batch bit-exact (aggregate 0.1417 `in`; shapes 0.150/0.150/0.125; medSum 290.8/279.9/297.2 s) — counting-only patch is behavior-neutral, confirmed against the parent's independent prototype (same tallies, rates 0.150/0.150/0.125).
+- 2026-11-10 (create round): ARM A (current pacing) per-shape: T/H/S 32/2/6, 32/2/6, 35/0/5; offers/run 21.73/21.77/20.93; coverage 12/12 everywhere, neverOffered ∅; topPickShare 0.155 (extrarope = top pick at 135/869 — dominance is modest, NOT a one-card game); dead set identical across all three shapes: **doublejump, multi, reinforce, window, windup**.
+  - pick-when-offered, bare (picks/offered): multi 38/160 = 23.7% | doublejump 41/165 = 24.8% | windup 11/39 = 28.2% | window 53/185 = 28.6% | reinforce 42/144 = 29.2% ‖ [gap] ‖ tally 51/167 = 30.5% | float 129/418 = 30.9% | feather 125/397 = 31.5% | widebrim 44/133 = 33.1% | highjump 103/282 = 36.5% | slowrope 97/262 = 37.0% | extrarope 135/135 = 100% (mechanical). chargeHeavy: multi 36/175 = 20.6%, windup 12/48 = 25.0%, reinforce 29/109 = 26.6% (dead set unchanged + reinforce deeper). Threshold 30% sits in a CLEAN GAP (nothing in 29.2→30.5) — well-separated on these seeds.
+  - finalRopes split (bare): tripped {1:32}, summit {1:6}, horizon {1:1, 2:1} — BH-F6's fix at work: the strip dominates; NO build holds multiple ropes into the summit (summit runs end at 1 rope); ropeHeavy converges to the same read (horizon {2:1} gone).
+  - coalescence: bare vs ropeHeavy tallies NEAR-identical at 40 seeds (rate 0.150 both; a few seeds survive differently in the first minute before the strip law erases the build — exact-bit identity was an 8-seed-probe artifact); arm B bare vs ropeHeavy bit-identical (39/40 trips freeze the streams early).
+- 2026-11-10 (create round): ARM B (escalated: %6 after skip 30) per-shape: rate 0.025/0.025/0.050, aggregate **0.0333 out-low**; T/H/S 39/0/1, 39/0/1, 38/0/2; medRun 201/192/183 s; offers/run 23.9/23.9/23.5 (≈ +10% offers, −26% run length → +47% offers per second of life); coverage still 12/12; topPickShare still 0.155; dead sets: bare/ropeHeavy 4 (reinforce ESCAPES at 31.6%), chargeHeavy 6 (**tally joins** at 29.7%) — net dead-count 15→14 = threshold noise, ZERO legibility gain. Mechanism: mid-run offer density lands `extrarope` picks into the past-2-ropes strip window (6.1 strip law) → 39/40 trips → summit rate collapses OUT-LOW. Matches the parent frontier-63 probe (0.033, 39/40) exactly.
+- 2026-11-10 (create round): Verdict-rule evaluation on the create data: promotion limb (i) FAILS (B `out-low`) and limb (ii) FAILS (dead-count noise; coverage/dominance identical) ⇒ **CLOSE CARD-09 with evidence** per Decided 5. Owned-cap inputs: extrarope picks 135 (A) / 142 (B) across 40 runs = 3.4–3.6 picks/run vs cap 4 — the Spare-Rope wall brushes but rarely binds in bot builds (Decided 6 stamp input).
+- 2026-11-10 (create round): Parent cross-check reconciled: an 8-seed prototype saw bit-identical bare/ropeHeavy tallies; the full 40-seed batch shows near-identity (coalescence is a strip-law convergence, not a draw-stream merge — exact claims avoided). Uniform-cadence context (NOT the AC's escalated variant): cad8 0.058 / cad6 0.067 / cad4 0.117 all in-band with medRun BELOW the 3-5 min window; cnt4 0.250 out-high — cited as context for "escalation should add frequency, not width".
+
+## Change Log
+
+- 2026-11-10 (story create): file created from epics.md:923-939 + full ledger sweep of 6.3-owned items; instrument contract, variant definition, threshold/legibility laws, verdict decision rule, and re-contract set (R1/A1/C1) authored; create-round instrumented sweep run in /tmp/e63 (repo untouched — only this file + sprint-status touched); census reconnaissance embedded.
