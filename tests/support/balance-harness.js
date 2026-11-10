@@ -3,7 +3,7 @@
 // parameters of these reports, never production seams (Decided 1: zero js/ edits).
 // Pure Node: relative js/ imports only, seeded rng by injection, POJO returns.
 
-import { startRun, tickRun, applyCard, resumeRun, ALT_PER_POINT, ROPE_PERIOD } from '../../js/game.js';
+import { startRun, tickRun, applyCard, resumeRun, ALT_PER_POINT, ROPE_PERIOD, MAX_ROPES, clampRopes, clampCharged, clampAirJumps } from '../../js/game.js';
 import { AREAS } from '../../js/areas.js';
 import { CARDS, freshEffects, pickOffers } from '../../js/upgrades.js';
 import { jump } from '../../js/player.js';
@@ -55,11 +55,13 @@ export function cappedOwned() {
   return Object.fromEntries(CARDS.map((c) => [c.id, c.cap]));
 }
 
-// The scripted jumper of tests/headless-sim.test.js:39-59 generalized:
-// grounded && phase in [lo, hi] -> jump(hold). Never startRun after a pick
-// (ARCH-02): choose resolves through applyCard + resumeRun. Traces record
-// POST-tick status/iFrames — exactly tickRun's ascend-gate values (game.js:185),
-// so the post-hoc ladder evaluator reads what the sim itself saw.
+// The scripted jumper of tests/headless-sim.test.js:39-59 generalized by
+// Story 6.1 (Decided 2) to the N-window rule: grounded && phase in ANY rope
+// k's lead-in window -> jump(hold); at ropes 1 the predicate is EXACTLY
+// phase in [lo, hi]. Never startRun after a pick (ARCH-02): choose resolves
+// through applyCard + resumeRun. Traces record POST-tick status/iFrames —
+// exactly tickRun's ascend-gate values (game.js:185), so the post-hoc ladder
+// evaluator reads what the sim itself saw.
 export function runBot(config = {}) {
   const {
     ticks = 1200,
@@ -69,12 +71,16 @@ export function runBot(config = {}) {
     owned = cappedOwned(),
     policy = { lo: 0.2, hi: 0.35, hold: 0.5 },
     pickStrategy = null,
+    build = {},
     rng = () => 0.5,
   } = config;
 
   let { rope, player, run } = startRun();
   rope = { ...rope, period };
-  run = { ...run, effects, owned, altitude: altitude0 };
+  // Story 6.1 (Decided 3): `build` seeds run-shaped state (ropes/charged/
+  // airJumps) on the RECORD where tickRun reads it (game.js:146-164), never
+  // in run.effects. Default {} + single rope = byte-identical to today.
+  run = { ...run, effects, owned, altitude: altitude0, ...build };
 
   const trace = [];
   let tripTick = null;
@@ -89,9 +95,19 @@ export function runBot(config = {}) {
       rope = { ...rope, period }; // resumeRun re-launches the canonical lead-in
       picks += 1;
     }
-    if (player.grounded && rope.phase >= policy.lo && rope.phase <= policy.hi) {
-      // Story 3.2 (deferred-work :84): the scripted jumper honors launchMul
-      // — peak measurements stay honest for the Launch Heels band.
+    // Story 6.1 (Decided 2): the N-window jump predicate, read through the
+    // sim's own rope clamp (game.js:164) every tick — d_k is the phase
+    // distance to rope k's feet-edge start, in window [0.45 - hi, 0.45 - lo].
+    // At N = 1 this is EXACTLY phase in [lo, hi] — the legacy scripted
+    // jumper (equivalence leg, tests/summitgate.test.js). Story 3.2
+    // (deferred-work :84): honors launchMul — peak numbers stay honest.
+    const nRopes = clampRopes(run.ropes);
+    let inWindow = false;
+    for (let k = 0; k < nRopes && !inWindow; k++) {
+      const d = ((0.45 + k / nRopes - rope.phase) % 1 + 1) % 1;
+      inWindow = d >= 0.45 - policy.hi && d <= 0.45 - policy.lo;
+    }
+    if (player.grounded && inWindow) {
       player = jump(player, policy.hold, run.effects.launchMul ?? 1);
     }
     ({ run, rope, player } = tickRun(run, rope, player, STEP, rng));
@@ -135,7 +151,8 @@ function sweptAltitude(entry, altPerPoint) {
 }
 
 // Post-hoc ladder evaluation over a logged trace, recomputing tickRun's own
-// ascend gate (status in {running, choose} && iFrames === 0, strict `>`, at
+// ascend gate (status in {running, choose} && no i-frames left under the
+// sim's own clamped read (Story 6.1), strict `>`, at
 // most one ascend per tick). Accepts a trace array or a full runBot result;
 // the latter additionally proves the terminal tick was a summit (not a trip,
 // which the sim excludes from ascending — "trip > win"), so an 'over' last
@@ -158,7 +175,13 @@ export function evaluateLadder(target, options = {}) {
     const e = trace[i];
     const alive = e.status === 'running' || e.status === 'choose'
       || (i === last && terminalAlive && e.status === 'over');
-    if (!alive || e.iFrames !== 0) continue;
+    // Story 6.1 (Decided 4, ledger :104-105): mirror tickRun's FR3 read
+    // (game.js:146): non-finite iFrames = gate-OPEN; closed iff the clamped
+    // finite read is > 0. Finite behavior byte-identical (the frozen parity
+    // legs are finite-only).
+    const iframesLeft = Number.isFinite(e.iFrames)
+      ? Math.min(MAX_ROPES, Math.max(0, e.iFrames)) : 0;
+    if (!alive || iframesLeft > 0) continue;
     const peak = sweptAltitude(e, altPerPoint) + e.y;
     if (areaIdx === ladder.length && peak > ladder[ladder.length - 1]) {
       winTick = e.tick;
@@ -221,6 +244,28 @@ function stackedEffects(card, times) {
   return effects;
 }
 
+// Story 6.1 (Decided 5, ledger :134-136): the effects-records fold — run-shaped
+// cards (card.shape === 'run') compose against a FRESH RUN RECORD instead of
+// the effects endofunction: stackedRun = card.apply x times on startRun().run
+// (the record endofunction patchedRun uses, game.js:294-301), installed
+// through runBot's build seed with patchedRun's clamps mirrored. The
+// extrarope/reinforce/doublejump rule numbers stop leaking run fields into
+// the effects record (the documented 3.2/3.3 blind spot).
+function stackedRun(card, times) {
+  let { run } = startRun();
+  for (let i = 0; i < times; i++) run = card.apply(run);
+  return run;
+}
+
+function runBuild(card, times) {
+  const rec = stackedRun(card, times);
+  return {
+    ropes: clampRopes(rec.ropes),
+    charged: clampCharged(rec.charged),
+    airJumps: clampAirJumps(rec.airJumps),
+  };
+}
+
 function maxHeight(result) {
   let top = -Infinity;
   for (const e of result.trace) if (e.y > top) top = e.y;
@@ -246,8 +291,14 @@ export function cardRuleReport(options = {}) {
   const baseMax = maxHeight(baseline);
 
   const cards = CARDS.map((card) => {
-    const pickRun = runBot({ ticks, effects: stackedEffects(card, 1) });
-    const capRun = runBot({ ticks, effects: stackedEffects(card, card.cap) });
+    // Story 6.1 (Decided 5): marker-driven fold — run-shaped variants measure
+    // on build-seeded records; the effects-shape path (and its numbers) is
+    // untouched. Report key sets are unchanged (pinned, balance.test.js:65-75).
+    const variant = (times) => card.shape === 'run'
+      ? runBot({ ticks, build: runBuild(card, times) })
+      : runBot({ ticks, effects: stackedEffects(card, times) });
+    const pickRun = variant(1);
+    const capRun = variant(card.cap);
     return {
       id: card.id,
       name: card.name,

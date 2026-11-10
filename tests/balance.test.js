@@ -196,6 +196,39 @@ test('per-card climb and peak deltas land in the analytic band of the real closu
 
   for (const entry of report.cards) {
     const card = CARDS.find((c) => c.id === entry.id);
+    // Story 6.1 re-contract R1 (sanctioned, Decided 5 fold; the marker-driven
+    // run-shaped exemption in the AXIS-guard leg's declaration-driven idiom of
+    // :317-321): a run-shaped apply writes no float/launch field (record
+    // effect-field census), so peakDelta expects 0 +/- 0.02 at BOTH strengths.
+    // The record field extrarope patches is `ropes` - one more scored pass per
+    // revolution: climbDeltaPick > 0.5 and climbDeltaCap > 0, and the cap is
+    // NOT ordered against the pick - at ropes 5 the N-window hold-0.5 bot is
+    // STRIPPED inside this horizon (~3 ropeLost, finalRopes ~2; measured pick
+    // 2.0000x vs cap 1.2500x - story Change Log amendment 2026-11-10; the
+    // strip law rides to 6.2's rope-economy retune). reinforce/doublejump
+    // patch record fields (charged/airJumps) that change no climb axis on the
+    // trip-free horizon: neutral within +/- 0.02. The trips flag stays
+    // surfaced as-is. The effects-shape branch below is VERBATIM.
+    if (card.shape === 'run') {
+      for (const peakKey of ['peakDeltaPick', 'peakDeltaCap']) {
+        assert.ok(Math.abs(entry[peakKey]) <= 0.02,
+          `${entry.id}/${peakKey}: peak ${entry[peakKey]} within 0.02 of record-derived 0`);
+      }
+      const baseRec = game.startRun().run;
+      const recordField = Object.keys(baseRec).filter((k) => card.apply(baseRec)[k] !== baseRec[k]);
+      if (recordField.length === 1 && recordField[0] === 'ropes') {
+        assert.ok(entry.climbDeltaPick > 0.5,
+          `${entry.id}: pick ${entry.climbDeltaPick} > 0.5 (extra scored pass per revolution)`);
+        assert.ok(entry.climbDeltaCap > 0,
+          `${entry.id}: cap ${entry.climbDeltaCap} > 0 (strip law: positive, never ordered against the pick)`);
+      } else {
+        for (const climbKey of ['climbDeltaPick', 'climbDeltaCap']) {
+          assert.ok(Math.abs(entry[climbKey]) <= 0.02,
+            `${entry.id}/${climbKey}: ${entry[climbKey]} within 0.02 of record-neutral 0`);
+        }
+      }
+      continue;
+    }
     for (const [n, climbKey, peakKey] of [[1, 'climbDeltaPick', 'peakDeltaPick'], [card.cap, 'climbDeltaCap', 'peakDeltaCap']]) {
       const fx = stackedEffects(card, n);
       const climbFactor = fx.ropeMul * fx.scoreMul;
@@ -236,19 +269,57 @@ test('dominated / reduceClimb / neutralClimb equal the analytic derivations', ()
   const byId = (list) => [...list].sort((x, y) => x.id.localeCompare(y.id));
   assert.deepEqual(byId(report.dominated), byId(expectedDominated), 'one-axis-one-card verdicts match the closures');
 
+  // Story 6.1 re-contract R2 (sanctioned, Decided 5 fold): the neutralClimb
+  // and reduceClimb EXPECTATION derivations branch on the card.shape marker.
+  // Effects-shape cards keep the analytic ropeMul x scoreMul derivation
+  // VERBATIM; for run-shaped cards the expectation is record-derived -
+  // neutral iff the apply writes no climb-axis effect field AND the record
+  // field it patches is not `ropes` (reinforce/charged, doublejump/airJumps:
+  // trip-free horizons make the charge/air value invisible to the rule
+  // report); extrarope/`ropes` is predicted NOT neutral (its field raises
+  // passes/revolution). reduceClimb: predicted EMPTY for reinforce/
+  // doublejump; extrarope membership rides the CONSISTENCY LAW against the
+  // measured entry, not an analytic prediction. The dominated block above
+  // stays byte-identical: the run-shaped axes are axis singletons - no pair
+  // gains a comparator (Debug Log: the set equals feather->float, tally->
+  // multi, widebrim->window, slowrope->windup both before and after the fold).
+  const climbAxisFields = ['ropeMul', 'scoreMul'];
+  const effectWrite = (card) => {
+    const base = freshEffects();
+    const next = card.apply(base);
+    return Object.keys(base).filter((k) => next[k] !== base[k]);
+  };
+  const recordWrite = (card) => {
+    const rec = game.startRun().run;
+    const next = card.apply(rec);
+    const changed = Object.keys(rec).filter((k) => next[k] !== rec[k]);
+    return changed.length === 1 ? changed[0] : null;
+  };
   const expectedReduce = CARDS.filter((card) => {
+    if (card.shape === 'run') return false; // handled record-side below
     const one = stackedEffects(card, 1);
     const cap = stackedEffects(card, card.cap);
     return one.ropeMul * one.scoreMul < 1 || cap.ropeMul * cap.scoreMul < 1;
-  }).map((card) => card.id).sort();
-  assert.deepEqual([...report.reduceClimb].sort(), expectedReduce, 'rule-2 violators are exactly the measured climb-cutters');
+  }).map((card) => card.id);
+  assert.deepEqual(['reinforce', 'doublejump'].filter((id) => report.reduceClimb.includes(id)), [],
+    'record-side charged/airJumps cut no climb (predicted empty intersection)');
+  const extraEntry = report.cards.find((c) => c.id === 'extrarope');
+  assert.equal(report.reduceClimb.includes('extrarope'), extraEntry.climbDeltaCap < 0,
+    'extrarope rides the consistency law, not an analytic prediction');
+  if (extraEntry.climbDeltaCap < 0) expectedReduce.push('extrarope');
+  assert.deepEqual([...report.reduceClimb].sort(), expectedReduce.sort(),
+    'rule-2 violators are exactly the measured climb-cutters (records decide for run shapes)');
 
-  const neutralAnalytic = CARDS.filter((card) => {
+  const expectedNeutral = CARDS.filter((card) => {
+    if (card.shape === 'run') {
+      return !effectWrite(card).some((f) => climbAxisFields.includes(f)) && recordWrite(card) !== 'ropes';
+    }
     const one = stackedEffects(card, 1);
     const cap = stackedEffects(card, card.cap);
     return one.ropeMul * one.scoreMul === 1 && cap.ropeMul * cap.scoreMul === 1;
   }).map((card) => card.id).sort();
-  assert.deepEqual([...report.neutralClimb].sort(), neutralAnalytic, 'zero-climb cards are exactly the no-climb-axis cards');
+  assert.deepEqual([...report.neutralClimb].sort(), expectedNeutral,
+    'zero-climb cards are exactly the no-climb-axis cards (records decide for run shapes)');
 });
 
 test('trip honesty: tripped entries use their trip tick, never the full horizon (Decided 7)', () => {
@@ -258,8 +329,25 @@ test('trip honesty: tripped entries use their trip tick, never the full horizon 
   const report = harness.cardRuleReport({ ticks });
   for (const entry of report.cards) {
     const card = CARDS.find((c) => c.id === entry.id);
-    const pickRun = harness.runBot({ ticks, effects: stackedEffects(card, 1) });
-    const capRun = harness.runBot({ ticks, effects: stackedEffects(card, card.cap) });
+    // Story 6.1 re-contract R3 (sanctioned, Decided 5 fold; the pre-66-polish
+    // R2 one-insert idiom — the oracle lines below stay byte-identical): the
+    // recomposition branches on the shape marker; run-shaped variants go
+    // through record-side build seeding (test-local stackedRun mirror + the
+    // patchedRun clamps, game.js:294-301), effects-shape stays VERBATIM.
+    const runBuild = (n) => {
+      let rec = game.startRun().run;
+      for (let i = 0; i < n; i++) rec = card.apply(rec);
+      return {
+        ropes: game.clampRopes(rec.ropes),
+        charged: game.clampCharged(rec.charged),
+        airJumps: game.clampAirJumps(rec.airJumps),
+      };
+    };
+    const variant = (n) => card.shape === 'run'
+      ? harness.runBot({ ticks, build: runBuild(n) })
+      : harness.runBot({ ticks, effects: stackedEffects(card, n) });
+    const pickRun = variant(1);
+    const capRun = variant(card.cap);
     assert.equal(entry.trips, pickRun.trips || capRun.trips, `${entry.id}: flag reflects both strengths`);
     for (const [run, key] of [[pickRun, 'climbDeltaPick'], [capRun, 'climbDeltaCap']]) {
       const elapsed = run.trips ? run.tripTick : run.elapsedTicks;

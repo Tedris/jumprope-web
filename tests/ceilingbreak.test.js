@@ -644,6 +644,15 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // by this file's own written authorization — the same R-series bookkeeping
     // rule the retro/playtest appends used; list-only, tripwire stays armed.
     '_bmad-output/implementation-artifacts/6-1-policy-bot-summit-gate-the-balance-master-dial.md',
+    // Story 6.1 dev round (2026-11-10): the story's own lane joins the census
+    // — the harness extension (support file, not a fence), the R1/R2
+    // re-contracted balance leg file, and the two NEW files the story creates
+    // (the batch-runner support module + its suite; new files go red at
+    // CREATE via the porcelain arm). List-only, tripwire stays armed.
+    'tests/support/balance-harness.js',
+    'tests/support/summit-gate.js',
+    'tests/balance.test.js',
+    'tests/summitgate.test.js',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

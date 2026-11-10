@@ -4,7 +4,7 @@ baseline_commit: a40458b17d5f302cb06b45bd2fcc5e42381b77ab
 
 # Story 6.1: Policy-bot summit gate — the balance master-dial
 
-Status: ready-for-dev
+Status: review
 
 *Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-10).*
 
@@ -71,26 +71,26 @@ The fold (Decided 5) changes `cardRuleReport`'s run-shaped entries' measured num
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: `tests/support/balance-harness.js` — honest traces + fold (AC: 1, 2; ledger items 1-3)
-  - [ ] `runBot`: add `build = {}` record seed (Decided 3) and the N-window jump predicate (Decided 2) reading `run.ropes` per tick; N=1 + empty build must keep every existing trace byte-identical. No new exports, trace/result key sets pinned.
-  - [ ] `evaluateLadder`: iFrames gate mirrors tickRun's read (Decided 4). Baseline repro to beat: crafted `iFrames: Infinity` crossing trace currently `winTick: null`.
-  - [ ] `cardRuleReport`: run-shaped variants via `stackedRun` + `build` seeding (Decided 5); effects path untouched; key sets pinned.
-- [ ] Task 2: `tests/support/summit-gate.js` — NEW batch runner (AC: 1, 3)
-  - [ ] `summitGate({ seeds = [0..39], horizon = 43200, shapes = { bare:{}, ropeHeavy:{ropes:5}, chargeHeavy:{charged:2} }, band = [0.05, 0.20] })` → per-shape reports per Decided 7 + `band`, `tunables` (live `ALT_PER_POINT` / `AREAS` ceilings). Pure Node; imports ONLY relative `../../js/*.js` + `./balance-harness.js`; seeded `mulberry32` only; POJO returns; no `console.*`.
-  - [ ] Policy bot lives here (jump predicate + pick heuristic), composed through harness primitives; `rngDraws` counted via a counting rng wrapper (same wrapper idiom `headless-sim.test.js:99-104` uses for its rng-invoked leg).
-  - [ ] `verdict` + `gateFailureReport(report)` → string naming measured rate %, band, and the producing `tunables` (AC3's tuning report; format is asserted by legs, never printed).
-  - [ ] Evaluate-then-drop each trace (Decided 8 memory rule).
-- [ ] Task 3: `tests/summitgate.test.js` — NEW legs (AC: 1, 2, 3)
-  - [ ] Contract leg: `summit-gate.js` export surface + every report key set (`deepEqual` sorted keys) — factory contract, same change (AGENTS.md).
-  - [ ] Live-batch legs: rate ∈ [0,1] and equals `summits/seeds`; every run outcome ∈ {summit, tripped, horizon}; `seconds === endTick × 1/120`; `verdict` equals an IN-TEST band comparison of `report.rate` (mechanism, not value); `tunables` deepEqual the live records; all three shapes present (ledger :92-94); `terminalRopes`/`picksTally` finite.
-  - [ ] Determinism legs (AC2 + ledger :168): identical-config `summitGate` twice → `deepEqual`; per-run `rngDraws > 0` (seed-honesty — the batch is never the vacuous cappedOwned draw); seeds are literals in the test, rng never `Math.random`.
-  - [ ] Out-of-band mechanism legs (AC3): crafted unreachable-ladder batch → rate 0.0 verdict `'out-low'`; crafted tiny-ladder near-summit batch → rate 1.0 `'out-high'`; `gateFailureReport` string contains the rate and the exact `altPerPoint`/ladder values that produced it; in-band crafted config (tiny ladder + near-summit start where the bot's physics wins on part of the seed set) → `'in'`.
-  - [ ] Parity legs (ledger item 1): crafted `iFrames: Infinity` and `NaN` gate-open; crafted `iFrames: 2` still blank-blocked; multi-rope live parity: `runBot({ build: { ropes: 3 }, … })` trace vs a test-local raw-sim mirror loop recording the sim's OWN ascend ticks (copy `balance.test.js:28-44` `simAscentTicks` idiom — NEVER import a `.test.js`) → identical crossTicks at shipped tunables.
-  - [ ] Fold legs (ledger item 2): `cardRuleReport` `extrarope` entries nonzero-climb / `reinforce`,`doublejump` neutral (mirrors R1's law); effects-shape entries unchanged bands (they're already pinned by the frozen leg — just confirm green).
-  - [ ] Rope-window equivalence leg (Decided 2 safety): test-local mirror loop with the legacy `phase ∈ [0.20, 0.35]` predicate at ropes 1 → trace `deepEqual` runBot's.
-- [ ] Task 4: Re-contracts R1/R2 in `tests/balance.test.js` EXACTLY as authorized; then verification (AC: 2)
-  - [ ] `time node --test tests/` before/after — record both plus the live-batch measurement table (per-shape rate, medians) in the Debug Log: that table IS the sweep result Story 6.2 consumes (epics.md:913).
-  - [ ] `git diff --stat` shows ONLY: `tests/support/balance-harness.js`, `tests/support/summit-gate.js` (NEW), `tests/summitgate.test.js` (NEW), `tests/balance.test.js` (R1/R2 legs only), this story, `sprint-status.yaml`. Zero `js/`, zero `index.html`/`package.json`/`.github/`.
+- [x] Task 1: `tests/support/balance-harness.js` — honest traces + fold (AC: 1, 2; ledger items 1-3)
+  - [x] `runBot`: add `build = {}` record seed (Decided 3) and the N-window jump predicate (Decided 2) reading `run.ropes` per tick; N=1 + empty build must keep every existing trace byte-identical. No new exports, trace/result key sets pinned.
+  - [x] `evaluateLadder`: iFrames gate mirrors tickRun's read (Decided 4). Baseline repro to beat: crafted `iFrames: Infinity` crossing trace currently `winTick: null`.
+  - [x] `cardRuleReport`: run-shaped variants via `stackedRun` + `build` seeding (Decided 5); effects path untouched; key sets pinned.
+- [x] Task 2: `tests/support/summit-gate.js` — NEW batch runner (AC: 1, 3)
+  - [x] `summitGate({ seeds = [0..39], horizon = 43200, shapes = { bare:{}, ropeHeavy:{ropes:5}, chargeHeavy:{charged:2} }, band = [0.05, 0.20] })` → per-shape reports per Decided 7 + `band`, `tunables` (live `ALT_PER_POINT` / `AREAS` ceilings). Pure Node; imports ONLY relative `../../js/*.js` + `./balance-harness.js`; seeded `mulberry32` only; POJO returns; no `console.*`.
+  - [x] Policy bot lives here (jump predicate + pick heuristic), composed through harness primitives; `rngDraws` counted via a counting rng wrapper (same wrapper idiom `headless-sim.test.js:99-104` uses for its rng-invoked leg).
+  - [x] `verdict` + `gateFailureReport(report)` → string naming measured rate %, band, and the producing `tunables` (AC3's tuning report; format is asserted by legs, never printed).
+  - [x] Evaluate-then-drop each trace (Decided 8 memory rule).
+- [x] Task 3: `tests/summitgate.test.js` — NEW legs (AC: 1, 2, 3)
+  - [x] Contract leg: `summit-gate.js` export surface + every report key set (`deepEqual` sorted keys) — factory contract, same change (AGENTS.md).
+  - [x] Live-batch legs: rate ∈ [0,1] and equals `summits/seeds`; every run outcome ∈ {summit, tripped, horizon}; `seconds === endTick × 1/120`; `verdict` equals an IN-TEST band comparison of `report.rate` (mechanism, not value); `tunables` deepEqual the live records; all three shapes present (ledger :92-94); `terminalRopes`/`picksTally` finite.
+  - [x] Determinism legs (AC2 + ledger :168): identical-config `summitGate` twice → `deepEqual`; per-run `rngDraws > 0` (seed-honesty — the batch is never the vacuous cappedOwned draw); seeds are literals in the test, rng never `Math.random`.
+  - [x] Out-of-band mechanism legs (AC3): crafted unreachable-ladder batch → rate 0.0 verdict `'out-low'`; crafted tiny-ladder near-summit batch → rate 1.0 `'out-high'`; `gateFailureReport` string contains the rate and the exact `altPerPoint`/ladder values that produced it; in-band crafted config (tiny ladder + near-summit start where the bot's physics wins on part of the seed set) → `'in'`.
+  - [x] Parity legs (ledger item 1): crafted `iFrames: Infinity` and `NaN` gate-open; crafted `iFrames: 2` still blank-blocked; multi-rope live parity: `runBot({ build: { ropes: 3 }, … })` trace vs a test-local raw-sim mirror loop recording the sim's OWN ascend ticks (copy `balance.test.js:28-44` `simAscentTicks` idiom — NEVER import a `.test.js`) → identical crossTicks at shipped tunables.
+  - [x] Fold legs (ledger item 2): `cardRuleReport` `extrarope` entries nonzero-climb / `reinforce`,`doublejump` neutral (mirrors R1's law); effects-shape entries unchanged bands (they're already pinned by the frozen leg — just confirm green).
+  - [x] Rope-window equivalence leg (Decided 2 safety): test-local mirror loop with the legacy `phase ∈ [0.20, 0.35]` predicate at ropes 1 → trace `deepEqual` runBot's.
+- [x] Task 4: Re-contracts R1/R2/R3 in `tests/balance.test.js` EXACTLY as authorized; then verification (AC: 2)
+  - [x] `time node --test tests/` before/after — record both plus the live-batch measurement table (per-shape rate, medians) in the Debug Log: that table IS the sweep result Story 6.2 consumes (epics.md:913).
+  - [x] `git diff --stat` shows ONLY: `tests/support/balance-harness.js`, `tests/support/summit-gate.js` (NEW), `tests/summitgate.test.js` (NEW), `tests/balance.test.js` (R1/R2/R3 legs only), this story, `sprint-status.yaml` (+ the two census allow-set appends the story authorizes). Zero `js/`, zero `index.html`/`package.json`/`.github/`.
 
 ## Dev Notes
 
@@ -164,18 +164,63 @@ The fold (Decided 5) changes `cardRuleReport`'s run-shaped entries' measured num
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+lane-qwen38-ultra/qwen (omp worker session Dev61)
 
 ### Debug Log References
 
+Throwaway probes (not shipped): `/tmp/probe61.mjs` (identity/fold/batch), `probe61b.mjs` (strip physics, seeds 0..7), `probe61c/d.mjs` (in-band plateau, dominated census, ropes-3 parity).
+
+Gate timing pair (Task 4): before = `./run_tests.sh` **548/548 @ 8.555 s** (baseline @ be11c9f, time builtin); after = **560/560 @ 8.714 s** — 12 new legs add ~0.17 s wall (summitgate.test.js ~1.4 s self-time overlaps the existing critical path). NFR4 met; NO seed/horizon cuts (40 seeds × 43,200 ticks shipped, Decided 8 ladder untouched). Interim during the round: **559/560** with the trip-honesty leg red — the STOP-2 finding, resolved by amendment `e2a23e2` (R3). Live-batch cost: 120 runs = **687 ms** (create estimate 0.6 s, gate-leg budget ≤ 0.8 s; one batch instance shared across the report legs).
+
+STOPs and evidence: STOP-1 (amendment `be11c9f`): R1 monotone clause vs measured pick ratio **2.0000×** (ropes 2, trip-free, 0 strips) vs cap **1.2500×** (ropes 5 — **3 `ropeLost` strips inside the 1200-tick horizon, finalRopes 2**). STOP-2 (amendment `e2a23e2`): the trip-honesty recomposition leg was the fold's third red leg (`extrarope` 1.0 vs effects-recomposition 0); R3 one-insert branch landed.
+
+FOLD MEASUREMENT TABLE (cardRuleReport ticks 1200, cappedOwned) — ratios vs baseline 16.0 altitude/1200 ticks:
+
+| variant | build seed | ratio | climbDelta | strips | finalRopes |
+|---|---|---|---|---|---|
+| baseline | {} | 1.0000× | — | 0 | 1 |
+| extrarope pick | {ropes: 2} | 2.0000× | +1.0000 | 0 | 2 |
+| extrarope cap | {ropes: 5} | 1.2500× | +0.2500 | 3 | 2 |
+| reinforce pick/cap | {charged: 1}/{2} | 1.0000× | 0.0000 | 0 | 1 |
+| doublejump pick/cap | {airJumps: 1} | 1.0000× | 0.0000 | 0 | 1 |
+
+- `dominated` EQUAL pre- and post-fold (R2 requirement): feather→float, tally→multi, widebrim→window, slowrope→windup.
+- `neutralClimb` pre-fold (blind-spot evidence): doublejump, extrarope, feather, float, highjump, reinforce, widebrim, window → post-fold `extrarope` exits; effects-shape entries byte-identical.
+- iFrames parity: baseline repro confirmed pre-fix (`winTick: null`); post-fix crafted Infinity/NaN/−Infinity traces gate-OPEN (single-entry probe reads `crossTicks [0]`; five-tick trace `winTick 4`); a constant `iFrames: 2` trace blocks fully. Note: the story's single-entry probe cannot show a non-null winTick at all (one-ascend-per-tick law caps `areaIdx` at 2 by tick 0) — gate-OPENness is the observable delta; pinned in the parity leg.
+- Rope-window equivalence: the N-window trace is JSON-identical to the legacy-predicate trace at ropes 1 across 8 configs (default, ticks 600, altitude0 100, launchMul 1.1, ropeMul 0.9×scoreMul 1.15, ropeMul 1.12×score+1, floatMul 1.15, windowMul 1.1).
+- Multi-rope live parity: `runBot({ build: { ropes: 3 }, altitude0: 2000, ticks: 1200 })` crossTicks == the sim's own ascend events — non-vacuous (opening ascents + real strip blanks inside the leg horizon).
+
+LIVE-BATCH MEASUREMENT TABLE (Decided-2 bot, 3 shapes × seeds 0..39 × 43,200 ticks, owned {} — the sweep input Story 6.2 consumes, epics.md:913):
+
+| shape | rate | summits | outcomes T/H/S | medianRunSecs | medianSummitSecs | rngDraws | terminalRopes |
+|---|---|---|---|---|---|---|---|
+| bare | 0.0750 | 3/40 | 20/17/3 | 335.5 | 334.0 | 2745 | {1:36, 2:3, 3:1} |
+| ropeHeavy | 0.1000 | 4/40 | 26/10/4 | 331.9 | 309.6 | 2772 | {1:36, 2:3, 3:1} |
+| chargeHeavy | 0.1000 | 4/40 | 25/11/4 | 308.7 | 314.0 | 2642 | {1:38, 2:2} |
+
+- Aggregate 11/120 ≈ 0.092 — IN band at placeholder tunables for the SHIPPED Decided-2 bot; the create round's 38% probe predates the shipped predicate. No leg asserts any rate (Decided 6); Story 6.2 AC2 owns the band claim.
+- Min 9 picks per run; evaluator/sim outcome agreement 120/120. picksTally (bare, aggregated over seeds): feather 147, extrarope 145, float 132, highjump 108, slowrope 99, tally 58, window 57, widebrim 53, doublejump 49, multi 48, reinforce 46, windup 13.
+- Rope-strip law (handed to 6.2): beyond ≈2 ropes the hold-0.5 lead-in strips the gain away (batch terminalRopes ≈ 1 in every shape; fold pick 2.0× vs cap 1.25×). The Decided-9 owned-cap census shows no lockout pathology — terminalRopes/picksTally ship as 6.3's instrumentation.
+- In-band craft plateau (mechanism-leg tuning, ladder top = AREAS summit − 200, record-derived): winners 20/120 ≈ 0.167; neighbors −400 → 0.225, −300 → 0.175, −100 → 0.142, −50 → 0.117. The leg rides the sim-summit population, which 6.2's own target centers in the band.
+
 ### Completion Notes List
+
+- AC1: the gate reports per-shape summit rates and wall-clock medians on the seeded batch; the policy-bot rules are documented in the `summit-gate.js` header (Decided 2 verbatim). The bot's per-run loop lives in summit-gate (not `runBot`) because the picksTally/terminalRopes/rngDraws instrumentation reads the live record, which `runBot`'s pinned result shape does not expose; the jump predicate itself is the shipped `runBot` one, pinned by the equivalence + parity legs.
+- AC2: determinism legs (identical-config deepEqual; seed-honesty via shape `rngDraws` + per-run picks; literal seeds, rng never `Math.random`); suite green in 8.71 s < 10 s (NFR4) with no seed cuts.
+- AC3: the verdict legs compute the band comparison of the report's own rate IN-TEST (mechanism, never value); `gateFailureReport` names the rate, the band, and the exact producing `altPerPoint`/ladder — asserted, never printed.
+- Ledger :104-105 PAID — evaluator mirrors tickRun's FR3 read; crafted + multi-rope-live parity legs (non-vacuous, across real strip blanks).
+- Ledger :134-136 PAID — `stackedRun`→`build` fold; fold legs + re-contracted R1/R2/R3 green; effects path byte-identical.
+- Ledger :92-94 PAID — the three-shape batch + presence legs; the strip law measured and handed to 6.2 in the Debug Log.
+- Ledger :168-169 PAID — offers fire under `owned: {}` (`rngDraws` ≫ runs, every run picks); zero current-build literals in the new legs (crafted ladders derive from the AREAS records).
+- Two story-text amendments rode this round: R1's strip-law form (`be11c9f`) and R3's authorization (`e2a23e2`) — both from STOP evidence with measurements quoted above.
+- Census allow-sets in `ceilingbreak.test.js` §6 / `summitapproach.test.js` §4.3 append the four story-lane paths (the story's own change set; the porcelain arm flags them), per the story's Precedents authorization.
 
 ### File List
 
 - tests/support/balance-harness.js (UPDATE)
 - tests/support/summit-gate.js (NEW)
 - tests/summitgate.test.js (NEW)
-- tests/balance.test.js (re-contracts R1/R2 only)
+- tests/balance.test.js (re-contracts R1/R2/R3 legs only)
 - _bmad-output/implementation-artifacts/6-1-policy-bot-summit-gate-the-balance-master-dial.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 - tests/ceilingbreak.test.js (census allow-set append only — see Change Log)
@@ -187,3 +232,4 @@ The fold (Decided 5) changes `cardRuleReport`'s run-shaped entries' measured num
 - 2026-11-10 (create round): Census allow-set appends AUTHORIZED in the create commit — this story's artifact path joins the `ceilingbreak.test.js` §6 and `summitapproach.test.js` §4.3 diff-census sets, list-only (the 71e03d5 retro precedent), because the porcelain arm flags new files at CREATE time (ledger :200-201, "red at CREATE"). No other existing-file change in this commit; every dev-round re-contract above stays the story's own work.
 - 2026-11-10 (story-text amendment, pre-dev): R1's `extrarope` clause amended from `climbDeltaCap ≥ climbDeltaPick` to `climbDeltaCap > 0` + the recorded strip law — dev-round STOP evidence: at `ropes: 5` the hold-0.5 N-window bot strips itself to ≈2 ropes inside the 1200-tick horizon (measured pick +1.0000 vs cap +0.2500), so the monotone ordering is false under shipped sim physics; the honest-positive form keeps the leg non-vacuous and hands the strip law to 6.2. Decided 5's fold stands unchanged (the fold's whole purpose is the honest read). All other sections byte-identical.
 - 2026-11-10 (story-text amendment 2, dev round): R3 authorized — the trip-honesty recomposition leg (`balance.test.js:325-341`) branches on `card.shape` (record-side build seeding for run-shaped cards, effects path verbatim otherwise), the third leg the fold reddens; the re-contract census (line 66) corrected from "two legs" to three. STOP-2 evidence: report `extrarope` pick 1.0/cap 0.25 vs effects-recomposition 0/0 → strict-equality red, unimplementable green without the branch; matches the pre-66-polish R2 one-insert/byte-identical-oracles precedent.
+- 2026-11-10 (dev round): Tasks 1-4 landed — harness N-window/build/partial-parity/fold, `summit-gate.js` batch runner, `summitgate.test.js` (12 legs), R1/R2/R3 re-contracts exactly as amended, census appends. Gate **560/560 @ 8.71 s** (was 548/548 @ 8.56 s); two STOPs resolved by story amendments `be11c9f`/`e2a23e2` mid-round. Status: review.
