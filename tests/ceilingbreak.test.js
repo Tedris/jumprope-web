@@ -635,6 +635,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // census by this file's own written authorization — the same R-series
     // bookkeeping rule the stories used; list-only, tripwire stays armed.
     '_bmad-output/implementation-artifacts/epic-5-retro-2026-11-10.md',
+    // Playtest fix 2026-11-10 (ghost-spread): the renderer shortening lands in
+    // js/render3d.js (in this set since 4.4); the new suite and the fix artifact
+    // join here, authorized by the fix doc — list-only, tripwire stays armed.
+    'tests/ghostspread.test.js',
+    '_bmad-output/implementation-artifacts/playtest-fix-2026-11-10-ghost-spread.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

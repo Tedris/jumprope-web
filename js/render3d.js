@@ -40,6 +40,12 @@ const GHOST_POOL = 4;            // MAX_ROPES − 1 — 4 ≠ trio: the fingerpr
 const GHOST_OPACITY = 0.35;      // dim-but-present outside a blank
 const GHOST_OPACITY_BLANK = 0.85; // visible-through while protected
 const GHOST_DIM = 0x5a5a66;      // skipper dim (the two body materials) during the blank
+// Playtest 2026-11-10: at EQUAL sweep radii, evenly-phased N arcs tile ONE
+// exact circle about the hands axis — ropes >= 2 read as an outline of the
+// skipper, not extra ropes. Each slot sweeps SHORTER, radial-only (scale.x
+// stays 1 so the rope ends stay on the handle line): distinct radii never tile.
+const GHOST_SHORT_BASE = 0.97;   // s_0: apex clears the ~1.35 head, floor dip <= the real rope's
+const GHOST_SHORT_STEP = 0.03;   // s_k = BASE - STEP*k  ->  0.97 / 0.94 / 0.91 / 0.88
 
 // Live look-tuning during UAT: append ?light=&fogNear=&fogFar= to override.
 // Browser-only read; Node/test import path always takes the shipped defaults.
@@ -377,6 +383,8 @@ export function createScene(canvas) {
   const ghosts = [];
   for (let k = 0; k < GHOST_POOL; k++) {
     const ghost = new THREE.Mesh(ropeTube.geometry, ghostMat);
+    const short = GHOST_SHORT_BASE - GHOST_SHORT_STEP * k;   // radial-only; written ONCE here
+    ghost.scale.set(1, short, short);
     ghost.visible = false;
     ghostGroup.add(ghost);
     ghosts.push(ghost);
