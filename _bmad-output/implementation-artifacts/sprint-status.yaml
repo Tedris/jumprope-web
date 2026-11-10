@@ -91,7 +91,7 @@ development_status:
   epic-5-retrospective: optional
   # Pre-Epic-6 chores — created at the Epic 5 close ledger check (2026-11-09, user batch answers)
   chore-pre-66-polish: done  # delivered 2026-11-09: leadInHop one-shot grace + digit stopUntil gate; review 0 patches (F2/F3 dismissed); 535/535
-  chore-test-harness-ci-consolidation: backlog  # ledger :53/:64/:189 fork dedup, :177/:178 performance stub, :48 dead best-write, :115/:116 CI, :179 census re-pin
+  chore-test-harness-ci-consolidation: ready-for-dev  # story created 2026-11-09: harness primitives + 7 boot folds, D-best, CI matrix+filters, porcelain census arm
 
   # Epic 6: Balance & Prove
   epic-6: backlog
