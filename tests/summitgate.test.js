@@ -342,6 +342,13 @@ test('offer instrumentation is mechanism-honest on the live batch', () => {
       assert.ok((shape.offeredTally[id] ?? 0) >= n,
         `${name}: every ${id} pick was an offered card`);
     }
+    // BH-1 (review patch): the Decided-5 extrarope override must fire BEYOND
+    // first-card picks — kills a firsts-derived-from-picks regression, under
+    // which firstTally collapses to picksTally and laws 2-3 pass by equality.
+    if ((shape.picksTally.extrarope ?? 0) > 0) {
+      assert.ok((shape.firstTally.extrarope ?? 0) < shape.picksTally.extrarope,
+        `${name}: the extrarope override picks off the first slot too (Decided 5)`);
+    }
     for (const id of Object.keys(shape.offeredTally)) {
       assert.ok(CARDS.some((c) => c.id === id),
         `${name}: offeredTally keys are shipped card ids (${id})`);
