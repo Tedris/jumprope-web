@@ -1,0 +1,195 @@
+---
+baseline_commit: aeb78d5d5e7fa6df88a77973fe27bb8619337be8
+---
+
+# Story 6.4: Docs & provenance pass
+
+Status: ready-for-dev
+
+*Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-10).*
+
+## Story
+
+As the next contributor (including future-me),
+I want the v2 story told accurately in the planning docs,
+So that the PRD, GDD, and architecture spine describe the game that actually shipped.
+
+## Acceptance Criteria
+
+1. **Docs to as-built fact.** Given v2 complete, when the docs pass runs, then `prd.md` (v2 state, closed/open items), `architecture.md` (new state shapes: ropes, charges, areas, ascent events), and the GDD's placeholder notes (tunables, area flavor, last-rope mix decision) are updated to as-built fact. [epics.md:949-951]
+2. **Success-metrics checklist executed.** Given the success-metrics checklist from the GDD, when it is executed, then each item is verified and recorded with evidence: 60 FPS capture on an integrated-GPU check (NFR1), suite green <10 s (NFR4), boundary fence green, red-green legs present for every new mechanic (NFR5), and page-load-to-first-jump <2 s (NFR3). [epics.md:953-955]
+3. **No hidden regressions.** And any metric that fails at this stage produces a logged follow-up item rather than a hidden regression. [epics.md:957]
+
+**And** — per the ledger (embedded verbatim below): the Story-2.5-AC collision-number fix is owned here (:121-122); the sub-linear wording nit rides this pass (:118-120); the owned-cap wall gets its as-built documentation half here (6.3's re-point, :154); `jumprope-best` is recorded as as-built fact (:158-159); the Known-Debt refresh in `epics.md:101` + `architecture.md:91-92` is owned here (:222-223); the thermostat prose refresh is this lane (:105 tail); the summit-tempo note (GDD ≈1.10 s vs as-built ≈0.99 s) is flagged for this pass (:192).
+
+### Decided interpretations (do not re-litigate)
+
+1. **Lanes and files. Docs-only.** Edits land in EXACTLY five files: `_bmad-output/planning-artifacts/prd.md`, `_bmad-output/planning-artifacts/architecture.md`, `_bmad-output/planning-artifacts/epics.md`, `_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md`, plus this story, `deferred-work.md` (stamps + the two follow-up entries Task 4 names), and `sprint-status.yaml`. **ZERO `js/` and ZERO `tests/` changes except the C1 census allow-set appends (list-only).** The gate must stay **566/566** — this story adds no legs (the suites are the evidence, not the edit target). If a docs claim turns out to CONTRADICT code in a way the edit plan below did not anticipate: STOP, write the as-built wording as a proposal in the Debug Log, do not ship a claim you did not re-verify against code.
+2. **As-built doctrine — what gets rewritten vs annotated.** (a) **Living registries** (PRD Current State + Open Items, epics.md FR list :35/:49/:69 + :94 + :101, architecture.md spine, GDD mechanics prose/ASSUMPTION index/NOTE rows): rewrite to as-built fact, cite the code site. (b) **Historical story ACs** (epics.md 2.1 :361, 2.2 :375, 4.1 :621, 4.2 :643, 2.5 :455): NEVER rewrite the sentences; fix ONLY the two numbers the ledger owns (Task 2, :455) and append a parenthetical as-built addendum at :361 (the stale-ownership note misleads future readers; 6.2 shipped 2.5 in `616eb6c` — the exemplar drift). Everything else in story-text history stands as written. (c) **`_bmad-output/game-architecture.md` (ADR doc)**: dated decision record — do NOT edit; the contradiction it carries (`jumprope-best-altitude` never shipped) is dispositioned in architecture.md's new persistence line + the ledger stamp, per ledger :159 ("accepted as shipped").
+3. **Every edit re-verified against code BEFORE writing (Task-1 drill).** The edit plan below was derived at create time against `aeb78d5`; each row carries its code cite — re-check each cite is still the live site (all `js/` is frozen this story, so cites CANNOT drift unless the plan itself was wrong — if one is, that is a STOP condition per Decided 1). Verified as-built constants: `ALT_PER_POINT = 2.5` (`js/game.js:42`), `ROPE_PERIOD = 1.3` (`js/game.js:15`), `START_PHASE = 0.33` (`:14`), ceilings `250/600/900/1350/2100` + periodMul `1.00/.95/.88/.82/.76` (`js/areas.js:16-32`), names `alley/rooftops/blimp/stratosphere/moon-approach`, effects 5 keys (`js/upgrades.js` `freshEffects`), caps extrarope 4 / reinforce 2 / doublejump 2 / highjump 3 (`js/upgrades.js:37-51`), summit tempo = 1.3 × 0.76 ≈ **0.99 s** (the old ≈1.10 s note was the ×0.85 placeholder's math), persistence key `jumprope-best` (`js/game.js:339,347`), VOICES = eight (`tests/ceilingbreak.test.js:511` fence), batch = 3 shapes × 40 seeds × 43,200 ticks (`tests/support/summit-gate.js:150`).
+4. **Success-metrics table — the claim/follow-up split (create-round measured; Main approved 2026-11-10).** The contract's "browser metrics NOT executable (no linux/arm64 Chromium)" premise is **FALSE on this bench**: playwright-core@1.65 (bun cache) + `~/.cache/ms-playwright/chromium-1248/chrome-linux-arm64/chrome` runs — Google Chrome for Testing 156.0.8078.4, verified by parent and create probe (`/tmp/probe64.mjs`, `/tmp/probe64b.mjs`; static server on 127.0.0.1, real jsdelivr CDN path, ZERO repo deps). **NFR1 claims the frame-timing-capture half** — live mid-game rAF deltas 482 frames: median 16.7 / p95 17.6 / max 18.4 ms, zero >20 ms, zero pageerrors; GL_RENDERER `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0)), SwiftShader driver)` → this is a **FLOOR, not a ceiling: 60 FPS held on a software rasterizer lower-bounds any 2020-era integrated GPU**; same wording lane + the ascend-beat capture cited from Epic-5 close UAT (`deferred-work.md:204`: median/p95 16.7/16.7–16.8 ms across a 5-rope area-5 ceiling break). The **human check on real integrated hardware** cannot run here → AC3 follow-up (owner: browser UAT lane / v2-deploy milestone, Epic-5 A5 precedent). **NFR3 claims measured**: load event 132 ms (real CDN fetch: three.module.js 45 ms + three.core.js 21 ms ≈ 390 KB), first scripted frames ≈449 ms, press→first-scored-skip 164 ms (`/tmp/probe64b.mjs`) — well under 2 s with the **datacenter-link caveat** (residential-broadband latency delta folded into the same UAT follow-up). **NFR4 claims with the gate timing** (`time node --test tests/` < 10 s — this round 566/566 @ 8.48 s / 8.54 s wall). **Boundary-fence and red-green claims from the suite/records** (Task 3 table). The GDD gameplay metrics (:479-496) are the playtest lane: policy-bot-side rows cite the 6.1-6.3 batch evidence (summit band 0.142 `in`; dead-card report; climb-value reports); the human-observation rows (smile/tension/moments/legibility narration) go to the UAT feel lane — record, don't claim.
+5. **architecture.md AC1 content = ONE new `## Run Record & Event Channel (as-built)` section** (drafted in the Debug Log — lift it in verbatim unless the re-verify finds drift) + the spine fixes in the edit plan. The run record's 17-key set is already test-fenced (`tests/altitude.test.js:43` sorted-keys deep-equal) — the doc must match that census exactly. "Ascent events" = the `ascend` event on the tick channel (area ladder, FR9/FR15 — derive from `js/game.js:284-300`, consumers JUICE_TIERS `js/shell.js:15-23` + VOICES `js/audio.js:185-208`); do not invent an event subsystem that isn't in the code.
+6. **Census pre-authorization (the 6.2/6.3 law: every planning-artifacts path this story edits must sit in BOTH allow-sets).** Verified create round: `sprint-status.yaml` + `deferred-work.md` already in both; `prd.md` already in both (6.3 C1 — no append needed); `epics.md`, `architecture.md`, `gdd.md` and this story's md are in NEITHER → **C1 appends exactly four paths per set** (Task 0). The story-md creation commit trips both censuses via the porcelain arm — expected; land C1 in the first dev commit (6.3 precedent `c1731e4`→C1).
+
+## Planning-doc edit plan (before → after; every row code-cited — re-verify each BEFORE editing)
+
+### gdd.md (`_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md`)
+
+| # | Locator (verify text) | Before → After | Code cite |
+|---|---|---|---|
+| G1 | :181 | "measured **linear** at 1.00 / 1.97 / 2.92 / 3.84 / 4.73" → "measured **sub-linear** at …" (ledger :118 nit) | 6.1 batch table (story 6.1 Debug Log); the numbers themselves stay |
+| G2 | :187-188 | "fixed **2 u** per point: `altitude += 2 × this pass's score`" → "**2.5 u** per point … `altitude += 2.5 × scoreMul`" | `js/game.js:42,182` |
+| G3 | :192-193 | "Area ceilings (placeholder ladder): **250 / 600 / 1,000 / 1,500 / 2,100**" → as-built ladder "**250 / 600 / 900 / 1,350 / 2,100** (Story 6.2 sweep-derived)" | `js/areas.js:16-32` |
+| G4 | :193-194 | "Target: summit reached around skip 120–180 passes" → as-built pacing: "at 2.5 u/pt the bare base to the 2,100 u summit is 840 points (`altitude += 2.5 × scoreMul` per pass); score-adding stacks lower the pass count — the **binding** pacing constraint is the wall-clock gate (NFR9), measured medSum 290.8/279.9/297.2 s (Story 6.2 batch)" | `js/game.js:182`; `js/areas.js:32`; 6.2 Debug Log table |
+| G5 | :234-237 ("*Why these numbers exist*") | "its offer frequency is the run's difficulty **thermostat**" → corrected per 6.3: frequency is a **TRIP lever, not a difficulty dial** — faster offers land `extrarope` earlier → past-2-ropes strip → MORE deaths, LOWER summit rate (non-monotone; escalated %6-after-30 measured 0.0333 out-low) | ledger :105 (PAID by 6.3); 6.3 story tables; `js/upgrades.js:105-112` (shipped pacing untouched) |
+| G6 | :244-248 (rule 1 measurement) | "16% of pick-of-2 … 47% of pick-of-3 … taking pick-of-3 to 39%" → exact-enumeration as-built: v1 8-card pool **16.25% / 46.20%**; shipped 12-card pool (post-3.1, rule-changers axis-singletons) **7.07% / 20.54%** — the 39% widening prediction never materialized; collisions DROPPED | `tests/balance.test.js:387-399` (pins 0.07/0.21; comment carries 16.25/46.20) |
+| G7 | :263-264 | retire `[ASSUMPTION: number-key picker not built in v1.0; assumed for target.]` → shipped (Story 3.5): `1/2/3` keys confirm offers | `js/shell.js:344` (`Digit1/2/3`) |
+| G8 | :267 | "**Mute/volume:** HUD toggle, persisted." → "key-driven — `Mute` / `−` / `=` — plus the pause-menu sound button + volume readout (Story 5.7), persisted." (GAP-02, readiness report :121) | `js/shell.js:314-316,787-790` |
+| G9 | :283-287 | "period multiplier (placeholder: ×1.0 / 0.96 / 0.92 / 0.88 / 0.85 — summit base period ≈ **1.10 s**). [ASSUMPTION: … designer has not tuned it.]" → as-built: "×1.00 / 0.95 / 0.88 / 0.82 / 0.76 — summit base period 1.3 × 0.76 ≈ **0.99 s**; tuned via the Story 6.2 sweep (ASSUMPTION retired — designer tuned it through the gate)" (ONE edit, retire the tag; the ≈1.10 was the ×0.85 placeholder's math) | `js/areas.js:16-32`; `js/game.js:15`; 6.2 story |
+| G10 | :374-375 | "altitude-per-skip (placeholder **2 u**)" → "(**2.5 u**, as-built — Story 6.2)" | `js/game.js:42` |
+| G11 | :384-388 | "Alley (0) → Rooftops (250) → Blimp Deck (600) → Stratosphere (1,000) → Moon Approach (1,500) → summit 2,100. [ASSUMPTION: tier names/themes are draft flavor…]" → as-built altitudes 0 → 250 → 600 → **900** → **1,350** → 2,100; names SHIPPED AS DRAFTED (code ids `alley/rooftops/blimp/stratosphere/moon-approach`); themepark never ran — flavor lane remains a designer candidate, not a rename | `js/areas.js:16-32` |
+| G12 | :405-410 (art section + NOTE) | the jiggle "candidate/undecided" → as-built: **blocky chest-jiggle SHIPPED** (renderer-only prop boxes on a damped spring; `CHEST_JIGGLE` switch); cel-shading alternative retired | `js/render3d.js:22-32`; `spec-chest-jiggle-physics.md` (status done) |
+| G13 | :417-418 | "Music track (`audio/track.ogg`, TRACK-1) **remains content-deferred**" → shipped Story 5.6 (Ogg/Vorbis mono, 79.18 s seamless loop, 97 BPM, zero rhythmic relation to the rope — pillar 2 intact) | `js/audio.js:8`; ledger :206 (sha + LUFS) |
+| G14 | :443 (assets) | "one optional **deferred** music file" → "one committed music loop"; ":444 jiggle candidate adds ≤10" → shipped as two prop boxes | `audio/track.ogg` (repo); `js/render3d.js:28+` |
+| G15 | :518-523 ASSUMPTION index | #2 (number-key picker) → retire, shipped 3.5; #3 (per-area multipliers awaiting tuning) → retire, tuned via 6.2 gate; #4 (area names placeholder flavor) → "shipped as drafted; themepark optional"; #1 (audience) — designer lane, LEAVE | G7/G9/G11 cites |
+| G16 | :525-530 NOTE FOR DESIGNER | #1 endless-after-summit — genuinely open, LEAVE; #2 art gag → RESOLVED, jiggle shipped (G12); #3 placeholders row → RETIRE ("balance pass done — Story 6.2/6.3 gate-proven"); #4 last-rope mix → **closed-by-implementation Story 5.2**: taut double-tick 660+1320 Hz on the tension variant, material-only; designer override lane stays open (D-N12) | `js/audio.js:191`; ledger :46 (5.2 Decision #4); epics.md FR10 note |
+
+### prd.md (`_bmad-output/planning-artifacts/prd.md`)
+
+| # | Locator | Before → After | Evidence |
+|---|---|---|---|
+| P1 | :44-53 "Current State — v2 in progress (as of 2026-11-07)" | stale (Epic 3 at 3.1-review, 303/303) → **"Current State — v2 complete (2026-11-10, Story 6.4 closes it)"**: Epics 1–5 done; 6.1 summit gate (`summit rate 0.142 in band`, three shapes), 6.2 real tunables (retune table), 6.3 CARD-09 CLOSED with evidence; this story = the docs-provenance pass + success-metrics execution (evidence: this story file); gate 566/566 @ ~8.5 s; next milestone: v2 deploy/UAT + Epic 7 The Peel (META-01 pinned) | sprint-status :74-101; 6.1-6.3 stories |
+| P2 | :88 TRACK-1 row | "Owned — Story 5.6 … story ships the file" → **CLOSED** — file shipped with Story 5.6 (first committed binary; sha/LUFS in ledger :206) | `audio/track.ogg`; `js/audio.js:8`; sprint :89 |
+| P3 | :89 WR-02 row | "Owned — Story 5.4" → **CLOSED** — fixed in 5.4, the `beat` gate at source | `js/render3d.js:575`; ledger :221 |
+| P4 | :90 CARD-08 row | **LEAVE UNTOUCHED** — "Promoted — shipping as Epic 3" is a decision record and Epic 3 is done; the row is v2-true (Main directive: no churn on accurate rows) | sprint :71 |
+| P5 | :91-92 CARD-09 / META-01 rows | UNTOUCHED (verified v2-true: CARD-09 CLOSED row shipped in 6.3; META-01 pinned Epic 7 = the one open item) | prd :91 @ HEAD |
+
+### architecture.md (`_bmad-output/planning-artifacts/architecture.md`)
+
+| # | Locator | Before → After | Evidence |
+|---|---|---|---|
+| A1 | :19-23 diagram + :44 Layers row | `js/areas.js` absent → add to the sim tree + Simulation-core row (data module since Story 2.2) | `js/game.js:4,12`; `js/areas.js` |
+| A2 | :26 storage line | already as-built (`'jumprope-best'`) — append "(as-built: the versioned `jumprope-best-altitude` of `game-architecture.md` §Persistence was never shipped — accepted 2026-11-10, ledger :159; no run record is ever persisted)" | `js/game.js:339,347` |
+| A3 | :47 Audio row | "Five procedural SFX voices" → **eight** voices + the pre-recorded track loop (5.6) | `js/audio.js:185-208`; `tests/ceilingbreak.test.js:511` |
+| A4 | :51 Run bullet | `{ status, score, skips, effects, owned, offer, ... }` → drop the ellipsis; point at the new Run Record section | `tests/altitude.test.js:43` (17-key fence) |
+| A5 | :57 Effects bullet | 4 fields → five (`launchMul` added Story 3.2; `*Mul` endofunctions) | `js/upgrades.js` freshEffects |
+| A6 | :83-86 Delivery/Tooling | "includes the 1000-tick headless-sim balance gate" → "…seeded policy-bot summit batch (3 shapes × 40 seeds × 43,200 ticks — Stories 6.1/6.2) beside the v1 headless-sim legs" | `tests/support/summit-gate.js:150` |
+| A7 | NEW `## Run Record & Event Channel (as-built)` section (after Key Abstractions) | lift the Debug-Log draft (Decided 5): 17-field table with meaning + owning story + instrument reads, the 9-event channel, ascend/win mechanics, persistence as-built | draft verified against `js/game.js:116-118,164-301`; `js/shell.js:15-23` |
+| A8 | :89-93 Known Debt | WR-02 line → PAID (Story 5.4, site `js/render3d.js:575`) — retire; `track.ogg` line → shipped (5.6) — retire; ADD **documented walls**: (w1) owned-cap lifetime lock (Spare Rope 4 / Steel Cord 2 / Second Wind 2 hide the card once lifetime-owned, even spent/stripped — decision re-pointed post-v2 by 6.3 Decided-6; bot builds brush the wall: extrarope ≈3.4 picks/run vs cap 4); (w2) seed-sensitivity flake surface on batch-driven legs — OPEN by design, last swept 6.3 (ledger :244-246) | `js/upgrades.js:37-51`; `js/game.js:166-275`; ledger :154/:206/:221/:244-246 |
+
+### epics.md (`_bmad-output/planning-artifacts/epics.md`)
+
+| # | Locator | Before → After | Evidence |
+|---|---|---|---|
+| E1 | :35 FR7 | "(placeholder tunables, replaced by the balance pass)" → "(as-built — Story 6.2: **250/600/900/1,350/2,100**, `js/areas.js`; altitude-per-skip 2.5, `js/game.js:42`)" | G3/G2 cites |
+| E2 | :49 FR15 | "placeholder flavor … (placeholder ×1.0/0.96/0.92/0.88/0.85)" → names shipped as drafted (`js/areas.js` ids) + as-built multipliers ×1.00/.95/.88/.82/.76 | `js/areas.js:16-32` |
+| E3 | :69 FR29 | "`audio/track.ogg` (TRACK-1) remains content-deferred" → **shipped Story 5.6** (the silence-degradation legs stay pinned — v1 unchanged for absent file) | ledger :206; `tests/track1.test.js` |
+| E4 | :94 catalogue rule | "16% of pick-of-2 and 47% of pick-of-3 … widens … to 39%" → as-built: 8-card 16.25%/46.20% (historical baseline); 12-card shipped pool 7.07%/20.54% — rule-changers are axis-singletons, collisions fell | `tests/balance.test.js:387-399` |
+| E5 | :101 Known debt WR-02 | → "Known debt WR-02 — **PAID** by Story 5.4 (2026-11-09): the `beat` gate at `js/render3d.js:575`; retired by Story 6.4" | ledger :221-223 |
+| E6 | :361 Story 2.1 AC "altitude-per-skip = 2 u … owned by Epic 6's balance pass" | append as-built parenthetical: "(as-built: 2.5 shipped by Story 6.2 in `616eb6c` — placeholder retired; THE exemplar of why this pass exists)" | `js/game.js:42` |
+| E7 | :455 Story 2.5 AC "(baseline: 16% at pick-of-2, 47% at pick-of-3)" | → "(baseline: exact weighted enumeration 16.25% / 46.20% on the 8-card pool — pinned `tests/balance.test.js`; post-3.1 12-card pool 7.07% / 20.54%)". Ledger :121-122 owns this number edit | ledger :121-122; E4 cite |
+
+## Ledger items embedded (every 6.4 owner, deferred-work.md line cites — Dev stamps ALL at Task 4)
+
+**1. Collision-number AC quote (deferred-work.md:121-122) — DISPOSITION: implement.** E7 (+E4, G6). The exact-enumeration 46.20% replaces the Monte-Carlo-rounded 47%; the current-pool truth (7.07/20.54) rides the same sentences so the row tells the v2 story, not just the 2026-11-06 story.
+**2. Sub-linear wording nit (:118-120, "the wording nit rides the 6.4 docs pass") — DISPOSITION: implement.** G1.
+**3. Owned-cap wall — DOCUMENTATION half, re-pointed by 6.3 (:154) — DISPOSITION: implement.** A8-w1: the wall recorded as as-built fact (both classes' sites, the 6.3 measured inputs, the post-v2 decision pointer). The DECISION half stays post-v2 correct-course — do not re-litigate, do not touch `js/upgrades.js`.
+**4. localStorage key (:158-159) — DISPOSITION: implement.** A2: `jumprope-best` recorded as as-built; the ADR contradiction noted in-line; `game-architecture.md` left as a dated record (Decided 2c).
+**5. Known-Debt refresh (:222-223, "OWNER: Story 6.4 candidate") — DISPOSITION: implement.** E5 + A8 (WR-02 + track rows retired; walls added).
+**6. Thermostat prose (:105 tail, "prose refresh is 6.4's docs lane") — DISPOSITION: implement.** G5.
+**7. Summit-tempo docs note (:192, "Flagged also for 6.4's docs pass") — DISPOSITION: implement.** G9 (the ≈1.10→≈0.99 s correction; the FEEL question "does the beat land at the tuned tempo?" stays UAT-lane — no docs claim).
+**8. Seed-sensitivity surface (:244-246) — DISPOSITION: RECORD ONLY.** Stays OPEN by design (6.3 is its last scheduled sweeper; the note survives); this story runs no batch. Do not stamp closed.
+**9. JUICE_TIERS ascend / VISTAS hex ladder provisional seeds (:191-192) — DISPOSITION: RECORD ONLY.** Feel-lane retune (D-N12), not a docs item; the numbers live in code comments, not planning docs — leave both blocks untouched.
+
+## Success-metrics execution table (Task 3 — record each row with evidence; the split below is create-measured)
+
+| Metric | Verdict | Evidence to cite in Completion Notes |
+|---|---|---|
+| NFR1 60 FPS — frame-timing capture | **PASS (floor claim)** | create probe: 482 rAF deltas median 16.7/p95 17.6/max 18.4, 0 >20 ms, SwiftShader GL_RENDERER (software raster ⇒ floor); Epic-5 close ascend-beat capture ledger :204 |
+| NFR1 — human check, 2020-era integrated GPU | **FOLLOW-UP (AC3)** | hardware absent at this bench → Task 4 ledger entry, owner browser UAT lane / v2-deploy (Epic-5 A5 precedent) |
+| NFR4 suite <10 s deterministic | **PASS** | `time node --test tests/` @ baseline 566/566 @ 8.48 s (duration_ms 8483; wall 8.54 s) + dev's own final run |
+| Boundary fence green | **PASS** | `tests/boundary.test.js` (derived-entry import-graph walk; sole `three` consumer + no browser IO in the sim graph) green inside the 566 |
+| NFR5 red-green legs for every new mechanic | **PASS (records claim)** | every v2 story file carries red-green/mutation records (census: 30/30 story mids match — Debug Log table); spot witnesses: multirope/trip (1.2), arealadder 18 mutation-proven legs (4.1), steelcord leg-8 mutation (3.3), summitapproach M2/M6-M9 (4.5), offercadence 4 red-green legs (6.2), reducedmotion L1-L3 honest-red (5.4), leadinhop L1-L6 (chore); frozen-test discipline itself fenced by the two diff censuses (green) |
+| NFR3 page-load → first jump <2 s | **PASS (measured, datacenter-link caveat)** | probe64b: load event 132 ms with real jsdelivr fetches (45+21 ms, ~390 KB), first frames ≈449 ms, press→first-scored-skip 164 ms; broadband delta → UAT follow-up (same row as NFR1 hardware half) |
+| Gameplay-metrics rows (GDD :479-496) | **SPLIT: bot-claimable / UAT lane** | claim with batch cites: summit band 0.142 in + medSum 290.8/279.9/297.2 s (6.2), no dead card below 30% when offered → report {multi, doublejump, windup, window, reinforce} sit 20.6-29.2% **under the bot's draw-order instrument** (6.3 Decided-5 caveat — state it), no score-negative pick (`cardRuleReport`, 6.1 fold), collisions trending to zero (E4). UAT lane (no headless proof): smile test, audible last-rope tension, moments land, one-sentence build narration |
+
+## Tasks
+
+- [ ] Task 0: Kickoff + C1. `time node --test tests/` → expect **566/566 @ ~8.5 s** at baseline `aeb78d5` (create-round measured). Land C1 FIRST (this story md trips both censuses via the porcelain arm — expected): in `tests/summitapproach.test.js` §4.3 allow-set AND `tests/ceilingbreak.test.js` §6 allow-set, append comment-attributed list-only entries adding exactly: this story's md, `_bmad-output/planning-artifacts/epics.md`, `_bmad-output/planning-artifacts/architecture.md`, `_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md` (`prd.md` + `deferred-work.md` + `sprint-status.yaml` already listed — no append; comment must state the docs-pass authorization and that it pre-authorizes nothing beyond the rows this story pins). Gate green again after C1 (566, both census legs read the NEW paths as authorized-unchanged until the docs commit lands — they stay green either way since the sets only WIDEN).
+- [ ] Task 1: Re-verify + drill the gdd.md list (G1-G16). Each row: read the cited code site, confirm the before-text at the locator (drifted line numbers → locate by text), apply the edit. Nothing else in gdd.md changes; the Success-Metrics/pillars/epic-structure prose is requirements text — leave it.
+- [ ] Task 2: prd.md P1-P5 + epics.md E1-E7. P4/P5 = verify-and-leave (record the check in the Debug Log, zero edits). epics.md: touch ONLY the seven registry/number sites — story AC sentences otherwise byte-identical (except E6/E7's authorized parenthetical/number edits).
+- [ ] Task 3: architecture.md A1-A8 (A7 = lift the Debug-Log draft; re-check every field's story cite against this file's Run Record draft cites). Then the metrics table (Task 3 rows): re-run the gate (`time`), re-run `/tmp/probe64.mjs` + `/tmp/probe64b.mjs` if still staged, else rebuild per the Debug Log description (static server + playwright-core from the bun cache + `chrome-linux-arm64/chrome`; ZERO repo deps); paste outputs into the Debug Log.
+- [ ] Task 4: Stamps + follow-ups + closeout. Ledger: stamp items 1-7 `PAID by Story 6.4 (2026-11-10)` under the existing owner bullets; items 8-9 `RECORDED` (stays open); ADD the AC3 follow-up entries: (F1) "60 FPS human check on 2020-era integrated GPU + residential-broadband NFR3 re-check — OWNER: browser UAT lane / v2-deploy milestone (Epic-5 A5 precedent); frame-timing floors already captured 2026-11-10 (6.4 Debug Log + ledger :204)"; (F2) the create-round DISCOVERY: `js/game.js:89` comment says area-5 periodMul "0.85 for +Infinity" — STALE code comment (as-built 0.76, `js/areas.js:32`); js/ edits are forbidden this story (Decided 1) → OWNER: next js-touching story (one-word fix). Then final gate + `git diff --stat` confinement (must show ONLY: gdd.md, prd.md, architecture.md, epics.md, deferred-work.md, sprint-status.yaml, this story, the two census files list-only), flip Status done + sprint line, File List + Change Log.
+
+## Dev Notes
+
+### Current state (verified 2026-11-10 @ aeb78d5)
+
+- Gate **566/566 @ 8.48 s** (`duration_ms 8483`; wall 8.54). All v2 mechanics shipped; planning docs are the ONLY stale surface. The four target docs carry ~25 stale spots (the edit plan is the complete census found at create round — a NEW stale row discovered mid-drill is not a surprise, it's Task 1/2's STOP-or-propose case).
+- Diff censuses: `tests/summitapproach.test.js:833` (base `2c3e693`, allow-set :859-958) + `tests/ceilingbreak.test.js:546` (base `5659fd4`, :572-671); porcelain arm included; both already carry `deferred-work.md`, `sprint-status.yaml`, `prd.md` (6.3 C1).
+- The ADR `game-architecture.md` contradicts shipped persistence (:215/:265/:330) — deliberately out of edit scope (Decided 2c); the architecture.md A2 line is the record.
+- Bench: Linux arm64 (NVIDIA host), Node 26, bunx + playwright-core@1.65 + working Chrome-for-Testing 156 (`chrome-linux-arm64`, SwiftShader via ANGLE) — the browser lanes EXECUTE (see Decided 4).
+
+### Pitfalls
+
+- **Census red at kickoff is expected** (porcelain arm vs the new story md) — land C1 first; do not "fix" anything else to make it green.
+- **Do NOT edit `_bmad-output/game-architecture.md`, AGENTS.md, `docs/`, or any story md other than this one.** Planning edits outside the four docs go red in both censuses — and would be unauthorized even if not.
+- Line numbers in the edit plan drift if the doc text was touched — locate every row BY TEXT (the "verify text" column), not by number.
+- gdd.md Success Metrics (:468-497) and epics NFR list (:74-84) are REQUIREMENTS, not drift — even where "human check" phrasing is now partially claimable, leave the requirement text; the RESULTS live in this story's table.
+- NFR5: claim via records + the two census fences — do NOT add a "red-green test" (zero test edits; a new leg would break AC-by-scope and the 566 count).
+- The 46.20% correction has THREE sites (G6, E4, E7) — fix all three with the same dual-number form, or the ledger item is not PAID.
+- SwiftShader numbers are a FLOOR — never phrase NFR1 as "verified on integrated GPU". Say exactly: measured floor under software rasterization + Epic-5 UAT citation; hardware check = follow-up.
+- `browser.userAgent` doesn't exist on playwright's browser object (create-round stumble) — `page.evaluate(() => navigator.userAgent)`.
+- Do not touch JUICE_TIERS/VISTAS (feel lane) and do not re-run any batch (seed surface: record-only).
+
+### Precedents to follow
+
+- 6.3/6.2 story discipline: Decided-N with evidence, Debug-Log tables as handoff, `time node --test` pair, C-series census appends as list-only comment-attributed amendments (`26e595e`, `e8099ab`), ledger stamps `**PAID by Story 6.4** (2026-11-10):` under the existing owner bullet.
+- Prose-refresh precedent: this story IS the lane 6.3 cited ("the prose refresh is 6.4's docs lane") — G5 ships what 6.3's ledger stamp ordered.
+
+### AC → test/artifact mapping
+
+| AC | Where |
+|---|---|
+| 1 docs as-built | edit plan G1-G16 / P1-P5 / A1-A8 / E1-E7 (four planning docs; the drill) |
+| 2 metrics executed | Task 3 table (gate timing, boundary leg green in-suite, red-green records, probe64/probe64b outputs) |
+| 3 no hidden regression | ledger F1 (hardware/broadband UAT follow-up) + F2 (stale `game.js:89` comment — logged, not silently fixed); gate stays 566/566 |
+
+### Project Structure Notes / Context Rules
+
+- Zero new paths; zero `js/`, zero `tests/` behavior, zero `css/`/`audio/`/`index.html` touches. AGENTS.md laws in force: frozen-test discipline (census C1 IS the written authorization for the two allow-set lines), NFR4 (<10 s — this story changes no legs), NFR6 (zero deps — the browser probes are scratch-side, bunx cache only, nothing installed into the repo).
+- No OPEN questions for the user: area FLAVOR shipped as drafted (names match code ids modulo case) — recording that is a fact, not a rename; endless-after-summit (NOTE #1) and audience (ASSUMPTION #1) are standing designer lanes, already logged.
+
+### References
+
+- [Source: _bmad-output/planning-artifacts/epics.md#Story 6.4 :941-957; FR/NFR registry :35,:49,:69,:74-84,:94,:101,:361,:455]
+- [Source: _bmad-output/implementation-artifacts/deferred-work.md :118-122, :154, :158-159, :191-192, :204, :206, :221-223, :244-246]
+- [Source: _bmad-output/implementation-artifacts/6-2-real-tunables-retire-the-placeholders.md (batch table), 6-3-offer-pacing-verdict-card-09.md (Decided 5/6, tables, Project-Structure 6.4-handoff)]
+- [Source: js/game.js:14-42,95-97,116-118,162-301,339-347; js/areas.js:1-33; js/upgrades.js (caps, isAvailable, pickOffers); js/audio.js:8,185-208; js/render3d.js:22-32,575; js/shell.js:15-23,130,314-316,344,787-790]
+- [Source: tests/balance.test.js:370-401; tests/altitude.test.js:43; tests/summitapproach.test.js:833-961; tests/ceilingbreak.test.js:511-517,546-674; tests/support/summit-gate.js:80-128,150]
+- [Source: _bmad-output/planning-artifacts/implementation-readiness-report-2026-10-28.md :106,:121,:130,:167 (GAP-02, spine-refresh ownership, M-3 evidence-home)]
+- [Source: /tmp/probe64.mjs, /tmp/probe64b.mjs (create-round browser probes — NFR1/NFR3), /home/ed/.bun/install/cache/playwright-core@1.65.0 (scratch-side, zero repo deps)]
+
+## Dev Agent Record
+
+### Agent Model Used
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List
+
+## Debug Log
+
+- 2026-11-10 (create round): Gate verified once @ `aeb78d5`: **566/566, duration_ms 8483 (wall 8.54 s)** — matches the contract's ~8.6 s baseline.
+- 2026-11-10 (create round): Drift-list re-derivation from code (every Task row re-verified at HEAD): ALT_PER_POINT 2.5 (`game.js:42`, comment carries the 6.2 gate cite); ROPE_PERIOD 1.3 (`:15`); AREAS ceilings/periods/names (`areas.js:16-32` — School B retune comments inline); event channel = jump/skip/nearMiss/offer/chargeUsed/ropeLost/trip/win/ascend (`game.js:165-300`); JUICE_TIERS 7 rows, VOICES 8 (`shell.js:15-23`, `audio.js:185-208`, ceilingbreak §6 fence); run record 17 keys (`game.js:117`, fenced `altitude.test.js:43`); persistence `jumprope-best` (`game.js:339,347`), ADR contradiction confirmed (`game-architecture.md:215,:265,:330`); collision dual-numbers confirmed (`balance.test.js:394` comment: "was 16.25% / 46.20% on 8 cards"; pins 0.07/0.21 for the 12-card pool); jiggle shipped (`render3d.js:22-32`, spec status done); WR-02 fixed (`render3d.js:575`); track shipped (`audio.js:8`); Digit1/2/3 live (`shell.js:344`); horizon 43,200 (`summit-gate.js:150`); 6.4-owned ledger census via grep "6.4" (items 1-9 embedded above — none missed; :175's Epic-3-close cluster all resolved upstream except the 6.4-stamped rows).
+- 2026-11-10 (create round): **Browser-lane probe — the contract's infeasibility premise FALSIFIED.** `~/.cache/ms-playwright/chromium-1248/chrome-linux-arm64/chrome --version` → Google Chrome for Testing 156.0.8078.4 (INSTALLATION_COMPLETE, 401 MB; puppeteer has no arm64 build — Playwright does). `/tmp/probe64.mjs` (static server + playwright-core from the bun cache; zero repo deps; zero pageerrors): mid-game rAF 482 frames **median 16.7 / p95 17.6 / max 18.4 ms, over20: 0**; GL_RENDERER `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0)), SwiftShader driver)` → software raster, FLOOR claim, same lane as Epic-5 close UAT (ledger :204, ascend-beat median/p95 16.7/16.7–16.8). `/tmp/probe64b.mjs`: real jsdelivr fetches (three.module.js 45 ms / three.core.js 20 ms, ≈390 KB), **load event 132 ms, first frames ≈449 ms, press→first-scored-skip 164 ms** — NFR3 <2 s with margin, datacenter-link caveat. Parent verified the binary and APPROVED the split (Main, 2026-11-10): NFR1 capture claimed with the floor caveat; hardware human check = AC3 follow-up F1.
+- 2026-11-10 (create round): **DRAFT — architecture.md `## Run Record & Event Channel (as-built)` section (A7; lift verbatim unless re-verify finds drift):** — **Run** — immutable record, 17 keys (fence: `tests/altitude.test.js:43`); states `idle → running ↔ choose → over` (`idle` is written ONLY shell-side at `js/shell.js:130`; `tickRun` never emits it). Fields: `status` (run FSM, v1) · `score` (points; `score += scoreMul` per pass, Story 2.1) · `altitude` (**2.5 u per point**, `ALT_PER_POINT`, game.js:42/182 — 6.2 retuned from the 2.0 placeholder) · `skips` (cleared-pass count — the pacing clock: offers every 10th, width 2→3 after 30, `upgrades.js:105-112`) · `effects` `{floatMul, ropeMul, scoreMul, windowMul, launchMul}` (endofunction multipliers; `launchMul` added by 3.2) · `offer` (2–3 cards during `choose`, else `null`; win tick clears it, 2.2/2.4) · `owned` {cardId: lifetime count} (deal filter + HUD; caps Spare Rope 4 / Steel Cord 2 / Second Wind 2 — the lifetime-lock wall, Known Debt w1) · `buffer` (0.1 s forgiveness window on the phase clock, decays `dt × ropeMul / periodMul`, D-N01) · `streak` (near-miss chain, 1.4; zeroed by trip/strip/comfortable clear) · `ropes` **1–5, live HP** (`clampRopes`; trip −1 + blank `ropeCount−1` crossings, FR2; `extrarope` +1 cap 4; read by HUD pips (1.3), the 3D ghost pool (5.3), the state-aware deal filter) · `charged` **0–2** (`clampCharged`/`MAX_CHARGED`; Steel Cord armor — consumed instead of a rope, blank spans a full revolution, FR12/3.3) · `airJumps` **0–1** (`clampAirJumps`; refreshed on ground contact iff Second Wind owned, game.js:162, FR12/3.4) · `iFrames` (crossings-until-blank-ends, NOT a clock — NFR8; non-finite reads as gate-open, capped to MAX_ROPES, FR3; the summit-peak check is suppressed while >0 — 4.5's DENY interlock) · `area` **1–5 ladder index** (`clampArea`, 4.1 heals crafted domains; one-way up) · `baseAltitude` (the ceiling we just left — a derived floor, `AREAS[area−2].ceiling`; arealadder §pinned) · `outcome` `null | 'tripped' | 'summit'` (2.2/2.4; drives saveBest-once + win/lose presentation). — **Event channel** — `tickRun` returns a per-tick `events` array (order = causality): `jump`, `skip`, `nearMiss`, `offer`, `chargeUsed` (3.3), `ropeLost` (1.2/5.2), `trip` (fatal-only, 2.4), `win`, **`ascend`** — nine names; the shell maps seven to JUICE_TIERS rows (`shell.js:15-23`; `jump` gets no juice) and eight to audio VOICES (ceilingbreak §6 exact-census fence). — **Ascent events** (Stories 4.1/4.2, FR9/FR15): once per tick, `peak = altitude + y` (post-step sample, no second clock) crossing `> AREAS[area−1].ceiling` with `iFrames == 0` → non-summit: `baseAltitude := ceiling`, `area += 1`, push `ascend` — the NEXT tick reads the new tier's `periodMul` (4.2 D-b: phase stays continuous, NFR8), the vista flips (4.3), the stinger fires (5.1), the marker re-arms; summit (area 5): `outcome 'summit'`, any same-tick `offer` field AND its channel cue are cleared (2.2/2.4). Exactly-one-ascend-per-tick (`if`, never `while` — 4.1 interlock); level-triggered, no banking (4.5). — **Persistence (as-built)**: localStorage `'jumprope-best'` (bare v1 key — the versioned `jumprope-best-altitude` of `game-architecture.md` was never shipped; accepted 2026-11-10 per ledger :159) + mute/volume, all via the injected storage seam; degrades to session-only; **no run record is ever persisted** (permadeath, FR23).
+- 2026-11-10 (create round): DISCOVERY (F2, not in the AC's drift list): `js/game.js:89` comment reads "row 5's **0.85** for +Infinity" — stale since the 6.2 retune (as-built 0.76, `areas.js:32`). `js/` is edit-forbidden this story (Decided 1) → logged as ledger follow-up F2 (owner: next js-touching story), zero docs impact.
+- 2026-11-10 (create round): Red-green records census for the NFR5 row: every story artifact 1-1 → 6-3 + both chores carries red-green/mutation record lines (per-file match counts: Epic 1 3-6/story, Epic 2 1-6, Epic 3 2-11, Epic 4 3-6, Epic 5 1-6, Epic 6 2-6+). Spot witnesses tabled in the metrics row; the two diff censuses (green at 566) fence the frozen-test half.
+- 2026-11-10 (create round): Census reconnaissance: both allow-sets read complete (`summitapproach.test.js:859-958`, `ceilingbreak.test.js:572-671`) — `deferred-work.md`/`sprint-status.yaml`/`prd.md` present in both; gdd/epics/architecture absent → C1 = four appends per set (Task 0). No planning-artifacts line in any other fence (grep-proven; 6.3's C1 comment is the sole precedent comment idiom reused).
+
+## Change Log
+
+- 2026-11-10 (create round): Story created from epics.md:941-957 + ledger scan; edit plan G1-G16/P1-P5/A1-A8/E1-E7 verified against `aeb78d5`; metrics split approved by Main (browser lanes EXECUTABLE — playwright chromium-1248 arm64 probe evidence supersedes the contract's infeasibility premise); state-shape draft verified field-by-field against the 17-key test fence; C1 pre-authorized (four appends per allow-set); ledger items 1-9 dispositioned (7 implement, 2 record-only) + follow-ups F1/F2 named.
