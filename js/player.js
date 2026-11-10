@@ -6,11 +6,17 @@ export function jumpVelocity(holdSeconds) {
   return 350 + Math.min(holdSeconds, 0.5) * 500;
 }
 
+// Story 6.2 (ledger :26-27/:43-44, Decided 8): the physics constants join the
+// export surface so the nearmiss/v1parity rigs stop duplicating them — the
+// values are UNCHANGED, every trace byte-identical by construction.
+export const GRAVITY = 1800;
+export const CLEAR_MIN_HEIGHT = 18;
+
 export function jump(player, holdSeconds, launchMul = 1) {
   return { ...player, vy: jumpVelocity(holdSeconds) * launchMul, grounded: false };
 }
 
-export function updatePlayer(player, dt, gravity = 1800) {
+export function updatePlayer(player, dt, gravity = GRAVITY) {
   let { y, vy, grounded, squash, squashVel } = player;
   vy -= gravity * dt;
   y += vy * dt;
@@ -34,6 +40,6 @@ export function updatePlayer(player, dt, gravity = 1800) {
   return { y, vy, grounded, squash, squashVel };
 }
 
-export function clearsRope(playerY, minHeight = 18) {
+export function clearsRope(playerY, minHeight = CLEAR_MIN_HEIGHT) {
   return playerY >= minHeight;
 }

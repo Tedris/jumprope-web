@@ -7,7 +7,7 @@ import {
   createRun, tickRun, resumeRun,
   START_PHASE, BUFFER_SEC, ROPE_PERIOD, MIN_ROPES, MAX_ROPES,
 } from '../js/game.js';
-import { createPlayer, jump, jumpVelocity } from '../js/player.js';
+import { createPlayer, jump, jumpVelocity, GRAVITY, CLEAR_MIN_HEIGHT as MIN_HEIGHT } from '../js/player.js';
 import { atFeetOffset } from '../js/rope.js';
 import { CARDS, freshEffects } from '../js/upgrades.js';
 
@@ -19,19 +19,17 @@ import { CARDS, freshEffects } from '../js/upgrades.js';
 //
 // This is a PROOF suite: zero production code. Expectations derive from what
 // the modules export (jumpVelocity, BUFFER_SEC, START_PHASE, CARDS, the rope
-// band via atFeetOffset) — the two inline physics numbers below are the only
-// rig-local literals (deferred-work.md 2026-11-04 defer: no constant exports
-// until the Epic 6 balance pass).
+// band via atFeetOffset) — the two physics numbers below ride the js/player.js
+// export surface (Story 6.2 re-contract R4, ledger :43: the 2026-11-04 "no
+// constant exports until the Epic 6 balance pass" defer is PAID by that pass).
 
 // ---------- pure-sim rig (feel.test.js + multirope.test.js idioms) ----------
 
 const STEP = 1 / 120;
 const RIG_PERIOD = ROPE_PERIOD;                    // rope rhythm IS exported
 const INC = STEP / RIG_PERIOD;               // phase advance per tick, ropeMul 1
-const GRAVITY = 1800;                        // rig-local literal: tickRun's updatePlayer
-                                             // call site (game.js:54) — not exported, see header
-const MIN_HEIGHT = 18;                       // rig-local literal: the clearsRope threshold passed
-                                             // at game.js:73 as 18 / windowMul — not exported
+// GRAVITY / MIN_HEIGHT: tickRun's physics constants, imported from js/player.js
+// (GRAVITY, CLEAR_MIN_HEIGHT locally as MIN_HEIGHT) — parity values identical.
 const FALL_PER_TICK = GRAVITY * STEP * STEP; // Δy of one injected vy=0 airborne tick
 const rngStub = () => 0.5;
 

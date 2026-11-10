@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   createRun, tickRun, BUFFER_SEC, NEAR_MARGIN, MIN_ROPES, MAX_ROPES,
 } from '../js/game.js';
+import { GRAVITY, CLEAR_MIN_HEIGHT as MIN_HEIGHT } from '../js/player.js';
 
 // Story 1.4 — near-miss & streak under multi-rope. Two sections in one file
 // (tripresolution.test.js precedent): pure-sim legs pinning the per-pass
@@ -20,10 +21,11 @@ import {
 
 const DT = 1 / 60;            // period 1 at dt 1/60: 60 ticks sweep the clock
 const TICKS_PER_REV = 60;
-const GRAVITY = 1800;         // tickRun's updatePlayer call site
+// Story 6.2 re-contract R3 (ledger :26-27/:43-44): GRAVITY and MIN_HEIGHT are
+// the js/player.js exports (CLEAR_MIN_HEIGHT, locally MIN_HEIGHT) — the rig's
+// duplicate literals retired with the exports; assertions untouched.
 const FALL_PER_TICK = GRAVITY * DT * DT; // Δy of one injected vy=0 airborne tick
-// minHeight at windowMul 1 is clearsRope's 18 default threshold.
-const MIN_HEIGHT = 18;
+// minHeight at windowMul 1 is clearsRope's CLEAR_MIN_HEIGHT default threshold.
 const NEAR_TOP = MIN_HEIGHT * (1 + NEAR_MARGIN); // near-miss band ceiling
 
 const groundedPlayer = { y: 0, vy: 0, grounded: true, squash: 1, squashVel: 0 };

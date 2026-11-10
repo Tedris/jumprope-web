@@ -1,5 +1,5 @@
 import { updateRope, atFeetOffset } from './rope.js';
-import { jump, createPlayer, updatePlayer, clearsRope } from './player.js';
+import { jump, createPlayer, updatePlayer, clearsRope, GRAVITY, CLEAR_MIN_HEIGHT } from './player.js';
 import { CARDS, freshEffects, pickOffers, shouldOfferUpgrade, offerCount } from './upgrades.js';
 import { AREAS } from './areas.js';
 
@@ -124,7 +124,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   // buffer decay below; left-associative so area 1 stays byte-identical.
   const periodMul = areaPeriodMul(area);
   const nextRope = updateRope(rope, (dt * run.effects.ropeMul) / periodMul);
-  const nextPlayer = updatePlayer(player, dt, 1800 / run.effects.floatMul);
+  const nextPlayer = updatePlayer(player, dt, GRAVITY / run.effects.floatMul);
   let { score, skips, status, offer } = run;
   let altitude = run.altitude ?? 0;
   let baseAltitude = run.baseAltitude ?? 0;
@@ -157,7 +157,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
   let strippedTo = null;
   const events = [];
   if (player.grounded && !nextPlayer.grounded) events.push('jump');
-  const minHeight = 18 / run.effects.windowMul;
+  const minHeight = CLEAR_MIN_HEIGHT / run.effects.windowMul;
   // FR1: N ropes on the one canonical clock — rope k's feet window is the
   // phase clock offset by k/N. With ropes = 1 (or absent, hence the ?? 1
   // fallback for hand-built run records) this is exactly the v1 single edge.
@@ -187,8 +187,9 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // Checked per cleared-pass increment so a multi-pass tick cannot step
       // over a 10th-skip boundary on the scoring path; the offer stops
       // crossing resolution for this tick (tickRun never runs in choose).
-      // Buffer-forgiven passes below are v1-frozen and skip this check — a
-      // forgiven 10th defers the offer to the next cleared crossing.
+      // Story 6.2 (ledger :5-6, C-decided): the forgiven branch below checks
+      // the same cadence — the v1 deferral-to-next-cleared-crossing gap was
+      // the FR10 violation closed by this story's witness (offercadence).
       if (shouldOfferUpgrade(skips)) {
         // FR10 state-aware dead-pick filter (Story 3.1): ropeCount and
         // charged are the clamped live values from the loop's heal (3.3).
@@ -212,6 +213,20 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       buffer = 0;
       streak += 1;
       events.push('skip', 'nearMiss');
+      // Story 6.2 (FR10): the forgiven pass checks the cadence exactly like
+      // the cleared path — a forgiven 10th fires its offer here, never a
+      // deferred 20th. State-aware draw, and Pitfall 6 holds: an exhausted
+      // pool must never arm choose.
+      if (shouldOfferUpgrade(skips)) {
+        const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng,
+          { ropes: ropeCount, charged });
+        if (offers.length > 0) {
+          status = 'choose';
+          offer = offers;
+          events.push('offer');
+          break;
+        }
+      }
     } else if (charged > 0) {
       // FR12 Steel Cord: armor eats the hit — the charge is consumed
       // instead of a rope (buffer → charge → strip). The blank spans one

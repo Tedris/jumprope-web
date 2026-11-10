@@ -653,6 +653,14 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     'tests/support/summit-gate.js',
     'tests/balance.test.js',
     'tests/summitgate.test.js',
+    // Story 6.2 dev round (2026-11-10, C1 amendment): the balance-pass lane
+    // joins the census — the three product tunables files (game/areas/player),
+    // the NEW offer-cadence witness suite, the two R3/R4 re-contracted rig
+    // files, and this story's artifact. List-only, tripwire stays armed.
+    'js/game.js', 'js/areas.js', 'js/player.js',
+    'tests/offercadence.test.js',
+    'tests/nearmiss.test.js', 'tests/v1parity.test.js',
+    '_bmad-output/implementation-artifacts/6-2-real-tunables-retire-the-placeholders.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
