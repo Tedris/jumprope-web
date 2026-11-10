@@ -60,8 +60,8 @@ export function cappedOwned() {
 // k's lead-in window -> jump(hold); at ropes 1 the predicate is EXACTLY
 // phase in [lo, hi]. Never startRun after a pick (ARCH-02): choose resolves
 // through applyCard + resumeRun. Traces record POST-tick status/iFrames —
-// exactly tickRun's ascend-gate values (game.js:185), so the post-hoc ladder
-// evaluator reads what the sim itself saw.
+// exactly tickRun's ascend-gate values (game.js:262-263), so the post-hoc
+// ladder evaluator reads what the sim itself saw.
 export function runBot(config = {}) {
   const {
     ticks = 1200,
@@ -177,8 +177,13 @@ export function evaluateLadder(target, options = {}) {
       || (i === last && terminalAlive && e.status === 'over');
     // Story 6.1 (Decided 4, ledger :104-105): mirror tickRun's FR3 read
     // (game.js:146): non-finite iFrames = gate-OPEN; closed iff the clamped
-    // finite read is > 0. Finite behavior byte-identical (the frozen parity
-    // legs are finite-only).
+    // finite read is > 0. Non-negative finite reads are byte-identical to
+    // the old gate; a NEGATIVE finite trace entry flips (old blocked, the
+    // mirror opens — the sim's read does too), and a fractional sub-trip
+    // write-back in (-1, 0) (post-tick unhealed subtraction, game.js:280)
+    // can differ by one tick. Every legitimate writer lands integers 0..5
+    // (game.js:142-144), so live traces stay in the identical region; the
+    // frozen parity legs are finite-only and unchanged.
     const iframesLeft = Number.isFinite(e.iFrames)
       ? Math.min(MAX_ROPES, Math.max(0, e.iFrames)) : 0;
     if (!alive || iframesLeft > 0) continue;

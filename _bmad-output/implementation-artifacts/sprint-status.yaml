@@ -95,7 +95,7 @@ development_status:
 
   # Epic 6: Balance & Prove
   epic-6: in-progress
-  6-1-policy-bot-summit-gate-the-balance-master-dial: review # dev 2026-11-10: harness N-window+build-seed+iFrames-parity+run-fold, summit-gate.js batch runner, summitgate.test.js (12 legs), R1/R2/R3 re-contracts (2 story amendments be11c9f/e2a23e2); gate 560/560 @ 8.71 s; 6.2 sweep table in story Debug Log
+  6-1-policy-bot-summit-gate-the-balance-master-dial: done # dev 2026-11-10: harness N-window+build-seed+iFrames-parity+run-fold, summit-gate.js batch runner, summitgate.test.js, R1/R2/R3 re-contracts (2 story amendments be11c9f/e2a23e2); review 2026-11-10: 6 patches (BH-F1 cross-check leg, F2/F3/F8, A61-1/A61-5), 9 dismissals, 1 deferral (BH-F6 → 6.3); gate 561/561
   6-2-real-tunables-retire-the-placeholders: backlog
   6-3-offer-pacing-verdict-card-09: backlog
   6-4-docs-provenance-pass: backlog

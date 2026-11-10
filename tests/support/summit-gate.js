@@ -11,7 +11,8 @@
 //         effects.launchMul ?? 1). At ropes 1 this is EXACTLY the legacy
 //         phase-in-[0.20,0.35] scripted jumper — equivalence leg in
 //         tests/summitgate.test.js; the predicate itself is the one shipped
-//         in balance-harness.js runBot (same formula, pinned by parity legs).
+//         in balance-harness.js runBot (same formula, pinned by the parity +
+//         predicate cross-check legs).
 //   PICK: take `extrarope` when offered AND live run.ropes < 3; otherwise the
 //         FIRST card of the offer (offer order comes from the real seeded
 //         pickOffers draw — deterministic, no peeking). Resolution is always
@@ -49,7 +50,7 @@ const DEFAULT_SHAPES = Object.freeze({
 });
 const POLICY = Object.freeze({ lo: 0.2, hi: 0.35, hold: 0.5 });
 
-function jumpWindowOpen(phase, ropes) {
+export function jumpWindowOpen(phase, ropes) {
   const n = clampRopes(ropes);
   for (let k = 0; k < n; k++) {
     const d = ((0.45 + k / n - phase) % 1 + 1) % 1;

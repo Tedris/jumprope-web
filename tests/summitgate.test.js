@@ -61,7 +61,7 @@ function mirrorAscents({ ticks, altitude0, build }) {
 // --- Task 2: contract leg (factory contract, AGENTS.md) ---
 
 test('summit-gate export surface and every report key set are pinned', () => {
-  assert.deepEqual(sortedKeys(gate), ['gateFailureReport', 'summitGate']);
+  assert.deepEqual(sortedKeys(gate), ['gateFailureReport', 'jumpWindowOpen', 'summitGate']);
   const report = gate.summitGate({ seeds: [0], horizon: 600, shapes: { bare: {} } });
   assert.deepEqual(sortedKeys(report), ['band', 'rate', 'shapes', 'tunables', 'verdict']);
   assert.deepEqual(sortedKeys(report.shapes.bare),
@@ -150,7 +150,7 @@ test('crafted tiny-ladder near-summit batch: rate 1, verdict out-high, failure r
   assert.ok(msg.includes(`ladder=[${report.tunables.ladder.join(',')}]`));
 });
 
-test('crafted mid-climb batch: bot physics wins a seed subset - verdict in', () => {
+test('crafted mid-climb batch: bot physics wins a seed subset - verdict rides the band law', () => {
   // The craft: the live ladder with the summit ceiling pulled 200 short (a
   // post-hoc sweep - the traces stay the shipped-physics ones). Winners are
   // the runs whose climb crosses that line before they trip or run out of
@@ -161,7 +161,10 @@ test('crafted mid-climb batch: bot physics wins a seed subset - verdict in', () 
   const nearSummitLadder = AREAS.map((a) => a.ceiling);
   nearSummitLadder[nearSummitLadder.length - 1] -= 200;
   const report = gate.summitGate({ seeds: SEEDS, horizon: 43200, shapes: SHAPES, band: [0.05, 0.20], ladder: nearSummitLadder });
-  assert.equal(report.verdict, 'in');
+  assert.equal(report.verdict,
+    report.rate < 0.05 ? 'out-low' : report.rate > 0.20 ? 'out-high' : 'in',
+    'verdict is the band LAW of the measured rate, never a pinned value (Decided 6)');
+  assert.ok(report.rate > 0, 'the craft populates winners - a mid-climb batch exists');
   for (const shape of Object.values(report.shapes)) {
     for (const r of shape.runs) {
       assert.ok(r.outcome === 'summit' || r.outcome === 'tripped' || r.outcome === 'horizon');
@@ -222,6 +225,43 @@ test('ropes-1 equivalence: the N-window predicate is EXACTLY the legacy phase wi
     if (run.status === 'over') break;
   }
   assert.deepEqual(mirrorTrace, harness.runBot({ ticks }).trace);
+});
+
+
+// --- Task 3: predicate cross-check leg (review round patch, BH-F1) ---
+
+test('predicate cross-check: the gate copy equals the harness mirror and the policy window edges', () => {
+  // BH-F1: the gate loop carries a COPY of runBot's jump predicate; batch
+  // outcomes are symmetric under k -> N-k, so drift can hide in dial numbers
+  // with the whole suite green. Pin (a) the copies against each other on a
+  // dense phase grid — the mirror re-encodes the rule, harness-style, never
+  // calling either shipped loop — and (b) the policy window itself at its
+  // edges: a lead of exactly 0.45 - hi / 0.45 - lo revolutions opens, just
+  // outside closes. A sign-flip class is provably inert (multiset k <-> N-k
+  // symmetry over the union — blind-hunter probe: sign-flipped batch
+  // measures identical summit sets); a POLICY-constant or k-loop drift dies
+  // on the edge probes or the grid.
+  const mirror = (phase, ropes) => {
+    const n = game.clampRopes(ropes);
+    for (let k = 0; k < n; k++) {
+      const d = ((0.45 + k / n - phase) % 1 + 1) % 1;
+      if (d >= 0.45 - 0.35 && d <= 0.45 - 0.2) return true;
+    }
+    return false;
+  };
+  for (const ropes of [1, 2, 3, 4, 5]) {
+    for (let i = 0; i < 4096; i++) {
+      const phase = i / 4096;
+      assert.equal(gate.jumpWindowOpen(phase, ropes), mirror(phase, ropes),
+        `phase ${phase} ropes ${ropes}: gate copy vs harness-style mirror`);
+    }
+  }
+  for (const lead of [0.1, 0.25]) {
+    assert.ok(gate.jumpWindowOpen(0.45 - lead, 1), `lead exactly ${lead} opens (closed window)`);
+  }
+  for (const lead of [0.09, 0.26]) {
+    assert.ok(!gate.jumpWindowOpen(0.45 - lead, 1), `lead ${lead} is outside the policy window`);
+  }
 });
 
 // --- Task 3: fold legs (ledger :134-136, mirrors R1's law) ---

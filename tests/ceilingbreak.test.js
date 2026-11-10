@@ -645,7 +645,7 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // rule the retro/playtest appends used; list-only, tripwire stays armed.
     '_bmad-output/implementation-artifacts/6-1-policy-bot-summit-gate-the-balance-master-dial.md',
     // Story 6.1 dev round (2026-11-10): the story's own lane joins the census
-    // — the harness extension (support file, not a fence), the R1/R2
+    // — the harness extension (support file, not a fence), the R1/R2/R3
     // re-contracted balance leg file, and the two NEW files the story creates
     // (the batch-runner support module + its suite; new files go red at
     // CREATE via the porcelain arm). List-only, tripwire stays armed.
