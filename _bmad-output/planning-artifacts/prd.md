@@ -20,6 +20,10 @@ more — until the player can't quite believe where the gameplay has gone.
 Surprise-by-escalation is the product; the demake is the disguise, not the
 genre. (Adopted 2026-11-05; source: brainstorming session log.)
 
+**Direction update (2026-11-10):** the thesis is now concretized by a
+brainstorming session — the disguise is a *training montage* for a portal-
+overrun world; see "v3 Direction" below, input to Epic 7.
+
 ## Goals
 
 - One-button hold-to-jump with variable jump height, joyful timing feel.
@@ -53,6 +57,43 @@ retired the placeholders (ALT 2.5, ceilings 250/600/900/1,350/2,100, periods
 docs & provenance pass + success-metrics execution (evidence: that story file).
 Gate: 566/566 Node tests @ ~8.5 s. Next milestone: **v2 deploy/UAT + Epic 7,
 The Peel (META-01)** — pinned.
+
+## v3 Direction (Epic 7 input) — The Peel Takes Shape (brainstormed 2026-11-10)
+
+**Status (2026-11-10, Ed): ON HOLD.** The current loop's fun must be
+proven first (v2 deploy/UAT + playtesting) before Epic 7 is re-scoped
+around this material; capture stays, no planning proceeds on it.
+
+Full session log: [`brainstorming-session-2026-11-10.md`](../brainstorming-session-2026-11-10.md).
+Locked decisions the Peel milestone must honor; candidate until epics/stories
+are cut from them:
+
+- **Premise:** the character was training all along for a world that goes
+  portal-overrun late (Solo Leveling flavor); the game is the montage before
+  its own genre's chapter one. The reveal lands through the world (a gym TV
+  news break), never through the UI.
+- **The day is the run:** activities (rope, running, lifting, reading — one
+  tap, different choreography) share a stamina-budget day; in-day cards stay
+  ephemeral and compost at nightfall into permanent stats; permanent
+  milestones get lifetime pick-two "life cards."
+- **Lossless law, refined:** failure never shrinks the save, but growth
+  cannot happen without it — failing an activity caps that stat's day and is
+  the only way to raise its long-term ceiling (supercompensation). v1's
+  rope-pace escalation becomes the meta-growth engine.
+- **Danger gradient:** training can't hurt; danger is dungeon-only (browse
+  gates; other hunters clear them too; losing = teleport-out + time cost
+  only). Dungeon Break = story scenario, never ambient punishment.
+- **Stats are the engine:** STR gate / VIT = day length / AGI throughput /
+  INT gate-board intel; hidden RANK + LEVEL debut in-world before any panel.
+- **Shadows are past days:** the split/automation power converts prior days
+  into deterministic replay-shadows (failure-days work best; shadows never
+  grow). Sim-core purity holds — shadows are replays, not AI.
+- **Interface stays three objects:** gym (progress as room-wear), diary
+  (tutorial voice, later retinted into the System panel), TV (infomercials →
+  news → the player's name). Re-semantization over new UI: nothing new,
+  everything reinterpreted.
+- **Architecture watch:** the day clock and world sim are meta-layer only —
+  the rope phase stays the canonical sim clock (Non-Goals unchanged).
 
 ## Current State — v1.0 Shipped (2026-10-22)
 
@@ -91,7 +132,7 @@ The Peel (META-01)** — pinned.
 | WR-02 | Reduced-motion idle pose still animates arms/scarf off wall-clock `beat` (`js/render3d.js:387`) | **CLOSED** — fixed in Story 5.4 (2026-11-09): the `beat` gate at source, `js/render3d.js:575`; retired by Story 6.4 (2026-11-10) |
 | CARD-08 | Rules-beyond-multipliers cards | **Promoted** — shipping as Epic 3 (FR12 rule-changing cards) |
 | CARD-09 | Escalating offer pacing | **CLOSED** — Story 6.3 verdict: rejected at the 6.2 tunables — escalated %6-after-skip-30 measured 0.0333 out-low, 39/40 trips per shape (116/120 aggregate; 39/39/38 bare/ropeHeavy/chargeHeavy), no dead-card/legibility gain (15→14 dead cards, threshold noise; coverage 12/12 and topPickShare 0.155 unchanged); v1 pacing stands (FR10) — see 6-3-offer-pacing-verdict-card-09.md (2026-11-10) |
-| META-01 | Between-run meta progression | **Pinned** — Epic 7 (The Peel), the milestone after epics 3–6 (2026-11-07, D-004) |
+| META-01 | Between-run meta progression | **Pinned** — Epic 7 (The Peel), the milestone after epics 3–6 (2026-11-07, D-004); design direction established by the 2026-11-10 brainstorm — see "v3 Direction" above. **S1–S4 decided 2026-11-10 pre-loop:** unlocks + outcome-counter gates (no currency, no prestige), counters mapped reach/summit/skips, catalogue-branch unlocks, run-scoped band gate — detail in epics.md Epic 7 |
 
 ## Next-Milestone Questions — answered 2026-11-07 (readiness audit)
 

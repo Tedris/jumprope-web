@@ -683,6 +683,15 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // Epic 6 retro bookkeeping (epic-6-retro-2026-11-10.md, Artifact
     // bookkeeping section): list-only, authorizes nothing else.
     '_bmad-output/implementation-artifacts/epic-6-retro-2026-11-10.md',
+    // Pre-Epic-7 planning bookkeeping (2026-11-10): tonight's brainstorm
+    // session doc, its PRD-update workspace memlog, and the party decision
+    // memory join the census — list-only, tripwire stays armed, authorizes
+    // nothing else. Session doc + workspace memlog are static after the prep
+    // commit; party memory is a living journal path under the same artifact-
+    // write rule as sprint-status/deferred-work (loop contract).
+    '_bmad-output/brainstorming-session-2026-11-10.md',
+    '_bmad-output/planning-artifacts/prds/prd-jumprope-web-2026-11-10/.memlog.md',
+    '_bmad-output/party-mode/memories/installed/.memlog.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

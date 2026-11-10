@@ -158,6 +158,11 @@ persisted** (permadeath, FR23).
   deterministic via seeded rng injection; the v1 1000-tick headless-sim legs
   sit beside the seeded policy-bot summit batch (3 shapes × 40 seeds × 43,200
   ticks — Stories 6.1/6.2, `tests/support/summit-gate.js:150`).
+- **Band gate scope = run-scoped (S4, decided 2026-11-10 pre-Epic-7).** The
+  NFR9 policy-bot band (0.05, 0.20] is defined for bare (no-meta) builds; the
+  6.1 bot's build space stays as shipped. Epic 7 meta-build sweeps report
+  meta-shape summit rates as named exceptions with sweep evidence in story
+  text — bare-build results must stay bit-identical (7.5).
 - Serve with any static HTTP server (`npx serve .` / `python3 -m http.server`).
 
 ## Known Debt
@@ -175,3 +180,7 @@ persisted** (permadeath, FR23).
 - Retired by Story 6.4 (2026-11-10): **WR-02 — PAID** by Story 5.4 (2026-11-09,
   the `beat` gate at `js/render3d.js:575`; ledger :228); **`audio/track.ogg`
   — shipped** by Story 5.6 (2026-11-09; ledger :213).
+- (S4, 2026-11-10) **Meta-blind summit gate — DECIDED run-scoped:** widening
+  the bot for meta state was rejected pre-Epic-7; if meta unlocks ever shift
+  bare-build deal odds, this note reopens (FR32's zero-locks bit-identity is
+  the tripwire).

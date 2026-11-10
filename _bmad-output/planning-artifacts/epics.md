@@ -1,10 +1,13 @@
 ---
 stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation']
+peelPassStepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation']
 inputDocuments:
   - _bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md
   - _bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/decision-log.md
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/prd.md
+  - _bmad-output/implementation-artifacts/epic-6-retro-2026-11-10.md
+  - docs/kickoff/readiness-audit-2026-11-07/decisions.md
 ---
 
 # jumprope-web - Epic Breakdown
@@ -69,6 +72,14 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 - FR29: `audio/track.ogg` (TRACK-1) **shipped — Story 5.6** (2026-11-09); the mechanism's silence-degradation legs stay pinned — v1 behavior unchanged for an absent file.
 - FR30: The pause menu presents an audio-config surface — Resume, a volume control, and a sound on/off toggle — reflecting and driving the existing `audio.js` seams (`setVolume`/`toggleMute`) and persisting through the existing storage seam (FR24/FR27). Keyboard shortcuts stay functional and stay in sync. *(Added 2026-11-07, readiness-audit D-006: mechanism shipped in v1 but was keyboard-only — the config surface is the gap.)*
 
+**The Peel — Epic 7 delta (added 2026-11-10 by the Epic 7 requirements pass; sources: PRD META-01 pin, readiness-audit D-004, GDD direction, Epic 6 retro riders)**
+
+- FR31: Between-run meta state persists via the injected storage seam under new `jumprope-*` keys alongside `jumprope-best`; it degrades to session-only when storage is unavailable, exactly like best-altitude (FR24 pattern). Meta state never includes a run record — "no run record is ever persisted" stays true (permadeath contract, architecture §Persistence).
+- FR32: Catalogue cards can be locked between runs, and the offer generator filters locked cards exactly like capped-owned ones. With zero locks the deal is bit-identical to v2 (the frozen suite's regression pin).
+- FR33: Unlocks are earned from run outcomes legible across runs — counters of what a run did (e.g., area reached, summits, lifetime skips) accrue in meta state and gate unlock predicates. The unlock set, its conditions, and thresholds are an OPEN DECISION POINT at story creation (designer lane — no source exists). Candidates on record: catalogue branch unlocks; an alternate skipper unlock (GDD character-select revisit clause, gdd.md:350-351).
+- FR34: Unlocks present as in-game fiction in the PS1 voice — the tech tree the disguise was hiding (PRD thesis). Any new meta surface (title strip, unlock card, meta screen) lands inside the letterbox resize path (NFR7), never re-clocks the rope (NFR8), and never breaks the fiction.
+- FR35 (prestige clause): "prestige = permanent climb power" is direction only (GDD Out-of-Scope). If anything permanent feeds climb power into run start, it enters as a named story decision with summit-gate evidence, catalogue-rule conformance (no score-reduction; one axis, one card), and the CARD-09 constraint (no offer-frequency escalation through the back door).
+
 ### NonFunctional Requirements
 
 - NFR1: 60 FPS sustained on low-end/integrated GPUs at the 240-row internal render target.
@@ -82,6 +93,8 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 - NFR9: Run length target: 3–5 min wall-clock to summit on a competent build; policy-bot summit rate in the 5–20% band is the balance master-dial.
 - NFR10: All geometry procedural/inline; zero bitmap texture budget beyond palette LUTs; character rig stays a few hundred triangles.
 - NFR11: Modern evergreen browsers (desktop + mobile) with WebGL; storage degrades gracefully when unavailable.
+- NFR12: Meta-state storage reads at boot add nothing measurable to the page-load-to-first-jump budget (NFR3) — small synchronous reads only, no parse stalls. (Derived, 2026-11-10 pass.)
+- NFR13: A missing or corrupt meta key degrades to fresh session-only state with no thrown errors — invalid states are data. (Derived, 2026-11-10 pass.)
 
 ### Additional Requirements
 
@@ -101,6 +114,12 @@ From Architecture (technical requirements that impact epic/story creation):
 - Known debt WR-02 — **PAID** by Story 5.4 (2026-11-09): the `beat` idle-clock gate at `js/render3d.js:575`; retired by Story 6.4 (2026-11-10).
 - Conventions from AGENTS.md: named exports, `create*`/`update*` factories returning new objects, POJOs only, `*Mul` suffix on multiplier fields, 2-space indent, no `console.*` in pure modules.
 - Near-frozen rule (corrected by Story 3.0): `index.html` / `package.json` are near-frozen by rule, not by fence test — no test reads `package.json`; `index.html` is covered only by `tests/ropehud.test.js`'s `#hud` contract leg; `tests/boundary.test.js` fences the sim import graph. Touching them needs justification.
+- **Epic 7 riders (Epic 6 retro, carried into story text at creation):** the A3 meta-blindness decision — widen the summit-gate bot's build space for meta state, or record the band gate as run-scoped in `architecture.md` — lands before the first balance-sensitive 7.x story; A2 seed-honesty contract for any batch-driven meta legs; owner strings name STORY/CHORE/LANE keys, never epic names (effective at Epic 7 creation); A4's owned-cap decision input pack rides story text if the correct-course session hasn't landed.
+- The policy-bot band (NFR9) is the peel's regression armor: every meta build lands its summit rate in-band, or is named as an exception in story text (retro §Epic 7 preview).
+- CARD-09 constraint: the meta layer must not reintroduce offer-frequency escalation through the back door without new evidence (Epic 6 retro; GDD §Cards "Why these numbers exist").
+- Meta state lives shell-side (storage seam); the sim receives it as an immutable input at run creation — like rng — and never writes storage; the `tests/boundary.test.js` purity fence stays unchanged. (Extraction from the purity rule + the `loadBest` seam pattern.)
+- Persistence naming: the as-built key is bare `jumprope-best`; new meta keys follow the same naming; the never-shipped versioned `jumprope-best-altitude` stays unshipped unless a story explicitly migrates (architecture §Persistence, ledger :162).
+- Doc-drift flag (retro A5 rule): GDD body text still says META-01 "deferred" (loop §Meta; Out of Scope) — superseded by the PRD pin; GDD text rides the SAME commit as the Epic 7 story that ages it out.
 
 ### UX Design Requirements
 
@@ -143,6 +162,11 @@ FR27: Epic 5 - audio contract protected (no beat-lock)
 FR28: Epic 5 - ascent stinger, win fanfare, rope-loss thud, last-rope mix
 FR29: Epic 5 - TRACK-1 stays deferred/degrades to silence (regression pin)
 FR30: Epic 5 - pause-menu audio config surface (Story 5.7; land early — mechanism already shipped)
+FR31: Epic 7 - meta state persists across runs via the storage seam (session-only degradation; run records still never persisted)
+FR32: Epic 7 - lock-aware deal filter (zero-locks deal = v2 deal, regression pin)
+FR33: Epic 7 - run-outcome unlock rules (set/thresholds = open decisions S2/S3 at story creation)
+FR34: Epic 7 - unlocks present as PS1-voiced in-game fiction on letterboxed surfaces
+FR35: Epic 7 - prestige clause: decision-gated, conditional story only; default = no permanent climb power
 
 NFR1–NFR3: All gameplay epics - performance budget held per epic; NFR3 verified at final validation
 NFR4/NFR5: Every story - frozen-test discipline + red-green legs; boundary fence per epic
@@ -152,6 +176,8 @@ NFR8: Epics 1–5 - phase-clock invariant checked in each sim story
 NFR9: Epic 6 - summit-rate balance master-dial
 NFR10: Epics 4–5 - area vistas and rigs stay within geometry budget
 NFR11: Final validation - browser/storage degradation check
+NFR12: Epic 7 - meta boot reads stay inside the NFR3 load budget
+NFR13: Epic 7 - corrupt/missing meta keys degrade to fresh session-only state (data, not errors)
 
 ## Epic List
 
@@ -191,14 +217,18 @@ The summit is reachable in 3–5 minutes: the headless-sim policy-bot gate repla
 
 **FRs covered:** FR7 (real tunables), NFR9; CARD-09 offer-pacing evaluation; docs
 
-### Epic 7: The Peel (pinned milestone after epics 3–6)
+### Epic 7: The Peel
 
-The game admits what it is: between-run progression (META-01) as in-game
-fiction — the tech tree the disguise was hiding. Unlocks presented in the PS1
-voice; persistence grows past best-score (`loadBest` seam in `js/shell.js`).
-Pinned 2026-11-07 (readiness-audit decision D-004) as the milestone immediately
-following the v2 summit gate; requires its own requirements pass before stories.
-(Source: 2026-11-05 sprint-change-proposal; PRD thesis.)
+The game admits what it is: between-run progression (META-01) as in-game fiction — the tech tree the disguise was hiding. Meta state persists across runs through the storage seam (never a run record), locks become real in the deal, unlocks are earned from run outcomes and land as PS1-voiced moments; every meta build either holds the summit-gate band or names its exception. Pinned 2026-11-07 (readiness-audit D-004); requirements delta landed in this file 2026-11-10 (FR31–FR35, NFR12–NFR13, plus the Epic 6 riders).
+(Source: 2026-11-05 sprint-change-proposal; PRD thesis; Epic 6 retro §Epic 7 preview.)
+
+**FRs covered:** FR31, FR32, FR33, FR34, FR35 (conditional clause) · **NFRs:** NFR12, NFR13
+
+**Decisions (designer lane; RESOLVED 2026-11-10 pre-loop — recorded before implementation per 7.4's AC):**
+S1 **Peel scope** = unlocks + outcome-counter gates. No spendable currency; prestige stays OFF (FR35 default — no permanent climb power ships; CARD-09 constraint stands: no offer-escalation back door).
+S2 **Unlock currency** = all three 7.2 counters, mapped: reach-unlocks gate on furthest area, achievement-unlocks on summit count, one persistence-unlock on lifetime skips. Exact predicates/thresholds are set at 7.4 kickoff within these mappings.
+S3 **What unlocks** = catalogue branch through the 7.3 locks. Alternate skipper NOT in Epic 7 — character-select revisit rides Epic 8/v3-era material.
+S4 **(retro A3)** = band gate recorded **run-scoped** in `architecture.md` (same prep pass); 7.5's meta-build sweeps name exceptions with sweep evidence; the policy-bot build space stays as shipped by 6.1.
 
 ### Epic 8 (candidate): Player Fuel
 
@@ -955,3 +985,123 @@ So that the PRD, GDD, and architecture spine describe the game that actually shi
 **Then** each item is verified and recorded with evidence: 60 FPS capture on an integrated-GPU check (NFR1), suite green <10 s (NFR4), boundary fence green, red-green legs present for every new mechanic (NFR5), and page-load-to-first-jump <2 s (NFR3)
 
 **And** any metric that fails at this stage produces a logged follow-up item rather than a hidden regression
+
+## Epic 7: The Peel
+
+The game admits what it is: between-run progression (META-01) as in-game fiction — the tech tree the disguise was hiding. Meta state persists across runs through the storage seam (never a run record), locks become real in the deal, unlocks are earned from run outcomes and land as PS1-voiced moments; every meta build either holds the summit-gate band or names its exception.
+
+**FRs covered:** FR31, FR32, FR33, FR34, FR35 (conditional clause) · **NFRs:** NFR12, NFR13 · **Riders:** A2 seed-honesty (7.2/7.5), A3/S4 gate decision (7.5), A4 owned-cap pack (7.5), CARD-09 constraint (7.3/7.5)
+
+### Story 7.1: Meta ledger — persistence without run records
+
+As a player returning to the tab tomorrow,
+I want the game to remember what my runs did,
+So that progress can accumulate between runs and the peel can begin.
+
+**Acceptance Criteria:**
+
+**Given** storage available at boot
+**When** the shell starts
+**Then** meta state loads through the existing storage seam under new `jumprope-*` keys beside `jumprope-best`, the boot read adds nothing measurable to the first-jump budget (FR31, NFR12), and no new storage lane appears — one seam, one pattern (FR24 lineage)
+
+**Given** storage unavailable, or a meta key missing or corrupt
+**When** the game boots
+**Then** fresh default meta state is used, play is unimpacted, writes degrade to session-only, and nothing throws — invalid states are data (FR31, NFR13)
+
+**Given** any run at any point
+**When** persistence writes happen
+**Then** only meta state, best altitude, and audio settings are ever persisted — no run record is ever written; the permadeath contract stays true, pinned by a new test file enumerating the persisted key set (FR31; architecture §Persistence)
+
+**And** meta state lives shell-side and enters the sim only as an immutable parameter at run creation — the rng-injection pattern again; `tests/boundary.test.js` stays green, the new factory contract gets its Node-side contract test in the same change (NFR5, NFR6)
+
+### Story 7.2: Every run leaves a mark — outcome counters
+
+As a player,
+I want completed runs to count — furthest area, summits, lifetime skips,
+So that the game has an honest basis for what I've earned.
+
+**Acceptance Criteria:**
+
+**Given** a run ends (`outcome 'tripped' | 'summit'`)
+**When** the shell records the result
+**Then** the outcome counters accrue in meta state through the SAME persistence path as `saveBest` — one shared write lane, no second path (FR33; shared-handler rule)
+
+**Given** pause, tab-hide, or restart paths
+**When** the run-end event fires
+**Then** counters accrue exactly once per run — release/resume paths cannot double-count (FR22 handler hygiene)
+
+**Given** any batch-driven test legs for accrual
+**When** they are written
+**Then** they follow the seed-honesty contract: law-form legs, no current-build numerics, ×2 determinism witnesses (retro A2)
+
+**And** this story records all three counters and USES none — the deal and the sim are untouched; the unlock currency itself is decision S2, a named decision point at Story 7.4 kickoff
+
+### Story 7.3: Locked in the deal — the catalogue learns locks
+
+As a player,
+I want the catalogue to open gradually,
+So that new cards feel earned, not listed.
+
+**Acceptance Criteria:**
+
+**Given** a card flagged locked in catalogue metadata
+**When** offers deal
+**Then** locked cards are filtered at exactly the same filter point as capped-owned (`pickOffers`) — one predicate extended, no second filtering path (FR32)
+
+**Given** zero locks — the state this story lands with
+**When** the frozen suite runs
+**Then** every existing deal/balance leg passes byte-identically, and the rng stream position for identical seeds is unchanged (FR32 regression pin, NFR5)
+
+**Given** the CARD-09 constraint
+**When** the deal changes at all
+**Then** offer frequency (every 10th skip, 2→3 after skip 30) is provably untouched — the `offercadence` instrument proves no offer-escalation back door (retro; GDD §Cards)
+
+**And** the filter ships inert — no card is locked by this story; unlocks flip locks from Story 7.4 onward (FR33 dependency direction: 7.3 before 7.4, never after)
+
+### Story 7.4: The Peel — unlocks as fiction in the PS1 voice
+
+As a player,
+I want the game to announce what I've earned in its own voice,
+So that escalation stays a surprise in disguise, not a notifications list.
+
+**Acceptance Criteria:**
+
+**Given** a named decision point at kickoff
+**When** this story starts
+**Then** decisions S2 (unlock currency) and S3 (what unlocks — catalogue branch vs. alternate skipper, GDD character-select revisit clause gdd.md:350-351) are resolved and recorded in story text and the PRD Open Items BEFORE implementation (D-006 kickoff pattern)
+
+**Given** meta counters meeting the chosen unlock predicate
+**When** a run ends
+**Then** the unlock is recorded in meta state and announced exactly once on the next idle/title surface, in the PS1 voice, as in-game fiction — never mid-run, never re-clocking the rope (FR33, FR34, NFR8)
+
+**Given** a newly unlocked card
+**When** offers deal from then on
+**Then** it flows through the 7.3 filter and obeys rarity weights, caps, and distinctness, and the catalogue rules hold for it: one axis one card, no score-reduction (FR32, FR35 conformance)
+
+**Given** any new meta surface
+**When** it renders
+**Then** it lands inside the letterbox resize path (NFR7) and `prefers-reduced-motion` dampens its cosmetics without touching timing (FR23 extension)
+
+**And** this story updates the GDD body's META-01 "deferred" text (loop §Meta; Out of Scope) in the SAME commit — the doc ages out with the behavior that ages it out (retro A5 doc-drift rule)
+
+### Story 7.5: The gate sees the peel — meta-aware balance & prove
+
+As the designer,
+I want the summit-rate dial to stay honest under meta builds,
+So that the peel cannot quietly break the balance.
+
+**Acceptance Criteria:**
+
+**Given** the meta-blindness decision S4 (retro A3)
+**When** this story starts
+**Then** EITHER the summit-gate bot's build space is widened to include meta state, OR the band gate is recorded as run-scoped in `architecture.md` — one or the other, written, before any balance-sensitive retune here (A3, NFR9)
+
+**Given** meta builds as of 7.4
+**When** the summit-gate batch runs
+**Then** summit rates stay in band (0.05, 0.20] — or the exception is named in story text with sweep evidence (retro §Epic 7 preview)
+
+**Given** the bare (no-meta) build
+**When** the gate re-runs
+**Then** bare-build results are unchanged — the peel moves no bare dial, and batch-driven meta legs hold the seed-honesty contract (A2; FR10/FR11 protection)
+
+**And** the FR35 prestige clause is dispositioned explicitly: if prestige (permanent climb power) was not adopted by the S1 scope decision at 7.4 kickoff, this story records the default — no permanent climb power ships — and the A4 owned-cap decision input pack rides this story's text if the correct-course session hasn't landed
