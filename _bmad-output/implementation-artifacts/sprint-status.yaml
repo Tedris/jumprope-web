@@ -80,7 +80,7 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Feel & Fidelity
-  epic-5: in-progress
+  epic-5: done  # 2026-11-09 Epic 5 close: 5.1-5.7 all done, gate 529/529; The Feel & Fidelity epic closed (ascend stinger/fanfare, rope-loss thud, i-frame juice, WR-02 paid, audio lifecycle sweep, TRACK-1 chiptune, pause-menu audio config); UAT trio (60 FPS, blink-free dim, live re-exercise) PAID at close
   5-1-ascent-stinger-win-fanfare: done
   5-2-rope-loss-thud-last-rope-tension: done
   5-3-i-frame-trip-juice: done
