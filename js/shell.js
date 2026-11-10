@@ -22,6 +22,13 @@ export const JUICE_TIERS = {
   trip: { hitstop: 80, shake: 2, particles: 16 }
 };
 
+// Story 5.7 (D5): the ONE volume-step law (FR24, AGENTS.md:53 shared handler) —
+// the `-`/`=` keydowns and both pause-menu buttons all route bumpVolume; the
+// clamp lives in audio.setVolume (audio.js:224), so this is a step, not a time.
+// (Placed after JUICE_TIERS, not the :6-9 timing block the story names: the
+// frozen audiolifecycle L5 census pins the tiers' line positions by LINE.)
+const VOLUME_STEP = 0.1;
+
 // The buffer tracks the window (coerced so Node-side stub environments
 // without innerWidth fall back to the old default and stay green);
 // js/render3d.js discovers size changes through its passive poll.
@@ -103,6 +110,20 @@ export function startGame(canvas) {
     }
     return el;
   })() : null;
+  // Story 5.7 (FR30/FR27): the pause menu — same capability probe + one-liner
+  // shape as the cards (:89 idiom), so DOM-less harnesses never build the node.
+  // The api bag is callback-only (D4): the factory captures NO shell state and
+  // `audio` is read live (it may still be null at boot — the readout's
+  // 'audio off' branch is volume() returning null, D3/2c).
+  const menu = hudRoot && typeof hudRoot.appendChild === 'function' ? setupMenu(hudRoot, {
+    visible: () => paused,
+    volume: () => audio && audio.getVolume(),
+    muted: () => audio && audio.isMuted(),
+    diag: () => audioDiag,
+    onResume: () => resumeFromPause(),
+    onVolume: bumpVolume,
+    onToggleMute: () => audio && audio.toggleMute(),
+  }) : null;
 
   let rope = createRope(ROPE_PERIOD);
   let player = createPlayer();
@@ -191,6 +212,13 @@ export function startGame(canvas) {
     }
   }
 
+  // Story 5.7 (D5): the ONE volume-bump handler — the keyboard `-`/`=` lines
+  // and both pause-menu buttons share it verbatim. The seam returns nothing
+  // (audio.js:223), so every caller re-reads through the frame render (D3).
+  function bumpVolume(delta) {
+    if (audio) audio.setVolume(audio.getVolume() + delta);
+  }
+
   function press() {
     if (paused) return; // input is locked behind the freeze frame (D-12/Pitfall 4)
     unlockAudio();
@@ -276,8 +304,8 @@ export function startGame(canvas) {
     // e.repeat: a held key must not flap mute or hammer setVolume's
     // synchronous write-through at OS repeat rate.
     if (e.code === 'Mute') { e.preventDefault(); if (audio && !e.repeat) audio.toggleMute(); return; }
-    if (e.code === 'Minus') { e.preventDefault(); if (audio && !e.repeat) audio.setVolume(Math.max(0, audio.getVolume() - 0.1)); return; }
-    if (e.code === 'Equal') { e.preventDefault(); if (audio && !e.repeat) audio.setVolume(Math.min(1, audio.getVolume() + 0.1)); return; }
+    if (e.code === 'Minus') { e.preventDefault(); if (audio && !e.repeat) bumpVolume(-VOLUME_STEP); return; }
+    if (e.code === 'Equal') { e.preventDefault(); if (audio && !e.repeat) bumpVolume(+VOLUME_STEP); return; }
     // UI-01 (D-01): P/Esc toggles pause, after the audio short-circuits and
     // before the Space reducer so it never charges a jump. !e.repeat: an OS
     // key-repeat must not strobe pause/resume at ~30 Hz (Pitfall 11).
@@ -596,6 +624,7 @@ export function startGame(canvas) {
         : c.icon.repeat(owned[c.id]))
       .join(' ');
     if (cards) cards.render();
+    if (menu) menu.render();
     if (markerEl) {
       markerEl.textContent = markerLine(run, player);
       markerEl.className = 'hud-marker' + (markerBlocked(run, player) ? ' blocked' : '');
@@ -718,6 +747,68 @@ export function startGame(canvas) {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+}
+
+// Story 5.7 (D1-D6): the pause-menu factory — a module-level sibling of the
+// DOM-layer code that captures NO shell state: every semantic arrives through
+// the api bag (visible/volume/muted/diag/onResume/onVolume/onToggleMute), so a
+// later idle-screen entry point reuses the panel without rework (AC5). The
+// panel is a pure VIEW (D3): it stores nothing and mirrors nothing — render
+// re-reads the live settings, the only protocol the value-returning seams
+// allow. Handlers are visible()-guarded and call ONLY the api callbacks (D6);
+// the nodes carry a pointerdown listener and NOTHING else — a click behind
+// the frozen frame must do exactly what it did before the click happened.
+function setupMenu(root, api) {
+  const wrap = document.createElement('div');
+  wrap.className = 'hud-menu hidden';
+  root.appendChild(wrap);
+  const resume = document.createElement('div');
+  resume.className = 'hud-menu-btn menu-resume';
+  resume.textContent = 'Resume';
+  const row = document.createElement('div');
+  row.className = 'hud-menu-row';
+  const down = document.createElement('div');
+  down.className = 'hud-menu-btn menu-vol-down';
+  down.textContent = '-';
+  const read = document.createElement('div');
+  read.className = 'hud-menu-read';
+  const up = document.createElement('div');
+  up.className = 'hud-menu-btn menu-vol-up';
+  up.textContent = '+';
+  const mute = document.createElement('div');
+  mute.className = 'hud-menu-btn menu-mute';
+  mute.textContent = 'Sound on';
+  for (const child of [resume, row, mute]) wrap.appendChild(child);
+  for (const child of [down, read, up]) row.appendChild(child);
+  const guard = fn => e => {
+    if (!api.visible()) return; // inert whenever the panel is not showing
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    fn();
+  };
+  resume.addEventListener('pointerdown', guard(() => api.onResume()));
+  down.addEventListener('pointerdown', guard(() => api.onVolume(-VOLUME_STEP)));
+  up.addEventListener('pointerdown', guard(() => api.onVolume(+VOLUME_STEP)));
+  mute.addEventListener('pointerdown', guard(() => api.onToggleMute()));
+  let sig = '';
+  return {
+    // Cards idiom (:529-547): the child structure is built once, text and
+    // className land under a string-signature guard — updateHud IS the
+    // freeze-frame pump (D3), so a paused panel re-reads every rendered frame.
+    render() {
+      const visible = api.visible();
+      const v = api.volume();
+      const muted = api.muted();
+      const off = v === null || v === undefined;
+      const next = (visible ? 'v' : '-') + '|' + (off ? 'off' : Math.round(v * 100))
+        + '|' + (muted ? 'muted' : 'on');
+      if (next !== sig) {
+        sig = next;
+        read.textContent = off ? 'audio off' : 'volume ' + Math.round(v * 100) + '%';
+        mute.textContent = muted ? 'Sound muted' : 'Sound on';
+        wrap.className = 'hud-menu' + (visible ? '' : ' hidden');
+      }
+    },
+  };
 }
 
 if (typeof document !== 'undefined') {

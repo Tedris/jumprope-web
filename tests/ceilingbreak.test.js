@@ -607,6 +607,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     'audio/track.ogg',
     'tests/track1.test.js',
     '_bmad-output/implementation-artifacts/5-6-track-1-music-content.md',
+    // Story 5.7 sanctioned re-contract R1 (2026-11-09): the shell-only pause-menu
+    // layer lands in js/shell.js + css/style.css (both in this set by 4.4/4.5
+    // lineage); the new suite and this story's artifact join here — zero other paths.
+    'tests/pausemenu.test.js',
+    '_bmad-output/implementation-artifacts/5-7-pause-menu-audio-config.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

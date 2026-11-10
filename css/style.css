@@ -96,3 +96,46 @@ canvas {
 /* Story 4.5: blocked-at-ceiling — dimmed while a live i-frame blank holds the
    ascend the line telegraphs. Static opacity, no transition/animation. */
 .hud-marker.blocked { opacity: 0.35; }
+
+/* Story 5.7 (FR30/NFR7): the pause menu — runtime-built by setupMenu() inside
+   #hud, riding the same viewport-absolute overlay as .hud-cards (the letterbox
+   path; no per-band geometry here). DESIGN tokens verbatim from .hud-card.
+   Static rules only — the no transition/animation law at :96-98 stands. */
+.hud-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none; /* the gaps must not eat canvas taps; buttons re-enable */
+  user-select: none;
+}
+.hud-menu.hidden { display: none; }
+.hud-menu-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.hud-menu-btn {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* thumb-sized targets, the .hud-card note at :43-46 */
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid #4d4a3e;
+  color: #f4f0d8;
+  font: 14px sans-serif;
+  cursor: pointer;
+}
+.hud-menu-read {
+  color: #f4f0d8;
+  font: 14px sans-serif;
+  padding: 0 8px;
+}
