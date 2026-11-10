@@ -94,8 +94,8 @@ development_status:
   chore-test-harness-ci-consolidation: done  # delivered 2026-11-09: primitives + 7 boot folds, D-best, CI matrix/filters, porcelain arm; review 2 patches (F1/F2), 544/544
 
   # Epic 6: Balance & Prove
-  epic-6: backlog
-  6-1-policy-bot-summit-gate-the-balance-master-dial: backlog
+  epic-6: in-progress
+  6-1-policy-bot-summit-gate-the-balance-master-dial: ready-for-dev
   6-2-real-tunables-retire-the-placeholders: backlog
   6-3-offer-pacing-verdict-card-09: backlog
   6-4-docs-provenance-pass: backlog

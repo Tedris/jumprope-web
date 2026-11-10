@@ -640,6 +640,10 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // join here, authorized by the fix doc — list-only, tripwire stays armed.
     'tests/ghostspread.test.js',
     '_bmad-output/implementation-artifacts/playtest-fix-2026-11-10-ghost-spread.md',
+    // Story 6.1 create round (2026-11-10): the story artifact joins the census
+    // by this file's own written authorization — the same R-series bookkeeping
+    // rule the retro/playtest appends used; list-only, tripwire stays armed.
+    '_bmad-output/implementation-artifacts/6-1-policy-bot-summit-gate-the-balance-master-dial.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
