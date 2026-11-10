@@ -3,7 +3,7 @@ baseline_commit: db98032
 ---
 # Chore: test-harness + CI consolidation (pre-6.6)
 
-Status: review
+Status: done
 
 Ledger bundle (owners CONFIRMED at Epic 3/4/5 closes; this chore runs NOW, before the Epic 6 entry probe):
 
@@ -20,6 +20,7 @@ The seven boots differ in real ways (render stub vs render-rewrite wrapper, audi
 
 - **NEW `tests/support/shell-harness.js`** — shared PRIMITIVES every boot composes: `makeDom({ hudIds, canvas2d, orientation })` (the stub-object factory + capture arrays), `makeAudioWrapHref()` / `makeRenderStubHref()` / `makeGameWrapHref(srcUrl, inject)` (the data-URL wrapper authors), `dataUrl(src, tag)`, `bootModule(src, tag)` (the `import(...)` + bootCount guard), `installVirtualClock()` (returns `{ now, advance, install, restore }`, the pickerhud `performance`-stub idiom), `captureConsoleErrors()` (`{ errors, install, restore }`).
 - **Each of the seven suites' boot function becomes a ≤25-line COMPOSITION** of the primitives — options stay suite-local, behavior stays identical. Test bodies below each boot stay byte-identical. `console.error` capture: `captureConsoleErrors` is wired in EVERY boot's env; ascent/pausemenu/leadinhop/polish keep returning `env.errors` (already collected) — the four that DISCARD it gain ONE closing assertion leg each (`assert.deepEqual(env.errors, [], ...)`) — if a real logged error surfaces, STOP and report (product finding, per 5.5-D5 doctrine).
+  *[REVIEW-CLOSE reconciliation (F3): the sentence above is internally impossible (7 suites, 4+4). The delta ships what the LEDGER prescribes: capture wired in every boot; the four assertion legs appended to ascent/pausemenu/polish/leadinhop — the four with error-capturing boots whose arrays were discarded unread (ledger :66/:196/#6 census); shell/uxpolish/altitude keep their donor shapes (their sinks/capture already observed or irrelevant), with the module's capture wired but unasserted. `tests/harness.test.js` H2 is the shared witness that the capture wiring is real (M1 kills it).*
 - **polish boots on the virtual clock** (`installVirtualClock` + pump = `advance`) — pays :184/:185 deterministically.
 - **D-best: delete `js/shell.js:443-444`** (restart write + its `best = Math.max` line). The v1parity restart-persistence legs pin the OBSERVABLE (key after restart) — unchanged by construction; the trip write (:725-726) is the single surviving path. Nothing else in shell.js.
 - **CI (`.github/workflows/test.yml`)**: `node-version: [18, 26]` matrix (same oracle `./run_tests.sh`), `on.push.tags-ignore: ['**']`, `concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: false }`. `.github` is do-not-touch (AGENTS.md) — THIS story text is the written authorization; the workflow oracle is unchanged.
@@ -70,4 +71,5 @@ Kickoff fact: the CREATE commit lands this artifact as a new tracked path, so th
 ## Change Log
 
 - 2026-11-09: DEV complete — all File List paths landed per contract; gate 544/544 green ×3 consecutive; battery M1-M5 all killed (M2's polish half documented as the racy-donor regression); porcelain probe demonstrated red-with-arm / green-without; Status → review (sprint key lands in-progress; parent flips at commit).
+- 2026-11-09: REVIEW — blind layer, ship recommendation; 7 findings: F1 localStorage-descriptor restore-chain drift (LOW/latent) PATCHED (descriptor capture in installStage, donor parity), F2 performance-stub writability (LOW/dormant) PATCHED (defineProperty) — both re-gated 544/544; F3 spec-text group mismatch reconciled above; F4 porcelain-arm fail-modes all fail-CLOSED (probed); F5 wrapper data-URLs not string-equal, semantically equivalent (ESM probe); F6 fork-census false-green surface only vs an 8th suite/indirection — stated scenario fails RED; F7 uxpolish unused imports pre-existing, untouched under the byte-identity law. Byte-identity census CLEAN (all seven suites' bodies), D-best proof holds (tickRun gated on running; over-screen inert), CI YAML valid for 18+26 (static floor scan — no Node-18 binary here; the matrix itself is the empirical check), battery re-runs reproduced (M1→H2-only, M2→H1+18, M3→fence-only, M4, M5). Status done; ledger PAID stamps land with this commit.
 
