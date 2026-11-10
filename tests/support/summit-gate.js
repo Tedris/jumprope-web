@@ -23,10 +23,11 @@
 // horizon, `owned: {}` so offers FIRE and the rng draws — with cappedOwned()
 // the rng never draws and seeds are vacuous (ledger :168). The per-run loop
 // lives here (not runBot) because the report's instrumentation — per-card
-// picksTally, terminalRopes, counted rngDraws — reads the live record, which
-// runBot's pinned result shape does not expose. Traces are evaluated-then-
-// dropped per run (Decided 8: 120 held traces ~ 600 MB; a batch never holds
-// more than one).
+// picksTally/offeredTally/firstTally, offerEvents and the outcome-split
+// finalRopes (6.3 retires terminalRopes, BH-F6) — reads the live record,
+// which runBot's pinned result shape does not expose. Traces are evaluated-
+// then-dropped per run (Decided 8: 120 held traces ~ 600 MB; a batch never
+// holds more than one).
 //
 // Pure Node: relative ../../js/*.js imports plus ./balance-harness.js only;
 // seeded mulberry32 through a counting wrapper (the rng-invocation idiom of
@@ -84,6 +85,12 @@ function runSeed({ build, seed, horizon, altPerPoint, ladder, altitude0 }) {
     return draw();
   };
   const tally = {};
+  // Story 6.3 offer instrumentation (Decided 3): the choose state pauses the
+  // sim until resolved (tickRun breaks on it), so this loop's resolution site
+  // sees EVERY offer exactly once. Count only — no rates, no judgments here.
+  const offered = {};
+  const firsts = {};
+  let offers = 0;
   let picks = 0;
   let { rope, player, run } = startRun();
   rope = { ...rope, period: ROPE_PERIOD };
@@ -94,6 +101,9 @@ function runSeed({ build, seed, horizon, altPerPoint, ladder, altitude0 }) {
   let endTick = null;
   for (let tick = 0; tick < horizon; tick++) {
     if (run.status === 'choose') {
+      for (const c of run.offer) offered[c.id] = (offered[c.id] ?? 0) + 1;
+      firsts[run.offer[0].id] = (firsts[run.offer[0].id] ?? 0) + 1;
+      offers += 1;
       const card = pickHeuristic(run.offer, run);
       tally[card.id] = (tally[card.id] ?? 0) + 1;
       picks += 1;
@@ -124,7 +134,8 @@ function runSeed({ build, seed, horizon, altPerPoint, ladder, altitude0 }) {
   return {
     outcome, endTick, won, picks, tally,
     rngDraws: draws.calls,
-    terminalRopes: clampRopes(run.ropes),
+    offers, offered, firsts,
+    finalRopes: clampRopes(run.ropes),
   };
 }
 
@@ -150,7 +161,10 @@ export function summitGate(options = {}) {
   for (const [name, build] of Object.entries(shapes)) {
     const runs = [];
     const picksTally = {};
-    const terminalRopes = {};
+    const offeredTally = {};
+    const firstTally = {};
+    const finalRopes = {};
+    let offerEvents = 0;
     const runSecs = [];
     const summitSecs = [];
     let rngDraws = 0;
@@ -165,7 +179,11 @@ export function summitGate(options = {}) {
         seconds: r.endTick * STEP, picks: r.picks,
       });
       for (const [id, n] of Object.entries(r.tally)) picksTally[id] = (picksTally[id] ?? 0) + n;
-      terminalRopes[r.terminalRopes] = (terminalRopes[r.terminalRopes] ?? 0) + 1;
+      for (const [id, n] of Object.entries(r.offered)) offeredTally[id] = (offeredTally[id] ?? 0) + n;
+      for (const [id, n] of Object.entries(r.firsts)) firstTally[id] = (firstTally[id] ?? 0) + n;
+      offerEvents += r.offers;
+      const h = (finalRopes[r.outcome] ??= {});
+      h[r.finalRopes] = (h[r.finalRopes] ?? 0) + 1;
       rngDraws += r.rngDraws;
       runSecs.push(r.endTick * STEP);
       if (r.won) summitSecs.push(r.endTick * STEP);
@@ -177,7 +195,10 @@ export function summitGate(options = {}) {
       medianSummitSecs: median(summitSecs),
       rngDraws,
       picksTally,
-      terminalRopes,
+      offeredTally,
+      firstTally,
+      offerEvents,
+      finalRopes,
     };
   }
 

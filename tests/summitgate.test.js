@@ -65,7 +65,7 @@ test('summit-gate export surface and every report key set are pinned', () => {
   const report = gate.summitGate({ seeds: [0], horizon: 600, shapes: { bare: {} } });
   assert.deepEqual(sortedKeys(report), ['band', 'rate', 'shapes', 'tunables', 'verdict']);
   assert.deepEqual(sortedKeys(report.shapes.bare),
-    ['medianRunSecs', 'medianSummitSecs', 'picksTally', 'rate', 'rngDraws', 'runs', 'terminalRopes']);
+    ['finalRopes', 'firstTally', 'medianRunSecs', 'medianSummitSecs', 'offerEvents', 'offeredTally', 'picksTally', 'rate', 'rngDraws', 'runs']);
   assert.deepEqual(sortedKeys(report.shapes.bare.runs[0]), ['endTick', 'outcome', 'picks', 'seconds', 'seed']);
   assert.deepEqual(sortedKeys(report.tunables), ['altPerPoint', 'ladder']);
 });
@@ -89,10 +89,16 @@ test('live batch: all three shapes report rates in [0,1] equal to their summit c
     assert.ok(shape.rate >= 0 && shape.rate <= 1);
     assert.equal(shape.rate, summits / SEEDS.length, 'rate equals summits/seeds (parity legs tie outcome to winTick)');
     assert.ok(Number.isFinite(shape.medianRunSecs));
-    for (const [ropes, count] of Object.entries(shape.terminalRopes)) {
-      assert.ok(Number.isFinite(count) && count > 0, 'terminalRopes histogram counts are finite and positive');
-      assert.ok(Number(ropes) >= game.MIN_ROPES && Number(ropes) <= game.MAX_ROPES, 'terminal ropes are a valid count');
+    let finalRopesTotal = 0;
+    for (const buckets of Object.values(shape.finalRopes)) {
+      for (const [ropes, count] of Object.entries(buckets)) {
+        assert.ok(Number.isFinite(count) && count > 0, 'finalRopes histogram counts are finite and positive');
+        assert.ok(Number(ropes) >= game.MIN_ROPES && Number(ropes) <= game.MAX_ROPES, 'final ropes are a valid count');
+        finalRopesTotal += count;
+      }
     }
+    assert.equal(finalRopesTotal, shape.runs.length,
+      'the outcome-split finalRopes split sums to the run count (BH-F6 cutover, story 6.3 R1)');
     for (const [id, n] of Object.entries(shape.picksTally)) {
       assert.ok(CARDS.some((c) => c.id === id), `picksTally keys are shipped card ids (${id})`);
       assert.ok(Number.isFinite(n) && n > 0);
@@ -307,5 +313,38 @@ test('6.2 retune law: the live batch verdict is IN and every shape summits insid
       `${name}: median summit clock within the NFR9 5-minute bound (300 s)`);
     assert.ok(shape.medianSummitSecs !== null && shape.medianSummitSecs >= 180,
       `${name}: median summit clock above the NFR9 3-minute floor (180 s, Decided 2(b))`);
+  }
+});
+
+// --- Story 6.3 Task 1: A1 one-leg append (the 6.2 append precedent) ---
+
+test('offer instrumentation is mechanism-honest on the live batch', () => {
+  // A1 (story 6.3 A1 authorization): the Decided 3/5 mechanism laws ride the
+  // file's ONE memoized lazy batch (~0 s extra wall, Decided 7) — exactly one
+  // pick per offer event (offerEvents === Σ picksTally), exactly one
+  // offer[0]-leader per offer (Σ firstTally === offerEvents), the first-card
+  // law picks ≤ firsts for every id EXCEPT the documented extrarope override
+  // (Decided 5), offered keys ⊆ CARDS, and every pick was offered. LAWS only:
+  // zero seed-specific numerics, zero thresholds (Decided 8).
+  const report = live();
+  for (const [name, shape] of Object.entries(report.shapes)) {
+    const pickSum = Object.values(shape.picksTally).reduce((a, n) => a + n, 0);
+    assert.equal(shape.offerEvents, pickSum,
+      `${name}: every offer event resolves exactly one pick`);
+    const firstSum = Object.values(shape.firstTally).reduce((a, n) => a + n, 0);
+    assert.equal(firstSum, shape.offerEvents,
+      `${name}: every offer contributes exactly one offer[0] first-card`);
+    for (const [id, n] of Object.entries(shape.picksTally)) {
+      if (id !== 'extrarope') {
+        assert.ok(n <= (shape.firstTally[id] ?? 0),
+          `${name}: ${id} is picked at most as often as it leads an offer (first-card law)`);
+      }
+      assert.ok((shape.offeredTally[id] ?? 0) >= n,
+        `${name}: every ${id} pick was an offered card`);
+    }
+    for (const id of Object.keys(shape.offeredTally)) {
+      assert.ok(CARDS.some((c) => c.id === id),
+        `${name}: offeredTally keys are shipped card ids (${id})`);
+    }
   }
 });

@@ -88,7 +88,7 @@ Next milestone after epics 3–6: **Epic 7, The Peel (META-01)** — pinned.
 | TRACK-1 | Looping music track file at `audio/track.ogg` | **Owned** — Story 5.6 (Epic 5); mechanism shipped, story ships the file (2026-11-07, D-002) |
 | WR-02 | Reduced-motion idle pose still animates arms/scarf off wall-clock `beat` (`js/render3d.js:387`) | **Owned** — Story 5.4 (Epic 5), folded in as its named fix |
 | CARD-08 | Rules-beyond-multipliers cards | **Promoted** — shipping as Epic 3 (FR12 rule-changing cards) |
-| CARD-09 | Escalating offer pacing | Owned — Story 6.3 verdict inside Epic 6 |
+| CARD-09 | Escalating offer pacing | **CLOSED** — Story 6.3 verdict: rejected at the 6.2 tunables — escalated %6-after-skip-30 measured 0.0333 out-low, 39/40 trips per shape (116/120 aggregate; 39/39/38 bare/ropeHeavy/chargeHeavy), no dead-card/legibility gain (15→14 dead cards, threshold noise; coverage 12/12 and topPickShare 0.155 unchanged); v1 pacing stands (FR10) — see 6-3-offer-pacing-verdict-card-09.md (2026-11-10) |
 | META-01 | Between-run meta progression | **Pinned** — Epic 7 (The Peel), the milestone after epics 3–6 (2026-11-07, D-004) |
 
 ## Next-Milestone Questions — answered 2026-11-07 (readiness audit)

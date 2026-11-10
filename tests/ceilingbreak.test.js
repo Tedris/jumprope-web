@@ -661,6 +661,13 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     'tests/offercadence.test.js',
     'tests/nearmiss.test.js', 'tests/v1parity.test.js',
     '_bmad-output/implementation-artifacts/6-2-real-tunables-retire-the-placeholders.md',
+    // Story 6.3 dev round (2026-11-10, C1): the offer-pacing verdict lane
+    // joins the census — this story's artifact and, for the FIRST time in
+    // either allow-set, a planning-artifacts path: prd.md, authorized ONLY
+    // for the CARD-09 Open-Items row edit this story pins (it pre-authorizes
+    // nothing else in planning-artifacts/). List-only, tripwire stays armed.
+    '_bmad-output/implementation-artifacts/6-3-offer-pacing-verdict-card-09.md',
+    '_bmad-output/planning-artifacts/prd.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
