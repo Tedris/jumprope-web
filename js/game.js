@@ -32,8 +32,14 @@ export const MAX_CHARGED = 2;
 // it was open-coded three times). clampCharged's arms, mirrored.
 export const MAX_AIRJUMPS = 1;
 
-// Story 2.1 (FR7): PLACEHOLDER — Epic 6 balance pass owns this value.
-export const ALT_PER_POINT = 2;
+// Story 2.1 (FR7) → Story 6.2 balance retune (FR7/FR15): 2.5 = 5/2, dyadic —
+// every ±20/±30 rig seed divides exactly and crafted-record altitude ===
+// ALT_PER_POINT × score stays bit-exact (Decided 4 as amended). Seed-driven
+// runs can pair it with the non-dyadic ×1.15 scoreMul, so the one shared
+// invariant site carries the ledger :55-56 tolerance (story amendment 3).
+// 6.2 retune: gate 0.142 in, shapes .15/.15/.125, medSum 290.8/279.9/297.2 s
+// @ 2026-11-10.
+export const ALT_PER_POINT = 2.5;
 
 // Story 2.2 (FR9): crossing the top row's ceiling wins instead of ascending.
 export const SUMMIT_AREA = AREAS.length;

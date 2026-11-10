@@ -30,21 +30,20 @@ const floatCard = game.CARDS.find(c => c.id === 'float');
 
 // ---------- data-table + factory contract legs ----------
 
-test('AREAS contract: five frozen rows on the 250/600/1000/1500/2100 ladder', () => {
-  // The table's OWN contract leg — placeholder numbers per FR15/GDD; the
-  // Epic 6 balance pass re-contracts this leg, every other leg here derives.
-  const LADDER = [
-    { area: 1, name: 'alley', ceiling: 250, periodMul: 1.00 },
-    { area: 2, name: 'rooftops', ceiling: 600, periodMul: 0.96 },
-    { area: 3, name: 'blimp', ceiling: 1000, periodMul: 0.92 },
-    { area: 4, name: 'stratosphere', ceiling: 1500, periodMul: 0.88 },
-    { area: 5, name: 'moon-approach', ceiling: 2100, periodMul: 0.85 },
-  ];
-  assert.equal(AREAS.length, 5);
+test('AREAS contract: five frozen rows on the Story 6.2 retuned ladder (laws, not a table)', () => {
+  // The table's OWN contract leg — Story 6.2's balance retune re-contracted
+  // it from the placeholder LADDER table to the LAWS the sweep is bound by
+  // (Decided 4: dyadic ALT, multiples-of-5 rungs, fixed 2100 summit, strictly
+  // decreasing periods from exactly 1.00); every other leg here derives.
+  const NAMES = ['alley', 'rooftops', 'blimp', 'stratosphere', 'moon-approach'];
+  assert.equal(AREAS.length, 5, 'five rows');
   AREAS.forEach((row, i) => {
-    assert.deepEqual(
-      { area: row.area, name: row.name, ceiling: row.ceiling, periodMul: row.periodMul },
-      LADDER[i], `row ${i + 1} matches the ladder`);
+    assert.equal(row.area, i + 1, `row ${i + 1} is area ${i + 1}`);
+    assert.equal(row.name, NAMES[i], `row ${i + 1} name in ladder order`);
+    assert.ok(Number.isInteger(row.ceiling) && row.ceiling > 0,
+      `row ${i + 1} ceiling is a positive integer`);
+    assert.equal(row.ceiling % 5, 0,
+      `row ${i + 1} ceiling is a multiple of 5 — ±20/±30 rig seeds stay ALT-exact`);
     assert.equal(row.palette, row.name, 'palette follows the area name (4.3 owns values)');
     assert.equal(typeof row.fog, 'number', 'fog placeholder (4.3 owns)');
     assert.ok(!('base' in row), 'no base field: base of area n = previous ceiling');
@@ -53,7 +52,12 @@ test('AREAS contract: five frozen rows on the 250/600/1000/1500/2100 ladder', ()
   assert.ok(Object.isFrozen(AREAS), 'the ladder array is frozen');
   for (let i = 1; i < AREAS.length; i++) {
     assert.ok(AREAS[i].ceiling > AREAS[i - 1].ceiling, 'ceilings strictly increase');
+    assert.ok(AREAS[i].ceiling - AREAS[i - 1].ceiling >= 250,
+      'ceiling spacings ≥ 250 u (the ascentRig margin + the jump arc need the headroom)');
+    assert.ok(AREAS[i].periodMul < AREAS[i - 1].periodMul, 'periodMul strictly decreases');
   }
+  assert.equal(AREAS[4].ceiling, 2100, 'the summit ceiling is 2100 (FR9, School B summit-preserving)');
+  assert.equal(AREAS[0].periodMul, 1.00, 'row 1 period is exactly 1.00 (alley bit-identity fence)');
 });
 
 test('factory contract: createRun gains area 1, baseAltitude 0, outcome null', () => {

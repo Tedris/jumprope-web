@@ -31,8 +31,8 @@ test('factory contract: createRun carries altitude 0 and ALT_PER_POINT is a fini
   assert.equal(typeof game.ALT_PER_POINT, 'number', 'ALT_PER_POINT must be exported from js/game.js');
   assert.ok(Number.isFinite(game.ALT_PER_POINT) && game.ALT_PER_POINT > 0,
     'ALT_PER_POINT must be finite and > 0 (placeholder owned by Epic 6)');
-  assert.equal(game.ALT_PER_POINT, 2,
-    'AC 5 pins the placeholder value — the Epic 6 balance pass re-contracts this leg when it lands real numbers');
+  assert.equal(game.ALT_PER_POINT, 2.5,
+    'the 6.2 balance retune pins the tuned value — annotate-change via the gate table');
   const run = game.createRun();
   assert.equal(run.altitude, 0);
   // Story 3.3 authorized re-contract: charged joins the createRun key set —

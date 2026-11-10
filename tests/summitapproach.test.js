@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -306,7 +305,13 @@ function tickAsserts(out, prevArea, t) {
   if (run.iFrames > 0) assert.ok(!events.includes('ascend') && !events.includes('win'),
     `area event on an iFrames>0 record at tick ${t} (interlock, AC2)`);
   assert.equal(run.baseAltitude, run.area === 1 ? 0 : AREAS[run.area - 2].ceiling, `base tracks the row left at tick ${t}`);
-  assert.equal(run.altitude, ALT_PER_POINT * run.score, `altitude invariant at tick ${t}`);
+  // Story 6.2 re-contract (amendment 3, ledger :55-56): the exact equality was
+  // bit-true only because the ×2 placeholder commutes with every accumulation
+  // rounding; ALT 2.5 + a picked ×1.15 scoreMul drifts 1 ulp between the two
+  // sums. Tolerance 1e-9 ≈ 10⁻⁷ of one skip's 2.5-altitude quantum — armed
+  // against real drift, deaf only to float dust.
+  assert.ok(Math.abs(run.altitude - ALT_PER_POINT * run.score) <= 1e-9 * Math.max(1, ALT_PER_POINT * run.score),
+    `altitude invariant at tick ${t}`);
 }
 
 // ladderSim donor (tests/arealadder.test.js:217-247) + the `skips: 9` cadence
@@ -805,12 +810,13 @@ test('§3.5 payload zero-delta: the arm adds NO view/run field (NFR7, 4.4 census
 
 const sourceOf = f => readFile(resolve(jsDir, f), 'utf8');
 
-test('§4.1 js/game.js is BYTE-IDENTICAL to the story baseline 2c3e693 (the DENY pin — kills M11)', async () => {
-  const buf = await readFile(resolve(jsDir, 'game.js'));
-  assert.equal(createHash('sha256').update(buf).digest('hex'),
-    '97e8bc7e6b669c2491ea8adbd5048a7034e29ac7d91c6956fd3e2ff2077b0687',
-    'the interlock ships UNCHANGED — this story pins the sim, it may not edit it (D-a; zero sim delta)');
-});
+// §4.1 RETIRED by Story 6.2 (story amendment 2, C2): 4.5's sim-interlock
+// pinned the game.js blob hash at 2c3e693 with no successor-handoff clause;
+// 6.2's sanctioned tunable retune edits js/game.js BY DESIGN, which kills a
+// build-specific blob pin structurally. Re-hashing is FORBIDDEN — a content
+// hash re-pinned to a story's own build dies at the next sim story. The
+// by-tree diff census (§4.3, allow-list carrying the 6.2 lane) is the
+// surviving and strictly broader fence: it names every changed path.
 
 test('§4.2 markerBlocked opens no timing surface and shell.js keeps its shipped four specifiers (NFR8 — kills M10)', async () => {
   const src = await sourceOf('shell.js');

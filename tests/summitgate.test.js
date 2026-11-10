@@ -288,3 +288,24 @@ test('effects-records fold: run-shaped rule-report entries read off records, the
       `effects- AND record-path numbers are finite (${entry.id})`);
   }
 });
+
+// --- Story 6.2 Task 4: A1 one-leg append (the review round's append precedent) ---
+
+test('6.2 retune law: the live batch verdict is IN and every shape summits inside the NFR9 clock', () => {
+  // A1 (story A1 authorization): AC2's in-band assertion + the NFR9 wall-clock
+  // law ride the file's ONE memoized lazy batch (Decided 11 budget: ~0 s extra
+  // wall). LAWS only — the band is the batch's own constructed band, the
+  // 180/300 s bounds are Decided 2(b)'s NFR9 spec constants; zero build-pinned
+  // numerics (Decided 10).
+  const report = live();
+  assert.equal(report.verdict, 'in',
+    `the aggregate verdict sits in the constructed band [${report.band}]`);
+  for (const [name, shape] of Object.entries(report.shapes)) {
+    assert.ok(shape.rate >= report.band[0] && shape.rate <= report.band[1],
+      `${name}: rate ${shape.rate} sits inside the band the batch was constructed with`);
+    assert.ok(shape.medianSummitSecs !== null && shape.medianSummitSecs <= 300,
+      `${name}: median summit clock within the NFR9 5-minute bound (300 s)`);
+    assert.ok(shape.medianSummitSecs !== null && shape.medianSummitSecs >= 180,
+      `${name}: median summit clock above the NFR9 3-minute floor (180 s, Decided 2(b))`);
+  }
+});

@@ -261,8 +261,13 @@ test('L5 fences, no boots: EXACTLY the eight derived names, chargeUsed silent, s
     "the './audio.js' specifier occurs EXACTLY once in js/ — the dynamic sole-consumer import (shell.js:64, D-N07)");
   assert.deepEqual(trackHits, ['audio.js:8'],
     'the audio/track.ogg literal lives only at js/audio.js:8 (TRACK-1 deferred, 5.6 lane)');
-  assert.deepEqual(chargeHits.sort(), ['game.js:223', 'shell.js:18'],
-    'chargeUsed appears in js/ ONLY at the sim push + the JUICE_TIERS row — no audio surface');
+  // Story 6.2 re-contract (amendment 2, C2): the filename MULTISET, not
+  // absolute lines — the line literal rotted at the first game.js edit (any
+  // story shifting the push's line reddened it with zero product signal).
+  // Armed exactly as before against the real threats: a ninth voice dies
+  // upstairs, an audio-surface chargeUsed hit changes THIS set.
+  assert.deepEqual(chargeHits.map((h) => h.split(':')[0]).sort(), ['game.js', 'shell.js'],
+    'chargeUsed appears in js/ ONLY in game.js (the sim push) + shell.js (the JUICE_TIERS row) — no audio surface');
 });
 
 test('L6 settings-apply-at-creation pair + coercion trio: the reloaded value lands on the master BEFORE any voice (FR27/FR24 seam, kills M5)', () => {
