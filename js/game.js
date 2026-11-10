@@ -86,7 +86,7 @@ export function clampArea(area) {
 export function areaPeriodMul(area) {
   // Story 4.2 (FR15): the current area's rope-period multiplier, read
   // through clampArea — crafted/missing areas are data (row 1's 1.00 for
-  // garbage, row 5's 0.85 for +Infinity), never a lookup throw.
+  // garbage, row 5's 0.76 for +Infinity), never a lookup throw.
   return AREAS[clampArea(area) - 1].periodMul;
 }
 
