@@ -26,7 +26,7 @@ Browser (index.html)
                 channel; zero references from the sim import graph
   localStorage ('jumprope-best', mute/volume) via injected storage seam
        (as-built: the versioned 'jumprope-best-altitude' of game-architecture.md
-        §Persistence was NEVER shipped - accepted 2026-11-10, ledger :159;
+§Persistence was NEVER shipped - accepted 2026-11-10, ledger :162;
         no run record is ever persisted)
 ```
 
@@ -48,11 +48,11 @@ test-reachable sim graph).
 | Simulation core | `js/game.js`, `js/rope.js`, `js/player.js`, `js/upgrades.js`, `js/interpolate.js`, `js/areas.js` (ladder data module since Story 2.2) | Pure, Node-importable | Factory `create*` + `update*` returning new state; predicates read as questions; rng injected as a parameter (`tickRun`'s 5th arg) |
 | Runtime shell | `js/shell.js` | Impure | rAF loop, fixed `STEP = 1/120` accumulator (clamped 0.25 s), pointer/keyboard/visibility input, pause, storage seam, resize/letterbox |
 | Renderer | `js/render3d.js` | Impure; sole `three` consumer | PS1 recipe: low-res Nearest render target, NDC vertex snap, single sRGB-then-Bayer/15-bit post pass; poses only from `lerpPhase` theta |
-| Audio | `js/audio.js` | Leaf, impure | Eight procedural SFX voices (`js/audio.js:185-208`; exact census fenced by `tests/ceilingbreak.test.js:511`) + the pre-recorded track loop (`audio/track.ogg`, Story 5.6), master bus, gesture-lifecycle AudioContext, suspend/resume guards; sim graph stays audio-free |
+| Audio | `js/audio.js` | Leaf, impure | Eight procedural SFX voices (`js/audio.js:184-208`; exact census fenced by `tests/ceilingbreak.test.js:511`) + the pre-recorded track loop (`audio/track.ogg`, Story 5.6), master bus, gesture-lifecycle AudioContext, suspend/resume guards; sim graph stays audio-free |
 
 ## Key Abstractions
 
-- **Run** — immutable 17-key record
+- **Run** — immutable 16-key record
   `{ status, score, altitude, skips, effects, offer, owned, buffer, streak, ropes, charged, airJumps, iFrames, area, baseAltitude, outcome }`
   (fenced by `tests/altitude.test.js:43`; full field census under
   *Run Record & Event Channel* below);
@@ -72,9 +72,9 @@ test-reachable sim graph).
 ## Run Record & Event Channel (as-built)
 
 Recorded by Story 6.4 (2026-11-10); every field verified against
-`js/game.js:116-118,164-301` and the 17-key fence `tests/altitude.test.js:43`.
+`js/game.js:116-118,164-301` and the 16-key fence `tests/altitude.test.js:43`.
 
-**Run** — immutable record, 17 keys (fence: `tests/altitude.test.js:43`);
+**Run** — immutable record, 16 keys (fence: `tests/altitude.test.js:43`);
 states `idle → running ↔ choose → over` (`idle` is written ONLY shell-side at
 `js/shell.js:130`; `tickRun` never emits it). Fields:
 
@@ -114,7 +114,9 @@ states `idle → running ↔ choose → over` (`idle` is written ONLY shell-side
 causality): `jump`, `skip`, `nearMiss`, `offer`, `chargeUsed` (3.3),
 `ropeLost` (1.2/5.2), `trip` (fatal-only, 2.4), `win`, **`ascend`** — nine
 names; the shell maps seven to JUICE_TIERS rows (`js/shell.js:15-23`; `jump`
-gets no juice) and eight to audio VOICES (ceilingbreak §6 exact-census fence).
+gets no juice) and seven by name to audio VOICES — the 8th voice `pick` fires
+shell-side on offer confirm (`js/shell.js:457`) and `chargeUsed` is intentionally
+silent (ceilingbreak §6 exact-census fence counts the eight voice names).
 
 **Ascent events** (Stories 4.1/4.2, FR9/FR15): once per tick,
 `peak = altitude + y` (post-step sample, no second clock) crossing
@@ -128,7 +130,7 @@ interlock); level-triggered, no banking (4.5).
 
 **Persistence (as-built)**: localStorage `'jumprope-best'` (bare v1 key — the
 versioned `jumprope-best-altitude` of `game-architecture.md` was never
-shipped; accepted 2026-11-10 per ledger :159) + mute/volume, all via the
+shipped; accepted 2026-11-10 per ledger :162) + mute/volume, all via the
 injected storage seam; degrades to session-only; **no run record is ever
 persisted** (permadeath, FR23).
 
@@ -167,9 +169,9 @@ persisted** (permadeath, FR23).
   `js/game.js:166-275`). A stripped Spare Rope never reappears. Policy-bot
   builds brush the wall: extrarope ≈3.4 picks/run vs cap 4 (Story 6.3
   sweep). The decision is re-pointed post-v2 by Story 6.3 Decided-6 —
-  correct-course lane; recorded as fact here, not re-litigated (ledger :154).
+  correct-course lane; recorded as fact here, not re-litigated (ledger :158).
 - (w2) **Seed-sensitivity flake surface** on batch-driven legs — OPEN by
-  design; Story 6.3 is the last scheduled sweeper (ledger :244-246).
+  design; Story 6.3 is the last scheduled sweeper (ledger :254-255).
 - Retired by Story 6.4 (2026-11-10): **WR-02 — PAID** by Story 5.4 (2026-11-09,
-  the `beat` gate at `js/render3d.js:575`; ledger :221); **`audio/track.ogg`
-  — shipped** by Story 5.6 (2026-11-09; ledger :206).
+  the `beat` gate at `js/render3d.js:575`; ledger :228); **`audio/track.ogg`
+  — shipped** by Story 5.6 (2026-11-09; ledger :213).

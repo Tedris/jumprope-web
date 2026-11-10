@@ -46,7 +46,7 @@ genre. (Adopted 2026-11-05; source: brainstorming session log.)
 v1.0 shipped 2026-10-22 (details below, kept for provenance). v2 delta ran on
 BMAD epics: **Epics 1–5 done** — every story shipped, gate-proven, frozen-test
 discipline held throughout. **Epic 6: 6.1** the policy-bot summit gate landed —
-summit rate **0.142 in band** across all three shapes; **6.2** real tunables
+summit rate **0.142 in band** aggregate (0.150/0.150/0.125 per shape); **6.2** real tunables
 retired the placeholders (ALT 2.5, ceilings 250/600/900/1,350/2,100, periods
 1.00/.95/.88/.82/.76 — every-shape medSum 290.8/279.9/297.2 s); **6.3** the
 **CARD-09 CLOSED** verdict with two-arm sweep evidence; **6.4** is the

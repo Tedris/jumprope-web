@@ -182,7 +182,8 @@ measured **sub-linear** at 1.00 / 1.97 / 2.92 / 3.84 / 4.73 × the one-rope rate
 N = 1…5. `extrarope` therefore buys survival and throttle in a single pick and
 is deliberately the loudest card in the catalogue; its brakes are timing load
 (N windows per revolution, a miss costing a rope *and* a blank revolution) and
-the offer-frequency thermostat — never a score penalty (Catalogue rules 2).
+the offer frequency — a trip lever, not a difficulty dial (§Economy, Story 6.3)
+— never a score penalty (Catalogue rules 2).
 
 **Height & ascent (NEW — v2 core).** Altitude **is** score, at **2.5 u** per
 point: `altitude += 2.5 × scoreMul` (as-built, `js/game.js:42,182`) — point-generating

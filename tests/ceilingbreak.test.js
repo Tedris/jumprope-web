@@ -677,6 +677,9 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     '_bmad-output/planning-artifacts/epics.md',
     '_bmad-output/planning-artifacts/architecture.md',
     '_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md',
+    // Story 6.4 REVIEW-PATCH amendment: gdd-epic-overview.md joins for its
+    // one stale period-ladder row (Blind A64-7); authorizes nothing else.
+    '_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd-epic-overview.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

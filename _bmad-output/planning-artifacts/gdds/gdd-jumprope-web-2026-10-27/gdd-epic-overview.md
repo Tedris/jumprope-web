@@ -66,7 +66,7 @@ The CARD-08 backlog, given the ladder's grammar.
 Five altitude tiers; the win becomes a place.
 
 - **4.1** Data: area table (ceilings, palette, fog, rope-period multiplier
-  ×1.0/0.96/0.92/0.88/0.85 — tuning-owned), area-enter state.
+  ×1.00/.95/.88/.82/.76 — tuned by Story 6.2, `616eb6c`), area-enter state.
 - **4.2** Sim: ascend routes to next area (period multiplier applies on the
   phase clock, never re-clocks it).
 - **4.3** Renderer: per-area vistas from cheap primitives (silhouettes, fog,

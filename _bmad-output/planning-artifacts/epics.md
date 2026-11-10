@@ -30,7 +30,7 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 
 **Height & ascent**
 
-- FR5: Each cleared pass accrues altitude as `altitude += 2 × this pass's score` — score *is* altitude; one number on the HUD and one number recorded (best-altitude subsumes v1's best-score).
+- FR5: Each cleared pass accrues altitude as `altitude += ALT_PER_POINT × this pass's score` (as-built: `ALT_PER_POINT` = 2.5, Story 6.2 `616eb6c` — the v1 draft wrote the `2` placeholder) — score *is* altitude; one number on the HUD and one number recorded (best-altitude subsumes v1's best-score).
 - FR6: Jump peak = current area base altitude + jump height; a peak crossing a mid-run area ceiling ascends the player to the next area; a peak crossing the summit (area 5) ceiling wins the run.
 - FR7: The area ceiling ladder is 250 / 600 / 900 / 1,350 / 2,100 u (as-built — Story 6.2 sweep-derived, `js/areas.js`; altitude-per-skip 2.5, `js/game.js:42`).
 - FR8: The HUD shows a ceiling marker for the current area ceiling, telegraphing each area break as a *moon-jump moment*.
@@ -117,7 +117,7 @@ FR1: Epic 1 - Multi-rope on one phase clock, even offsets
 FR2: Epic 1 - Trip resolution: buffer → fastest rope lost → last-rope death
 FR3: Epic 1 - i-frames: one pass per rope held, no scores/trips
 FR4: Epic 1 - Rope count on HUD
-FR5: Epic 2 - altitude = 2 × pass score; one number (HUD + record)
+FR5: Epic 2 - altitude = ALT_PER_POINT (as-built 2.5, Story 6.2) × pass score; one number (HUD + record)
 FR6: Epic 2 - jump-peak vs ceiling; summit break wins (Epic 4 adds mid-run ascent across areas)
 FR7: Epic 2 - ceiling ladder constants land as placeholders (Epic 6 replaces via balance pass)
 FR8: Epic 2 - HUD ceiling marker (Epic 5 polishes the moon-jump moment)
@@ -163,7 +163,7 @@ Players build and survive with a rope economy: 1–5 ropes sweep one phase clock
 
 ### Epic 2: Altitude & the Win
 
-Skips convert into height: score *is* altitude at 2 u/pt on one HUD number and one record; jump peaks test a ceiling ladder; breaking the summit ceiling wins the run, tripping with one rope ends it. The game becomes winnable.
+Skips convert into height: score *is* altitude at 2.5 u/pt (as-built, Story 6.2; the draft's 2 was a placeholder) on one HUD number and one record; jump peaks test a ceiling ladder; breaking the summit ceiling wins the run, tripping with one rope ends it. The game becomes winnable.
 
 **FRs covered:** FR5, FR6, FR7 (placeholder ladder), FR8, FR21, FR24, FR26
 
@@ -330,7 +330,7 @@ So that the one non-negotiable — the jump-timing feel — stays proven with ev
 
 ## Epic 2: Altitude & the Win
 
-Skips convert into height: score *is* altitude at 2 u/pt on one HUD number and one record; jump peaks test a ceiling ladder; breaking the summit ceiling wins the run, tripping with one rope ends it. The game becomes winnable.
+Skips convert into height: score *is* altitude at 2.5 u/pt (as-built, Story 6.2; the draft's 2 was a placeholder) on one HUD number and one record; jump peaks test a ceiling ladder; breaking the summit ceiling wins the run, tripping with one rope ends it. The game becomes winnable.
 
 **FRs covered:** FR5, FR6, FR7 (placeholder ladder), FR8, FR21, FR24, FR26 · **NFRs:** NFR4, NFR5, NFR7, NFR9 (seed)
 
