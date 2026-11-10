@@ -32,7 +32,7 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 
 - FR5: Each cleared pass accrues altitude as `altitude += 2 × this pass's score` — score *is* altitude; one number on the HUD and one number recorded (best-altitude subsumes v1's best-score).
 - FR6: Jump peak = current area base altitude + jump height; a peak crossing a mid-run area ceiling ascends the player to the next area; a peak crossing the summit (area 5) ceiling wins the run.
-- FR7: The area ceiling ladder is 250 / 600 / 1,000 / 1,500 / 2,100 u (placeholder tunables, replaced by the balance pass).
+- FR7: The area ceiling ladder is 250 / 600 / 900 / 1,350 / 2,100 u (as-built — Story 6.2 sweep-derived, `js/areas.js`; altitude-per-skip 2.5, `js/game.js:42`).
 - FR8: The HUD shows a ceiling marker for the current area ceiling, telegraphing each area break as a *moon-jump moment*.
 - FR9: Ascent is strictly upward and one-way — no backtracking; a run visits at most 5 areas.
 
@@ -46,7 +46,7 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 
 **Areas**
 
-- FR15: Five areas are altitude tiers of one continuous vertical space (Alley → Rooftops → Blimp Deck → Stratosphere → Moon Approach — placeholder flavor); each tier applies a palette, fog/horizon geometry, and an escalating rope-period multiplier (placeholder ×1.0 / 0.96 / 0.92 / 0.88 / 0.85).
+- FR15: Five areas are altitude tiers of one continuous vertical space (Alley → Rooftops → Blimp Deck → Stratosphere → Moon Approach — names shipped as drafted, code ids `alley/rooftops/blimp/stratosphere/moon-approach`, `js/areas.js`); each tier applies a palette, fog/horizon geometry, and an escalating rope-period multiplier (as-built ×1.00 / 0.95 / 0.88 / 0.82 / 0.76, tuned by the Story 6.2 sweep).
 - FR16: A ceiling break changes rope appearance, palette, and horizon, and lands as a beat (stinger, hitstop, palette flip).
 
 **Core play (v1 contract — regression surface for v2 work)**
@@ -66,7 +66,7 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 
 - FR27: Procedural WebAudio SFX on a master bus, gesture-gated AudioContext, persisted mute/volume; audio follows gameplay — nothing may beat-lock the rope. *(v1, unchanged)*
 - FR28: New procedural voices: ascent stinger and win fanfare; rope-loss thud adapted for multi-rope; last-rope tension audio treatment (mix decision in Epic 5).
-- FR29: `audio/track.ogg` (TRACK-1) remains content-deferred; the mechanism degrades to silence. *(v1, unchanged)*
+- FR29: `audio/track.ogg` (TRACK-1) **shipped — Story 5.6** (2026-11-09); the mechanism's silence-degradation legs stay pinned — v1 behavior unchanged for an absent file.
 - FR30: The pause menu presents an audio-config surface — Resume, a volume control, and a sound on/off toggle — reflecting and driving the existing `audio.js` seams (`setVolume`/`toggleMute`) and persisting through the existing storage seam (FR24/FR27). Keyboard shortcuts stay functional and stay in sync. *(Added 2026-11-07, readiness-audit D-006: mechanism shipped in v1 but was keyboard-only — the config surface is the gap.)*
 
 ### NonFunctional Requirements
@@ -91,14 +91,14 @@ From Architecture (technical requirements that impact epic/story creation):
 - Pure functional core / imperative shell: sim modules (`game.js`, `rope.js`, `player.js`, `upgrades.js`, `interpolate.js`) never touch DOM, `Date`, `Math.random`, or storage; never mutate; enforce via `tests/boundary.test.js` import-graph fence — no new mechanic may leak render authority into game state.
 - The shell passes a one-way immutable view payload to `render3d.js`; multi-rope, area, and charge state must flow through that same payload.
 - Effects stay pure endofunctions over an effects record; `ropeMul` capped per-card so stacked speed cards stay inside the rope-wrap bound by construction — new rope/charge/double-jump state must respect this pattern.
-- **Catalogue rule — one axis, one card** (adopted 2026-11-06): two cards may not offer the same effect axis at two strengths, unless the weaker one is an explicit cap-extension tier and reads as one. Measured on the shipped catalogue: 16% of pick-of-2 and 47% of pick-of-3 draws put two same-axis cards in one offer (`js/upgrades.js` — float/feather, multi/tally, window/widebrim); Launch Heels widens the peak-height axis to 39% at pick-of-3.
+- **Catalogue rule — one axis, one card** (adopted 2026-11-06): two cards may not offer the same effect axis at two strengths, unless the weaker one is an explicit cap-extension tier and reads as one. Measured (exact weighted enumeration, `tests/balance.test.js:387-399`): the 8-card v1 pool put two same-axis cards in one offer on **16.25%** of pick-of-2 / **46.20%** of pick-of-3 draws (`js/upgrades.js` — float/feather, multi/tally, window/widebrim); Launch Heels was predicted to widen the peak-height axis to 39% at pick-of-3 — it never materialized: the shipped 12-card pool (post-3.1, rule-changers as axis-singletons) measures **7.07% / 20.54%** — collisions FELL.
 - **Catalogue rule — no upgrade reduces the score** (adopted 2026-11-06): hard rule, all cards, implicit costs included. Since Story 2.1 `score += scoreMul` *is* altitude (`js/game.js:110-111`), a points cut is a climb cut. Two shipped cards violate it: Wide Brim (`scoreMul −0.25` → −25% climb rate) and Heavy Rope (`ropeMul ×0.9` → −13% climb rate). Re-cost in Epic 3, before Story 3.1 locks FR11's legacy-8 freeze; values measured by the Story 2.5 harness.
 - Invalid states are data (`status: 'over'`, `tripped: true`), never thrown errors — new win/lose/ascent states follow this.
 - Cross-cutting singletons: one shared handler per concern (`releaseEverything()`, `resumeRun()`, `snapGridFor()`) — pause/resume and input paths for new states must reuse them, not duplicate.
 - rng injected as a parameter (e.g. `tickRun`'s 5th arg); randomness (card draws only) deterministic under test.
 - Every new factory return contract gets a Node-side contract test in the same change; gesture/audio guards get red-green test legs when written.
 - Tests via the one gate `./run_tests.sh` (Node's built-in runner under the hood — `node --test tests/`, Node ≥ 18, `node:test` + `node:assert/strict`); balance gate reuses the 1000-tick headless-sim technique.
-- Known debt WR-02 (reduced-motion idle pose animates off wall-clock `beat`, `js/render3d.js:387`) — one-line fix; decide whether folded into an Epic 5 story or housekeeping.
+- Known debt WR-02 — **PAID** by Story 5.4 (2026-11-09): the `beat` idle-clock gate at `js/render3d.js:575`; retired by Story 6.4 (2026-11-10).
 - Conventions from AGENTS.md: named exports, `create*`/`update*` factories returning new objects, POJOs only, `*Mul` suffix on multiplier fields, 2-space indent, no `console.*` in pure modules.
 - Near-frozen rule (corrected by Story 3.0): `index.html` / `package.json` are near-frozen by rule, not by fence test — no test reads `package.json`; `index.html` is covered only by `tests/ropehud.test.js`'s `#hud` contract leg; `tests/boundary.test.js` fences the sim import graph. Touching them needs justification.
 
@@ -358,7 +358,7 @@ So that scoring and climbing are the same obvious thing — how high can I get?
 **When** a run records
 **Then** persistence degrades to session-only exactly as v1, with no errors surfaced (FR24, NFR11)
 
-**And** a new constant documents altitude-per-skip = 2 u as a placeholder tunable owned by Epic 6's balance pass (FR7)
+**And** a new constant documents altitude-per-skip = 2 u as a placeholder tunable owned by Epic 6's balance pass (FR7) (as-built: 2.5 shipped by Story 6.2 in `616eb6c` — placeholder retired; THE exemplar of why Story 6.4's docs pass exists)
 
 ### Story 2.2: Jump peak vs ceiling — and the summit win
 
@@ -452,7 +452,7 @@ So that every tuning decision from here on is measured, not guessed.
 
 **Given** seeded offer draws over the catalogue
 **When** the harness counts same-axis collisions (two cards from one axis in one offer)
-**Then** it reports the collision rate for the pool, so a duplicate-axis fix is verified by that number falling (baseline: 16% at pick-of-2, 47% at pick-of-3)
+**Then** it reports the collision rate for the pool, so a duplicate-axis fix is verified by that number falling (baseline: exact weighted enumeration 16.25% at pick-of-2 / 46.20% at pick-of-3 on the 8-card pool — pinned `tests/balance.test.js`; post-3.1 12-card pool 7.07% / 20.54%)
 
 **And** the harness is positioned for Epic 6 to reuse as the balance master-dial (summit reach rate 5–20% band) without rework
 

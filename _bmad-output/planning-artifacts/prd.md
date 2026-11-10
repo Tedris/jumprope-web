@@ -41,16 +41,18 @@ genre. (Adopted 2026-11-05; source: brainstorming session log.)
 - Faithful reproduction of Scarlet Skips' cards, story, or characters — spirit,
   not letter.
 
-## Current State — v2 in progress (as of 2026-11-07)
+## Current State — v2 complete (2026-11-10, Story 6.4 closes it)
 
-v1.0 shipped 2026-10-22 (details below, kept for provenance). v2 delta runs on
-BMAD epics: **Epic 1 (Ropes as HP) done, Epic 2 (Altitude & the Win) done
-2026-11-06** (5/5 stories, incl. the 2.5 balance harness); **Epic 3 in
-progress** — Story 3.1 at review, 3.2–3.5 backlog; Epics 4–6 backlog with the
-Story 6.1 policy-bot summit gate as the v2 exit criterion. Gate: 303/303 Node
-tests green (readiness audit 2026-11-07,
-[`docs/kickoff/readiness-audit-2026-11-07/`](../../docs/kickoff/readiness-audit-2026-11-07/)).
-Next milestone after epics 3–6: **Epic 7, The Peel (META-01)** — pinned.
+v1.0 shipped 2026-10-22 (details below, kept for provenance). v2 delta ran on
+BMAD epics: **Epics 1–5 done** — every story shipped, gate-proven, frozen-test
+discipline held throughout. **Epic 6: 6.1** the policy-bot summit gate landed —
+summit rate **0.142 in band** across all three shapes; **6.2** real tunables
+retired the placeholders (ALT 2.5, ceilings 250/600/900/1,350/2,100, periods
+1.00/.95/.88/.82/.76 — every-shape medSum 290.8/279.9/297.2 s); **6.3** the
+**CARD-09 CLOSED** verdict with two-arm sweep evidence; **6.4** is the
+docs & provenance pass + success-metrics execution (evidence: that story file).
+Gate: 566/566 Node tests @ ~8.5 s. Next milestone: **v2 deploy/UAT + Epic 7,
+The Peel (META-01)** — pinned.
 
 ## Current State — v1.0 Shipped (2026-10-22)
 
@@ -85,8 +87,8 @@ Next milestone after epics 3–6: **Epic 7, The Peel (META-01)** — pinned.
 
 | ID | Item | Status |
 |----|------|--------|
-| TRACK-1 | Looping music track file at `audio/track.ogg` | **Owned** — Story 5.6 (Epic 5); mechanism shipped, story ships the file (2026-11-07, D-002) |
-| WR-02 | Reduced-motion idle pose still animates arms/scarf off wall-clock `beat` (`js/render3d.js:387`) | **Owned** — Story 5.4 (Epic 5), folded in as its named fix |
+| TRACK-1 | Looping music track file at `audio/track.ogg` | **CLOSED** — file shipped with Story 5.6 (2026-11-09; first committed binary; sha/LUFS in `deferred-work.md` ledger) |
+| WR-02 | Reduced-motion idle pose still animates arms/scarf off wall-clock `beat` (`js/render3d.js:387`) | **CLOSED** — fixed in Story 5.4 (2026-11-09): the `beat` gate at source, `js/render3d.js:575`; retired by Story 6.4 (2026-11-10) |
 | CARD-08 | Rules-beyond-multipliers cards | **Promoted** — shipping as Epic 3 (FR12 rule-changing cards) |
 | CARD-09 | Escalating offer pacing | **CLOSED** — Story 6.3 verdict: rejected at the 6.2 tunables — escalated %6-after-skip-30 measured 0.0333 out-low, 39/40 trips per shape (116/120 aggregate; 39/39/38 bare/ropeHeavy/chargeHeavy), no dead-card/legibility gain (15→14 dead cards, threshold noise; coverage 12/12 and topPickShare 0.155 unchanged); v1 pacing stands (FR10) — see 6-3-offer-pacing-verdict-card-09.md (2026-11-10) |
 | META-01 | Between-run meta progression | **Pinned** — Epic 7 (The Peel), the milestone after epics 3–6 (2026-11-07, D-004) |

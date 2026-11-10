@@ -955,6 +955,15 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     // nothing else in planning-artifacts/). List-only, tripwire stays armed.
     '_bmad-output/implementation-artifacts/6-3-offer-pacing-verdict-card-09.md',
     '_bmad-output/planning-artifacts/prd.md',
+    // Story 6.4 dev round (2026-11-10, C1): the docs-provenance pass joins
+    // the census — this story's artifact plus the three planning docs it
+    // rewrites to as-built fact (gdd/epics/architecture; prd.md already listed
+    // via 6.3 C1). Authorized ONLY for the G/E/A rows this story pins — it
+    // pre-authorizes nothing beyond those rows. List-only, tripwire stays armed.
+    '_bmad-output/implementation-artifacts/6-4-docs-provenance-pass.md',
+    '_bmad-output/planning-artifacts/epics.md',
+    '_bmad-output/planning-artifacts/architecture.md',
+    '_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');

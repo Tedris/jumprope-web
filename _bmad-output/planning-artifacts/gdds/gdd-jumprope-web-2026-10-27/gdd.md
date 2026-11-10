@@ -178,20 +178,24 @@ scores and none can trip — a true blank on the clock. A trip strips the
 **fastest** rope (decided default: preserves the gentlest remaining state).
 Ropes are simultaneously the health bar, the multiplier, and the difficulty
 dial — **confirmed 2026-11-06:** rope count *is* the climb-rate multiplier,
-measured linear at 1.00 / 1.97 / 2.92 / 3.84 / 4.73 × the one-rope rate for
+measured **sub-linear** at 1.00 / 1.97 / 2.92 / 3.84 / 4.73 × the one-rope rate for
 N = 1…5. `extrarope` therefore buys survival and throttle in a single pick and
 is deliberately the loudest card in the catalogue; its brakes are timing load
 (N windows per revolution, a miss costing a rope *and* a blank revolution) and
 the offer-frequency thermostat — never a score penalty (Catalogue rules 2).
 
-**Height & ascent (NEW — v2 core).** Altitude **is** score, at a fixed 2 u per
-point: `altitude += 2 × this pass's score` — point-generating cards climb,
+**Height & ascent (NEW — v2 core).** Altitude **is** score, at **2.5 u** per
+point: `altitude += 2.5 × scoreMul` (as-built, `js/game.js:42,182`) — point-generating
 multipliers compound into the climb, and the run records one number
 (best-altitude subsumes v1's best-score). Jump peak = area base altitude + jump
 height; peak crossing a ceiling **ascends** (visual: rope, palette, and horizon
-change). Area ceilings (placeholder ladder): **250 / 600 / 1,000 / 1,500 /
-2,100** u. Target: summit reached around skip 120–180 passes on a competent
-build. Pacing note: with N ropes, passes accrue N× per revolution, so skip-keyed
+change). Area ceilings (as-built ladder, Story 6.2 sweep-derived): **250 / 600 /
+900 / 1,350 / 2,100** u (`js/areas.js:16-32`). As-built pacing: at 2.5 u/pt the
+bare base to the 2,100 u summit is 840 points (`altitude += 2.5 × scoreMul` per
+pass); score-adding stacks lower the pass count — the **binding** pacing
+constraint is the wall-clock gate (NFR9), measured medSum 290.8/279.9/297.2 s
+(Story 6.2 batch). Pacing note: with N ropes, passes accrue N× per revolution,
+so skip-keyed
 gates (offers, ladder) advance N× faster in revolutions — multi-rope builds
 compress *wall-clock* run time; the 3–5 min target is wall-clock and is the
 balance gate's constraint. Every area break is a *moon-jump moment*, telegraphed
@@ -232,8 +236,11 @@ Target additions (rule-beyond-multiplier; numbers first-pass, to be balanced):
 | `highjump` | Launch Heels | mobility | jump launch velocity +10% | common | 3 |
 
 *Why these numbers exist:* Second Wind ×2 is the ceiling-breaker answer for
-players farming peak height; Spare Rope is the only direct HP gain and its
-offer frequency is the run's difficulty thermostat; Wind-Up remains the risk
+players farming peak height; Spare Rope is the only direct HP gain, and its offer
+frequency is a **trip lever, not a difficulty dial** — faster offers land
+`extrarope` earlier → past-2-ropes strip → MORE deaths, LOWER summit rate
+(non-monotone; the 6.3 escalated-%6-after-30 check measured 0.0333, out-low —
+shipped pacing untouched, `js/upgrades.js:105-112`); Wind-Up remains the risk
 rare, now deadlier *and* more rewarding under multi-rope.
 
 **Catalogue rules (adopted 2026-11-06).** These bind every row above and every
@@ -243,9 +250,12 @@ row added later:
    unless the weaker is an explicit cap-extension tier and reads as one. The v1
    table breaks this on three axes — hang time (`float`/`feather`), pass score
    (`multi`/`tally`), forgiveness (`window`/`widebrim`) — which lands two
-   same-axis cards in one offer on 16% of pick-of-2 draws and 47% of pick-of-3
-   draws (20k seeded draws through the real `pickOffers`). Launch Heels joins
-   the hang/peak axis, taking pick-of-3 to 39%.
+   same-axis cards in one offer on 16.25% of pick-of-2 draws and 46.20% of
+   pick-of-3 draws (exact weighted enumeration on the 8-card v1 pool). Launch Heels
+   joins the hang/peak axis, predicted to take pick-of-3 to 39% — the widening
+   never materialized: the shipped 12-card pool (post-3.1, rule-changers as
+   axis-singletons) measures **7.07% / 20.54%** — collisions DROPPED
+   (`tests/balance.test.js:387-399`).
 2. **No upgrade reduces the score.** Hard rule, implicit costs included — score
    *is* altitude (FR5), so a points cut and a slower rope are both climb cuts.
    Measured over a trip-free 10 s headless window, policy bot, neutral baseline
@@ -260,11 +270,12 @@ row added later:
 
 - **Jump:** Space / Enter / pointer-down anywhere. Hold for height. *The only
   gameplay input.*
-- **Card pick:** pointer/tap on a card, or 1/2/3 keys. [ASSUMPTION: number-key
-  picker not built in v1.0; assumed for target.]
+- **Card pick:** pointer/tap on a card, or 1/2/3 keys — `Digit1/2/3` confirm
+  offers (shipped, Story 3.5; `js/shell.js:344`; ASSUMPTION retired).
 - **Pause:** P or Esc (with full input-release hygiene; shared
   release/resume path).
-- **Mute/volume:** HUD toggle, persisted.
+- **Mute/volume:** key-driven — `Mute` / `−` / `=` — plus the pause-menu sound
+  button + volume readout (Story 5.7), persisted (`js/shell.js:314-316,787-790`).
 - Accessibility: `prefers-reduced-motion` damps cosmetics only — judgment and
   timing are never altered.
 
@@ -281,10 +292,10 @@ row added later:
 - **Difficulty scaling:** never automatic in v1 — *target design keeps the
   engine hands-off*: difficulty is **player-chosen** (rope-speed cards,
   added ropes) plus **area pressure** — each area applies an escalating rope
-  period multiplier (placeholder: ×1.0 / 0.96 / 0.92 / 0.88 / 0.85 — summit
-  base period ≈ 1.10 s). [ASSUMPTION: per-area pressure is the assistant's
-  proposal to keep late areas tense without changing picks; designer has not
-  tuned it.]
+  period multiplier (as-built: ×1.00 / 0.95 / 0.88 / 0.82 / 0.76 — summit base
+  period 1.3 × 0.76 ≈ **0.99 s**, `js/areas.js:16-32`; tuned via the Story 6.2
+  sweep — ASSUMPTION retired: the designer tuned it through the gate; the old
+  ≈ 1.10 s note was the ×0.85 placeholder's math).
 - **Victory:** summit ceiling break (see Win/Loss). Runs are winnable; that is
   the v2 correction to endless v1.
 
@@ -371,8 +382,8 @@ both are needed for the summit — timing alone can't reach a 100-unit peak.
 
 No currency. The economy is: **skips → altitude** and **trips → ropes**, with
 cards as the exchange rate between them. The single most important tunable in
-the game is altitude-per-skip (placeholder 2 u); it sets run length against
-the ceiling ladder.
+the game is altitude-per-skip (**2.5 u**, as-built — Story 6.2, `js/game.js:42`);
+it sets run length against the ceiling ladder.
 
 ---
 
@@ -382,10 +393,11 @@ the ceiling ladder.
 
 Areas are altitude tiers of one continuous vertical space, not separate
 levels: **Alley** (0) → **Rooftops** (250) → **Blimp Deck** (600) →
-**Stratosphere** (1,000) → **Moon Approach** (1,500) → summit ceiling 2,100.
-Each tier = palette + horizon geometry + rope-period multiplier; same stage,
-same rope grammar. [ASSUMPTION: tier names/themes are draft flavor; designer
-has not themeparked them.]
+**Stratosphere** (900) → **Moon Approach** (1,350) → summit ceiling 2,100
+(as-built ladder, `js/areas.js:16-32`). Each tier = palette + horizon geometry
++ rope-period multiplier; same stage, same rope grammar. Tier names SHIPPED AS
+DRAFTED (code ids `alley/rooftops/blimp/stratosphere/moon-approach`); the
+themepark never ran — flavor remains a designer candidate, not a rename.
 
 ### Level Progression
 
@@ -402,20 +414,21 @@ PS1-truth: 240-row nearest-filter render target, screen-space vertex snap,
 flat shading, sRGB→Bayer/15-bit dither pass; low-poly chibi skipper (head,
 limbs, scarf chain) posed purely from the phase clock; rope geometry sag-baked.
 Areas differentiate by palette, fog color, and silhouette geometry, not new
-asset classes. **Candidate gags/directions (designer-flagged, undecided):**
-blocky spring-rigged chest-jiggle physics on the chibi rig as deliberate
-goofy PS1-era comedy — ~two spheres on a spring, pillar-3-legal; alternative
-exploration: cel-shaded look. Both must keep the *deliberately* lo-fi tone.
-[NOTE FOR DESIGNER: pick one before the art epic locks; jiggle requires the
-skipper design to commit to the joke.]
+asset classes. **Art gag — RESOLVED (as-built):** the blocky spring-rigged
+chest-jiggle **SHIPPED** — renderer-only boxy prop boxes on a damped spring,
+behind the `CHEST_JIGGLE` switch (`js/render3d.js:22-32`; the cel-shading
+alternative is retired; spec-chest-jiggle-physics, status done). The
+*deliberately* lo-fi tone holds.
 
 ### Audio and Music
 
 Procedural WebAudio voices on a master bus, gesture-gated AudioContext,
 persisted mute/volume. **Audio follows gameplay; the rope is never beat-locked**
 (pillar 2 + demake-ethics line). Skip ticks, near-miss stingers, rope-loss thud,
-ascent stinger (new), win fanfare (new, procedural). Music track (`audio/track.ogg`,
-TRACK-1) remains content-deferred; nothing may clock the rope.
+ascent stinger (new), win fanfare (new, procedural). Music track
+(`audio/track.ogg`, TRACK-1) **SHIPPED** (Story 5.6): Ogg/Vorbis mono, 79.18 s
+seamless loop, 97 BPM, zero rhythmic relation to the rope — pillar 2 intact;
+nothing clocks the rope.
 
 ---
 
@@ -440,8 +453,9 @@ effect-field names) live in `architecture.md`, not here.
 ### Asset Requirements
 
 All geometry procedural/inline; zero bitmap texture budget beyond palette
-LUTs; audio voices procedural, one optional deferred music file. Character
-rig stays a few hundred triangles (jiggle candidate adds ≤10).
+LUTs; audio voices procedural + one committed music loop (`audio/track.ogg`,
+Story 5.6). Character rig stays a few hundred triangles (the jiggle shipped as
+two prop boxes).
 
 ---
 
@@ -515,19 +529,24 @@ server; anything stored stays in the browser):
 
 ## Assumptions and Dependencies
 
-**[ASSUMPTION] index:**
-1. Target audience inferred (not stated by designer).
-2. Number-key card picker assumed for target UX (not in v1.0).
-3. Per-area rope-pressure multipliers are an assistant proposal awaiting
-   designer tuning.
-4. Area names/themes (Alley→Moon Approach) are placeholder flavor.
+**[ASSUMPTION] index (as-built, Story 6.4):**
+1. Target audience inferred (not stated by designer). — standing designer lane.
+2. ~~Number-key card picker assumed for target UX (not in v1.0).~~ — RETIRED:
+   shipped Story 3.5 (`js/shell.js:344`).
+3. ~~Per-area rope-pressure multipliers are an assistant proposal awaiting
+   designer tuning.~~ — RETIRED: tuned via the Story 6.2 gate (`js/areas.js`).
+4. Area names/themes (Alley→Moon Approach) shipped as drafted; themepark
+   optional (`js/areas.js` ids).
 
-**[NOTE FOR DESIGNER] open items:**
-1. Endless-after-summit: yes/no/later.
-2. Art gag: blocky jiggle vs cel-shading vs neither — decide before art epic.
-3. Ceiling-ladder and altitude-per-skip placeholders (250/600/1k/1.5k/2.1k,
-   2 u/pt) — first balance pass must replace.
-4. Last-rope audio mix (thinner? beat-forward?) — decide in Epic 5.
+**[NOTE FOR DESIGNER] items (as-built, Story 6.4):**
+1. Endless-after-summit: yes/no/later. — genuinely open; standing designer lane.
+2. Art gag — RESOLVED: blocky jiggle shipped (Art Style section, G12).
+3. ~~Ceiling-ladder and altitude-per-skip placeholders (250/600/1k/1.5k/2.1k,
+   2 u/pt) — first balance pass must replace.~~ — RETIRED: balance pass done,
+   Story 6.2/6.3 gate-proven (as-built 250/600/900/1,350/2,100 @ 2.5 u/pt).
+4. Last-rope audio mix — **closed-by-implementation (Story 5.2)**: taut
+   double-tick 660+1320 Hz on the tension variant, material-only
+   (`js/audio.js:191`); designer override lane stays open (D-N12).
 
 **Dependencies:** v1.0 sim core (pure, injectable rng) extends cleanly;
 Three.js CDN pin unchanged; frozen-test discipline applies — new mechanics get
