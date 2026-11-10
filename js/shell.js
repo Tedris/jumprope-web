@@ -203,6 +203,7 @@ export function startGame(canvas) {
         try {
           audio.gesture(new AudioContext());
           audioReady = true;
+          audioDiag = ''; // recovery clears the witness — 'audio off' must not outlive the failure (review F1)
         } catch {
           audioDiag = 'audio-error';
         }
@@ -798,7 +799,9 @@ function setupMenu(root, api) {
       const visible = api.visible();
       const v = api.volume();
       const muted = api.muted();
-      const off = v === null || v === undefined;
+      // The api bag's diag is the shell's audio-failure witness (review F1):
+      // an AudioContext-creation failure must NOT render a healthy readout.
+      const off = !!api.diag() || v === null || v === undefined;
       const next = (visible ? 'v' : '-') + '|' + (off ? 'off' : Math.round(v * 100))
         + '|' + (muted ? 'muted' : 'on');
       if (next !== sig) {

@@ -87,7 +87,7 @@ development_status:
   5-4-reduced-motion-for-new-states-the-wr-02-fix: done
   5-5-audio-lifecycle-regression-sweep: done
   5-6-track-1-music-content: done  # dev 2026-11-09: audio/track.ogg + tests/track1.test.js, gate 521/521; closes TRACK-1
-  5-7-pause-menu-audio-config: review  # dev 2026-11-09: shell panel + 5 CSS rules + tests/pausemenu.test.js (7 legs), gate 519/521 kickoff -> 528/528, battery 6/6, live lane 18/18
+  5-7-pause-menu-audio-config: done  # review 2026-11-09: 5 patches (1 product diag-consume, 4 test/harden incl. new L6), gate 529/529; dev: shell panel + 5 CSS rules + tests/pausemenu.test.js, battery 6/6, live lane 18/18
   epic-5-retrospective: optional
 
   # Epic 6: Balance & Prove

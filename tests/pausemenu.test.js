@@ -10,8 +10,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 // shipped audio settings (D3): it stores nothing, mirrors nothing; every write
 // routes audio.setVolume/toggleMute through the existing write-through path.
 //
-// Frozen suites are DONORS, never imports (fork-hygiene doctrine, ledger :173;
-// this is boot fork #5, counted for the tests/support/shell-harness.js chore):
+// Frozen suites are DONORS, never imports (fork-hygiene doctrine; this is boot
+// fork #5 — ledgered in the 5.7 review section for the shell-harness chore):
 //   bootLifecycleShell — tests/audiolifecycle.test.js:351-460: the audio-
 //     resolving boot (dynamic-specifier rewrite to a wrapper over the REAL
 //     js/audio.js + storageMap + document.hidden + the settle() dance). Its
@@ -57,7 +57,32 @@ const settle = () => new Promise(r => setTimeout(r, 0));
 
 // ---------- harness: bootMenuShell (fork #5 — see the donor map above) ----------
 
-async function bootMenuShell({ storageMap, dom = true } = {}) {
+// Review F5: minimized AudioContext donor (audiolifecycle makeAudioContext
+// family) — the ctx-STATE witness the menu ACs need: gesture() arms it,
+// enterPause suspends it, and a menu control that wakes it is instantly
+// visible as ctxState !== 'suspended'. The ctor throws while
+// globalThis.__menuCtxThrow is truthy — the audio-error face without a 4th boot.
+function makeMenuContext() {
+  const node = () => ({ connect() {}, disconnect() {} });
+  const param = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, cancelScheduledValues() {} });
+  return class MenuAudioContext {
+    constructor() {
+      if (globalThis.__menuCtxThrow) throw new Error('AudioContext unavailable (sandbox)');
+      this.state = 'running'; this.currentTime = 0; this.sampleRate = 48000; this.destination = node();
+    }
+    createGain() { const g = node(); g.gain = param(); return g; }
+    createOscillator() { const o = node(); o.type = 'sine'; o.frequency = param(); o.detune = param(); o.start = () => {}; o.stop = () => {}; return o; }
+    createBufferSource() { const o = node(); o.buffer = null; o.loop = false; o.playbackRate = param(); o.start = () => {}; o.stop = () => {}; return o; }
+    createBiquadFilter() { const f = node(); f.type = 'lowpass'; f.frequency = param(); f.Q = param(); return f; }
+    createBuffer(ch, len) { return { length: len, sampleRate: 48000, numberOfChannels: ch, getChannelData: () => new Float32Array(len) }; }
+    decodeAudioData() { return Promise.resolve(this.createBuffer(2, 1024)); }
+    suspend() { this.state = 'suspended'; return Promise.resolve(); }
+    resume() { this.state = 'running'; return Promise.resolve(); }
+    close() { this.state = 'closed'; return Promise.resolve(); }
+  };
+}
+
+async function bootMenuShell({ storageMap, dom = true, audioCtx = false } = {}) {
   const frames = [];
   const handlers = { window: {}, canvas: {} };
   const created = [];
@@ -117,6 +142,7 @@ async function bootMenuShell({ storageMap, dom = true } = {}) {
     consoleError: console.error,
     audio: globalThis.__menuAudio,
     voices: globalThis.__menuVoices,
+    audioContext: globalThis.AudioContext,
   };
   globalThis.document = documentStub;
   globalThis.window = { addEventListener: (type, fn) => { handlers.window[type] = fn; } };
@@ -124,6 +150,7 @@ async function bootMenuShell({ storageMap, dom = true } = {}) {
   Object.defineProperty(globalThis, 'localStorage', { value: storageStub, configurable: true });
   globalThis.performance = { now: () => clock.t }; // pickerhud:93 virtual clock
   globalThis.fetch = () => Promise.reject(new Error('no track in the sandbox'));
+  if (audioCtx) globalThis.AudioContext = makeMenuContext(); // review F5
   console.error = () => {};
 
   const renderStubHref = 'data:text/javascript,' + encodeURIComponent([
@@ -206,6 +233,8 @@ async function bootMenuShell({ storageMap, dom = true } = {}) {
       if (saved.voices === undefined) delete globalThis.__menuVoices;
       else globalThis.__menuVoices = saved.voices;
       delete globalThis[viewsKey];
+      if (saved.audioContext === undefined) delete globalThis.AudioContext;
+      else globalThis.AudioContext = saved.audioContext;
     },
   };
   return env;
@@ -371,10 +400,15 @@ test('L1 menu presents Resume + volume + mute, initialized from the PRE-SEEDED p
   pauseVis(env);
   tick(env, st);
   assertShown(env, 'visibility-pause opened the SAME menu node');
-  assert.equal(env.menu.wrap, menuNode, 'one node for both entries — nothing was rebuilt');
+  // Review F3: a property-identity compare can never fail under a rebuild —
+  // the witness is the LIVE #hud child census, on both sides of the entry.
+  const panelNodes = () => env.hudRoot.children.filter(el => el.className.startsWith('hud-menu'));
+  assert.equal(panelNodes().length, 1, 'EXACTLY ONE .hud-menu node under #hud after the visibility entry (no rebuild, no duplicate panel)');
+  assert.equal(panelNodes()[0], menuNode, 'and it is the SAME node — nothing was rebuilt');
   assert.equal(env.menu.read.textContent, 'volume 40%', 'readout identical at the second entry');
   resumeClick(env, st); // resume FROM the menu, via the Resume button itself
   assertHidden(env, 'the Resume click closed the menu');
+  assert.equal(panelNodes().length, 1, 'still exactly one panel node after the resume (render never appends)');
   env.document.hidden = false; // leave the tab "shown" without firing the event (no auto-resume surprise)
   tick(env, st);
   assert.equal(view(env).run.status, 'running', 'the click-resumed run is live for the L3 battery');
@@ -524,7 +558,7 @@ test('L4 the menu re-renders in sync with EVERY write path — Minus/Equal/Mute 
     sync('boot-load persisted settings → readout (triangle arm 1; first pinned at L1)');
     const v0 = env.audio().getVolume();
     keydown(env, 'Minus');
-    sync('the Minus keydown while paused — it short-circuits BEFORE the pause toggle (shell.js:290)');
+    sync('the Minus keydown while paused — it short-circuits BEFORE the pause toggle (shell.js:307)');
     assert.ok(Math.abs(env.audio().getVolume() - (v0 - 0.1)) < 1e-12, 'the keyboard step is exactly VOLUME_STEP');
     const v1 = env.audio().getVolume();
     click(env.menu.up);
@@ -535,7 +569,7 @@ test('L4 the menu re-renders in sync with EVERY write path — Minus/Equal/Mute 
     sync('the Equal keydown while paused');
     const m0 = env.audio().isMuted();
     keydown(env, 'Mute');
-    sync('the OS Mute key while paused (shell.js:289 short-circuit, triangle arm 3)');
+    sync('the OS Mute key while paused (shell.js:306 short-circuit, triangle arm 3)');
     assert.equal(env.audio().isMuted(), !m0, 'the seam flipped exactly once');
     click(env.menu.mute);
     sync('the menu sound button flips it back');
@@ -544,6 +578,49 @@ test('L4 the menu re-renders in sync with EVERY write path — Minus/Equal/Mute 
     tick(env, st);
     assertHidden(env, 'L4 exits to a live run');
   } finally {
+    env.restore();
+  }
+});
+
+// ---------- L6: review F1/F5 — audio-failure honesty + the ctx-suspend witness ----------
+
+test('L6 the panel never claims healthy audio, and menu controls never wake the suspended ctx — one boot, both faces of the AudioContext failure (review F1/F5 — kills M9)', async () => {
+  globalThis.__menuCtxThrow = true; // face 1: the constructor throws -> audioDiag
+  const env = await bootMenuShell({
+    storageMap: new Map([['jumprope-audio', '{"muted":false,"volume":0.6}']]),
+    audioCtx: true,
+  });
+  try {
+    const st = startRunning(env); // the boot tap hits unlockAudio -> catch -> audioDiag
+    assert.equal(env.audio().getStatus().initialized, false, 'the failed boot holds no context');
+    pumpSafePoint(env, st);
+    pauseKey(env);
+    tick(env, st);
+    assert.equal(env.menu.read.textContent, 'audio off',
+      'the failure face renders the OFF readout — never the persisted healthy number (review F1)');
+    resumeClick(env, st);
+    globalThis.__menuCtxThrow = false; // face 2: the next gesture's creation succeeds
+    press(env); tick(env, st); release(env); tick(env, st); // one tap retries unlockAudio (:202 design)
+    assert.equal(env.audio().getStatus().initialized, true, 'the retry gesture armed the context');
+    pumpSafePoint(env, st);
+    pauseKey(env);
+    tick(env, st);
+    assert.equal(env.menu.read.textContent, 'volume 60%',
+      'recovery CLEARS the witness — audio off must not outlive the failure (shell.js:205)');
+    assert.equal(env.audio().getStatus().ctxState, 'suspended', 'enterPause suspended the ctx (shell.js:274)');
+    click(env.menu.up);
+    click(env.menu.down);
+    click(env.menu.mute);
+    click(env.menu.mute);
+    tick(env, st);
+    assert.equal(env.audio().getStatus().ctxState, 'suspended',
+      'every menu control stays ctx-inert behind the pause — no gesture(), no resume() (review F5 — kills M9)');
+    assert.equal(env.menu.read.textContent, 'volume 60%', 'the up/down pair and mute double-tap land neutral');
+    assert.equal(env.menu.mute.textContent, 'Sound on', 'the label rides the live seam');
+    resumeClick(env, st);
+    assert.equal(env.audio().getStatus().ctxState, 'running', 'the resume path is the ONE that revives audio (shell.js:290)');
+  } finally {
+    delete globalThis.__menuCtxThrow;
     env.restore();
   }
 });
@@ -565,10 +642,14 @@ test('L5 factory fence: the setupMenu body is semantics-free — no gesture/shel
   }
   assert.equal((src.match(/setItem/g) ?? []).length, 0,
     'the shell NEVER gains a setItem call — the settings writes live in the audio layer alone (single persistence truth)');
-  const codes = [...new Set([...src.matchAll(/e\.code === '([A-Za-z0-9]+)'/g)].map(x => x[1]))].sort();
+  // Review F4: the census must bind COMPARISONS, not one spelling — any
+  // e.code/e.key form (spacing, quotes, ==/===/!==) enters the reducer census.
+  const codes = [...new Set([...src.matchAll(/e\.(?:code|key)\s*[!=]==?\s*['"]([A-Za-z0-9]+)['"]/g)].map(x => x[1]))].sort();
   assert.deepEqual(codes, ['ArrowLeft', 'ArrowRight', 'Digit1', 'Digit2', 'Digit3', 'Equal', 'Escape',
     'KeyP', 'Minus', 'Mute', 'Numpad1', 'Numpad2', 'Numpad3', 'Space'],
-    'the keydown code census deep-equals the shipped set — ZERO new bindings (D5 — kills M6)');
+    'the key-comparison census deep-equals the shipped set — ZERO new bindings (D5 — kills M6, review F4)');
+  assert.equal((src.match(/\be\.key\b/g) ?? []).length, 0,
+    'the shell keys on e.code ONLY — an e.key comparison never enters the reducer (review F4 — kills M16)');
   assert.equal((src.match(/setVolume\(/g) ?? []).length, 1,
     'EXACTLY ONE setVolume call site in the shell — bumpVolume, the shared handler (FR24, AGENTS.md:53)');
   assert.match(src, /bumpVolume\(-VOLUME_STEP\)/, 'the Minus line routes the shared bump (behavior-identical rewrite, Task 2a)');
