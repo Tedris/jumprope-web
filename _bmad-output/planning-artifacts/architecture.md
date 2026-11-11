@@ -24,7 +24,7 @@ Browser (index.html)
     └─ js/interpolate.js lerpPhase (wrap-aware phase interpolation)
   js/audio.js — leaf: procedural WebAudio SFX fed by the shell's event
                 channel; zero references from the sim import graph
-  localStorage ('jumprope-best', mute/volume) via injected storage seam
+  localStorage ('jumprope-best', 'jumprope-meta', mute/volume) via injected storage seam
        (as-built: the versioned 'jumprope-best-altitude' of game-architecture.md
 §Persistence was NEVER shipped - accepted 2026-11-10, ledger :162;
         no run record is ever persisted)
@@ -130,7 +130,9 @@ interlock); level-triggered, no banking (4.5).
 
 **Persistence (as-built)**: localStorage `'jumprope-best'` (bare v1 key — the
 versioned `jumprope-best-altitude` of `game-architecture.md` was never
-shipped; accepted 2026-11-10 per ledger :162) + mute/volume, all via the
+shipped; accepted 2026-11-10 per ledger :162) + `'jumprope-meta'` (Story 7.1,
+FR31: the bare unversioned meta ledger — flat `{furthestArea, summits, skips}`,
+write lane dormant until Story 7.2 accrual) + mute/volume, all via the
 injected storage seam; degrades to session-only; **no run record is ever
 persisted** (permadeath, FR23).
 
