@@ -1,5 +1,5 @@
 # generated: 2026-10-28
-# last_updated: 2026-11-10
+# last_updated: 2026-11-11
 # project: jumprope-web
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-10-28
-last_updated: 2026-11-10
+last_updated: 2026-11-11
 project: jumprope-web
 project_key: NOKEY
 tracking_system: file-system
@@ -103,8 +103,8 @@ development_status:
 
   # Epic 7: The Peel — registered by the 2026-11-10 epics planning pass (epics.md FR31–FR35, NFR12–13)
   # Open decisions ride story kickoff: S2/S3 at 7-4, S4 (retro A3) + A4 pack at 7-5; S1 scope by 7-4 latest.
-  epic-7: backlog
-  7-1-meta-ledger-persistence-without-run-records: backlog
+  epic-7: in-progress # 7-1 created 2026-11-11 — first story created, auto backlog→in-progress per workflow rule
+  7-1-meta-ledger-persistence-without-run-records: ready-for-dev # created 2026-11-11: meta ledger + dormant write lane; baseline gate 566/566 @ 0c5185f
   7-2-every-run-leaves-a-mark-outcome-counters: backlog
   7-3-locked-in-the-deal-the-catalogue-learns-locks: backlog
   7-4-the-peel-unlocks-as-fiction-in-the-ps1-voice: backlog

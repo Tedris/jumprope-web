@@ -979,6 +979,11 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     '_bmad-output/brainstorming-session-2026-11-10.md',
     '_bmad-output/planning-artifacts/prds/prd-jumprope-web-2026-11-10/.memlog.md',
     '_bmad-output/party-mode/memories/installed/.memlog.md',
+    // Story 7.1 create round (2026-11-11): the story artifact joins the census
+    // by this file's own written authorization — the same bookkeeping rule the
+    // c38070e (6.1) create-round append used; list-only, authorized by the
+    // story doc, tripwire stays armed, authorizes nothing else.
+    '_bmad-output/implementation-artifacts/7-1-meta-ledger-persistence-without-run-records.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');
