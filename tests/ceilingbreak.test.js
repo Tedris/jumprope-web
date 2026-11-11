@@ -724,6 +724,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // list-only bookkeeping rule, authorized by the story doc, tripwire stays
     // armed, authorizes nothing else.
     'js/upgrades.js',
+    // Story 7.4 create round (2026-11-11): the story artifact joins the census
+    // by this file's own written authorization — the same bookkeeping rule the
+    // c38070e (6.1) create-round append used; list-only, authorized by the
+    // story doc, tripwire stays armed, authorizes nothing else.
+    '_bmad-output/implementation-artifacts/7-4-the-peel-unlocks-as-fiction-in-the-ps1-voice.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
