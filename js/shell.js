@@ -1,4 +1,4 @@
-import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, loadMeta, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA, clampCharged, clampAirJumps } from './game.js';
+import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, loadMeta, saveMeta, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA, clampCharged, clampAirJumps } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
@@ -726,6 +726,17 @@ export function startGame(canvas) {
         if (out.tripped || run.outcome === 'summit') {
           best = Math.max(best, Math.round(run.altitude));
           saveBest(localStorage, best);
+          // Story 7.2 (FR33, D1/D2): the outcome counters accrue on THIS
+          // branch — the run-end seam shared with saveBest, structurally
+          // once-per-run (the running-drain gate, :717). MAX area, summits
+          // only on 'summit', skips += the run-local delta. Recorded here,
+          // consumed by nothing yet — 7.3 reads.
+          meta = {
+            furthestArea: Math.max(meta.furthestArea, run.area),
+            summits: meta.summits + (run.outcome === 'summit' ? 1 : 0),
+            skips: meta.skips + run.skips,
+          };
+          saveMeta(localStorage, meta);
         }
         // D-N02: the events array is the ONLY juice trigger (the tripped
         // fallback is a defensive shim for a channel-less sim build).

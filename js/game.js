@@ -379,12 +379,15 @@ export function loadMeta(storage) {
 }
 
 export function saveMeta(storage, meta) {
+  // Story 7.2 (D3, 7.1-review F5): the field reads ride ABOVE the try —
+  // post-sanitize values cannot throw in stringify, so the catch keeps its
+  // one meaning (blocked storage, silent) and a nullish meta throws LOUD as
+  // the caller bug it is. The ledger is the file's only such caller today.
+  const furthestArea = clampCounter(meta.furthestArea);
+  const summits = clampCounter(meta.summits);
+  const skips = clampCounter(meta.skips);
   try {
-    storage.setItem('jumprope-meta', JSON.stringify({
-      furthestArea: clampCounter(meta.furthestArea),
-      summits: clampCounter(meta.summits),
-      skips: clampCounter(meta.skips),
-    }));
+    storage.setItem('jumprope-meta', JSON.stringify({ furthestArea, summits, skips }));
   } catch {
     // storage unavailable; the ledger is session-only
   }

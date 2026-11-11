@@ -428,8 +428,8 @@ test('L2 the controls route the shipped seams with write-through to the SINGLE s
     assert.equal(view(env).run.status, 'over', 'the walk ends with a real trip — game.js:318 writes jumprope-best');
     tick(env, st);
     assertHidden(env, 'boot-2 over status');
-    assert.deepEqual([...env.map.keys()].sort(), ['jumprope-audio', 'jumprope-best'],
-      'the storage-key census: the shipped set EXACTLY (audio.js:7 + game.js:318) — a second persistence path is structurally impossible (kills M4)');
+    assert.deepEqual([...env.map.keys()].sort(), ['jumprope-audio', 'jumprope-best', 'jumprope-meta'],
+      'the storage-key census: jumprope-audio + jumprope-best + jumprope-meta EXACTLY (audio.js:7 + game.js:318 + game.js saveMeta — Story 7.2 re-contract: the meta write rides the SAME run-end seam, still no second persistence path; kills M4)');
     assert.deepEqual(Object.keys(JSON.parse(env.map.get('jumprope-audio'))).sort(), ['muted', 'volume'],
       'the settings shape stays the shipped {muted, volume} (audio.js:34-43)');
   } finally {

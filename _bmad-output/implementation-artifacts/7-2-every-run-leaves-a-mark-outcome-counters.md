@@ -3,7 +3,7 @@ baseline_commit: 783dc1084430f773f33b430ada588543f1b4221e
 ---
 # Story 7.2: Every run leaves a mark — outcome counters
 
-Status: ready-for-dev
+Status: review
 
 *Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-11).*
 
@@ -40,22 +40,22 @@ Exactly ONE existing test leg is re-authorized: `tests/pausemenu.test.js` L2, th
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — the run-end accrual branch (AC: 1, 2; D1, D2)
-  - [ ] `js/shell.js:726-728`: inside the existing `if (out.tripped || run.outcome === 'summit')` branch, after the `saveBest` line, reassign the shell-local `meta` (declared :155) — `furthestArea: Math.max(meta.furthestArea, run.area)`, `summits: meta.summits + (run.outcome === 'summit' ? 1 : 0)`, `skips: meta.skips + run.skips` — and call `saveMeta(localStorage, meta)`. Add `saveMeta` to the existing `game.js` import line (named import, beside `loadMeta`).
-  - [ ] One hook only: no other run-end call site; `resumeRun`/restart/pause paths untouched; no new loadMeta call anywhere (boot fence, Decided 7).
-  - [ ] No sim changes: zero diff in `tickRun`/`startRun`/`applyCard`/`resumeRun`/deal paths; nothing READS meta this story (AC4 — 7.3 consumes).
-- [ ] Task 2 — the `saveMeta` try-hoist (AC: 1; D3, ledger deferred-work.md:281-282)
-  - [ ] `js/game.js:381-390`: hoist the three `clampCounter(meta.*)` reads above the `try`; the `try` wraps only `setItem` + `JSON.stringify` of the pre-sanitized `{ furthestArea, summits, skips }` (key set and shape-pinned semantics unchanged — the metalegger legs stay green untouched).
-  - [ ] Update the comment if it misdescribes the try scope; blocked storage stays silent; nullish `meta` now throws (caller bug, loud). Do NOT touch `saveBest`/`saveSettings`.
-- [ ] Task 3 — the frozen-leg re-contract (AC: 1; D4)
-  - [ ] `tests/pausemenu.test.js` L2 :431: expected array → `['jumprope-audio', 'jumprope-best', 'jumprope-meta']`; :432 message names the three keys and the game.js `saveMeta` site. Nothing else in the file; :424 byte-identical — its green is the no-write-before-run-end proof.
-- [ ] Task 4 — the new contract suite (AC: 1, 2, 3, 4; D6)
-  - [ ] `tests/runmark.test.js` NEW: scripted shell-harness legs — (a) tick-to-trip: `jumprope-meta` written once with `furthestArea = max(0, area reached)`, `summits` unchanged, `skips = run.skips`; (b) scripted summit: `summits + 1`, `furthestArea` reaches 5; (c) exactly-once: post-end ticks (idle, pause/resume, restart-to-running) leave the persisted value byte-identical; (d) ledger monotonicity: pre-seeded `meta` with a higher `furthestArea` is never lowered (MAX, D2); (e) lifetime accumulation: pre-seeded `skips`/`summits` grow by exactly the finished run's delta; (f) the try-hoist red-green pair: nullish meta on healthy storage THROWS; blocked storage with a POJO meta stays silent (direct Node legs, `saveMeta` import); (g) AC4 guard: after accrual, the written meta JSON keys are EXACTLY the three counters — no run record rides along (permadeath).
-  - [ ] C1: append `tests/runmark.test.js` to BOTH §6 allow-sets, list-only comment, tripwires stay armed (this file's precedent rule; NOT part of the create round).
-- [ ] Task 5 — gates and bookkeeping (AC: all)
-  - [ ] `./run_tests.sh` green (baseline 574/574 @ 783dc10, ~8.5 s; expect 574 + new runmark legs; NFR4 < 10 s).
-  - [ ] `tests/boundary.test.js` green unchanged (no `localStorage` literal in game.js — `saveMeta(localStorage, …)` lives in shell.js only); metalegger suite green UNTOUCHED (the hoist must keep all 7+ legs green without an edit — that is the D3 proof that storage degradation is untouched); summit-gate/balance suites green unchanged (sim bit-identical; band gate is run-scoped, architecture.md:163-167 — zero meta feeds a sim build).
-  - [ ] Story Status → done (dev round stamps `review` per the loop contract); File List + Debug Log filled; sprint-status stamp per house style.
+- [x] Task 1 — the run-end accrual branch (AC: 1, 2; D1, D2)
+  - [x] `js/shell.js:726-728`: inside the existing `if (out.tripped || run.outcome === 'summit')` branch, after the `saveBest` line, reassign the shell-local `meta` (declared :155) — `furthestArea: Math.max(meta.furthestArea, run.area)`, `summits: meta.summits + (run.outcome === 'summit' ? 1 : 0)`, `skips: meta.skips + run.skips` — and call `saveMeta(localStorage, meta)`. Add `saveMeta` to the existing `game.js` import line (named import, beside `loadMeta`).
+  - [x] One hook only: no other run-end call site; `resumeRun`/restart/pause paths untouched; no new loadMeta call anywhere (boot fence, Decided 7).
+  - [x] No sim changes: zero diff in `tickRun`/`startRun`/`applyCard`/`resumeRun`/deal paths; nothing READS meta this story (AC4 — 7.3 consumes).
+- [x] Task 2 — the `saveMeta` try-hoist (AC: 1; D3, ledger deferred-work.md:281-282)
+  - [x] `js/game.js:381-390`: hoist the three `clampCounter(meta.*)` reads above the `try`; the `try` wraps only `setItem` + `JSON.stringify` of the pre-sanitized `{ furthestArea, summits, skips }` (key set and shape-pinned semantics unchanged — the metalegger legs stay green untouched).
+  - [x] Update the comment if it misdescribes the try scope; blocked storage stays silent; nullish `meta` now throws (caller bug, loud). Do NOT touch `saveBest`/`saveSettings`.
+- [x] Task 3 — the frozen-leg re-contract (AC: 1; D4)
+  - [x] `tests/pausemenu.test.js` L2 :431: expected array → `['jumprope-audio', 'jumprope-best', 'jumprope-meta']`; :432 message names the three keys and the game.js `saveMeta` site. Nothing else in the file; :424 byte-identical — its green is the no-write-before-run-end proof.
+- [x] Task 4 — the new contract suite (AC: 1, 2, 3, 4; D6)
+  - [x] `tests/runmark.test.js` NEW: scripted shell-harness legs — (a) tick-to-trip: `jumprope-meta` written once with `furthestArea = max(0, area reached)`, `summits` unchanged, `skips = run.skips`; (b) scripted summit: `summits + 1`, `furthestArea` reaches 5; (c) exactly-once: post-end ticks (idle, pause/resume, restart-to-running) leave the persisted value byte-identical; (d) ledger monotonicity: pre-seeded `meta` with a higher `furthestArea` is never lowered (MAX, D2); (e) lifetime accumulation: pre-seeded `skips`/`summits` grow by exactly the finished run's delta; (f) the try-hoist red-green pair: nullish meta on healthy storage THROWS; blocked storage with a POJO meta stays silent (direct Node legs, `saveMeta` import); (g) AC4 guard: after accrual, the written meta JSON keys are EXACTLY the three counters — no run record rides along (permadeath).
+  - [x] C1: append `tests/runmark.test.js` to BOTH §6 allow-sets, list-only comment, tripwires stay armed (this file's precedent rule; NOT part of the create round).
+- [x] Task 5 — gates and bookkeeping (AC: all)
+  - [x] `./run_tests.sh` green (baseline 574/574 @ 783dc10, ~8.5 s; expect 574 + new runmark legs; NFR4 < 10 s).
+  - [x] `tests/boundary.test.js` green unchanged (no `localStorage` literal in game.js — `saveMeta(localStorage, …)` lives in shell.js only); metalegger suite green UNTOUCHED (the hoist must keep all 7+ legs green without an edit — that is the D3 proof that storage degradation is untouched); summit-gate/balance suites green unchanged (sim bit-identical; band gate is run-scoped, architecture.md:163-167 — zero meta feeds a sim build).
+  - [x] Story Status → done (dev round stamps `review` per the loop contract); File List + Debug Log filled; sprint-status stamp per house style.
 
 ## Dev Notes
 
@@ -126,23 +126,40 @@ Exactly ONE existing test leg is re-authorized: `tests/pausemenu.test.js` L2, th
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+lane-qwen38-ultra/qwen (omp worker session Dev72)
 
 ### Debug Log References
 
+- Baseline gate (pre-edit, this round): **574/574 @ 8.69 s** wall (time builtin; HEAD 6ff8c60 = the create commit, story baseline 783dc10 verified via git log).
+- RED phase: `tests/runmark.test.js` alone **0/7 pass** — every leg red for the right reason: scripted legs died at `JSON.parse(env.map.get('jumprope-meta'))` = "undefined" (no runtime meta write existed), leg f red at `Missing expected exception (TypeError)` (the 7.1 try-scope swallowing the caller bug). The harness itself was proven alive inside the red: legs reached real trips through the shipped death arm and `pumpSkips` scored its skips.
+- GREEN phase: first full gate **581/581 @ 8.56 s** wall (TAP duration_ms 8499; 8.5–8.7 s across runs — NFR4 < 10 s held; the 7 runmark legs cost ~88 ms suite-wide, individual legs 0.3–16.9 ms). Zero red iterations: first implementation run went green in one pass.
+- Diff shape audit (`git diff -U0` hunks): js/game.js changes sit ENTIRELY inside `saveMeta` (:381-394, try-hoist); js/shell.js deltas are exactly the import line + 11 accrual lines at the run-end branch (:726-740). Zero diff in `tickRun`/`startRun`/`applyCard`/`resumeRun`/deal — AC4's "sim untouched" is a diff fact, not an argument.
+- Frozen-leg audit: `git diff tests/` — pausemenu touched ONLY :431-432 (the authorized region); its :424 mid-walk census `['jumprope-audio']` passed byte-identical = the no-write-before-run-end proof held at runtime; winloss/metalegger/reducedmotion byte-identical (metalegger green UNTOUCHED against the hoist = D3's storage-degradation proof); both §6 census tripwires green with the C1 appends live.
+- AC2 witnesses: counting storage tallied EXACTLY ONE `jumprope-meta` setItem per run end in every scripted leg (0 mid-walk, 1 at the branch); leg (c) re-reads the raw JSON byte-identical after idle/pause-resume/tab-hide/restart-to-running walks.
+- Summit leg mechanics: the wrapper seeds a domain-legal near-summit startRun state (area 5, one skip below the row-5 ceiling, row-4 ceiling as base) and revives trips so only the REAL summit branch can end the walk — the summit write itself is shipped code (`runmark.test.js` wrapper comment states this).
+
 ### Completion Notes List
+
+- Accrual landed exactly on D1/D2: the shell-local `meta` reassigns with `furthestArea: Math.max(meta.furthestArea, run.area)`, `summits: meta.summits + (run.outcome === 'summit' ? 1 : 0)`, `skips: meta.skips + run.skips`, then `saveMeta(localStorage, meta)` — the ONLY new runtime write, riding the same predicate/tick/seam as `saveBest` (shell.js:726-740). `saveMeta` joined the existing game.js import line; no second hook, no loadMeta reload (boot fence green untouched).
+- Task 2 (7.1-F5 defer, deferred-work.md:281-282): the three `clampCounter` reads hoisted above the `try`; `setItem` + `JSON.stringify` of the pre-sanitized trio stay inside — blocked storage silent (leg f silent arm + the untouched metalegger blocked-legs), nullish meta now a loud TypeError (leg f throws arms, red-green witnessed). `saveBest`/`saveSettings` untouched per scope; deferred-work.md carries the RESOLVED note.
+- `tests/runmark.test.js` NEW — 7 legs (a-g) as scripted shell-harness boots (6 boots: a,b,c,d,e,g) + 1 bootless direct pair (f): real-trip accrual + mid-walk zero-write witness + write tally; scripted summit (seeded position, shipped summit branch); exactly-once under idle/P-pause-resume/tab-hide/restart; MAX monotonicity (seed 4 > reached 1); lifetime += (seed 7/2 + live delta, non-vacuous delta asserted); the try-hoist pair; the AC4 closed-shape guard. No batch machinery → AC3 seed-honesty vacuous by construction; every assertion reads the live run's own fields (law-form).
+- Task 3 executed to the letter: pausemenu L2 census → `['jumprope-audio', 'jumprope-best', 'jumprope-meta']`, message names the three keys + the game.js saveMeta site; the census SEMANTICS unchanged (still the no-second-persistence-path witness); :424 and everything else byte-identical. winloss untouched per D5 (green-by-construction verified — full suite green).
+- C1 bookkeeping: `tests/runmark.test.js` appended to both §6 diff-census allow-sets, list-only comments mirroring the 7.1 wording, tripwires stay armed.
+- Nothing READS meta (AC4): no sim/deal/offer path changed (diff fact above); consumption stays 7.3's lane, S2 fiction stays 7.4-kickoff. Dev round stamps `review` (loop contract); `done` belongs to the review round.
 
 ### File List
 
 - js/shell.js (import saveMeta; accrual in the run-end branch)
 - js/game.js (saveMeta try-hoist — body only)
 - tests/pausemenu.test.js (L2 :431-432 re-contract only — authorized, D4)
-- tests/runmark.test.js (NEW)
-- tests/ceilingbreak.test.js (census allow-set append only)
-- tests/summitapproach.test.js (census allow-set append only)
+- tests/runmark.test.js (NEW — 7 contract legs)
+- tests/ceilingbreak.test.js (census allow-set append only — C1)
+- tests/summitapproach.test.js (census allow-set append only — C1)
 - _bmad-output/implementation-artifacts/7-2-every-run-leaves-a-mark-outcome-counters.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/deferred-work.md (7.1-F5 defer RESOLVED note)
 
 ## Change Log
 
 - 2026-11-11 (create round): story created from epics.md:1017-1037 + Epic 7 riders + architecture §Persistence; live re-verification at 783dc10 confirmed every cite (accrual branch shifted :724→:726-728 by 7.1's boot comment). Decided D1-D6 embedded: accrual rides the run-end branch beside saveBest (structurally once-per-run), S2 counter map (max-area / summit-only / +=-skips incl. forgiven), the 7.1-review try-hoist lands here, ONE frozen-leg re-contract (pausemenu L2 :431-432; :424 byte-identical proof obligation; winloss :196 verified green-by-construction via its dynamic bootKeys Set — discovered in the live sweep, hands off), new tests/runmark.test.js scripted legs (A2 vacuous by construction). Census allow-append (this artifact, list-only) x2; sprint-status ready-for-dev; gate baseline 574/574 @ 783dc10.
+- 2026-11-11 (dev round): implemented per D1-D6 — accrual branch in js/shell.js run-end site (meta reassign + saveMeta beside saveBest, structurally once-per-run), saveMeta try-hoist in js/game.js (7.1-F5 closed: caller bugs loud, blocked storage silent), ONE authorized re-contract pausemenu L2 :431-432 to the three-key census (:424 + winloss + reducedmotion green untouched = the D4/D5 proof obligations held), tests/runmark.test.js NEW (7 scripted legs, 0→7 red-green; law-form, no batch machinery), C1 census appends x2, deferred-work RESOLVED note. Gate 581/581 @ 8.6 s (was 574/574); zero red iterations; status review.

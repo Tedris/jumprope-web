@@ -993,6 +993,10 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     // c38070e (6.1) create-round append used; list-only, authorized by the
     // story doc, tripwire stays armed, authorizes nothing else.
     '_bmad-output/implementation-artifacts/7-2-every-run-leaves-a-mark-outcome-counters.md',
+    // Story 7.2 dev round (2026-11-11): the new run-mark contract suite
+    // joins the census (C1) — same list-only bookkeeping rule, authorized by
+    // the story doc, tripwire stays armed, authorizes nothing else.
+    'tests/runmark.test.js',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');
