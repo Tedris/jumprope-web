@@ -150,8 +150,9 @@ export function startGame(canvas) {
   let calloutRev = -1;
   let best = loadBest(localStorage);
   // Story 7.1 (FR31): the meta ledger boots through the same seam, one
-  // getItem + one JSON.parse (NFR12). Nothing consumes it yet — 7.2 accrues,
-  // 7.3 reads (D2/D5); saveMeta stays dormant, no runtime meta write exists.
+  // getItem + one JSON.parse (NFR12). The write lane is LIVE since 7.2 —
+  // the ONE write site is the run-end branch below (saveMeta beside saveBest);
+  // nothing reads it into gameplay yet (7.3).
   let meta = loadMeta(localStorage);
   // Story 2.4 (FR26): run-start best snapshot (drives the "new best" tail)
   // and the restart arming flag — shell-local by design, never in the record.
@@ -728,9 +729,8 @@ export function startGame(canvas) {
           saveBest(localStorage, best);
           // Story 7.2 (FR33, D1/D2): the outcome counters accrue on THIS
           // branch — the run-end seam shared with saveBest, structurally
-          // once-per-run (the running-drain gate, :717). MAX area, summits
+          // once-per-run (the running-drain gate, :718). MAX area, summits
           // only on 'summit', skips += the run-local delta. Recorded here,
-          // consumed by nothing yet — 7.3 reads.
           meta = {
             furthestArea: Math.max(meta.furthestArea, run.area),
             summits: meta.summits + (run.outcome === 'summit' ? 1 : 0),

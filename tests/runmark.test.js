@@ -62,7 +62,7 @@ const SUMMIT_GAME_WRAP = `
   export const startRun = () => {
     const s = real.startRun();
     return { ...s, run: { ...s.run, area: real.SUMMIT_AREA,
-      altitude: real.AREAS[real.SUMMIT_AREA - 1].ceiling - 1,
+      altitude: real.AREAS[real.SUMMIT_AREA - 1].ceiling - 60,
       baseAltitude: real.AREAS[real.SUMMIT_AREA - 2].ceiling } };
   };`;
 
@@ -220,6 +220,7 @@ test('a summit run end accrues summits +1 and furthestArea = the summit ladder, 
     assert.equal(meta.summits, 1, "summits += 1 iff outcome === 'summit' (D2)");
     assert.equal(meta.furthestArea, run.area, 'furthestArea tracks the area reached (MAX, D2)');
     assert.equal(meta.furthestArea, SUMMIT_AREA, 'a summit walk has furthestArea at the top of the ladder');
+    assert.ok(run.skips > 0, 'the seeded walk SCORES skips before the summit — the += delta is non-vacuous (review F2)');
     assert.equal(meta.skips, run.skips, 'the summit run accrues its skips too — BOTH endings accrue (D2)');
     assert.equal(env.writes.meta, 1, 'exactly ONE meta write — revived trips wrote nothing (AC2)');
   } finally {
@@ -229,32 +230,23 @@ test('a summit run end accrues summits +1 and furthestArea = the summit ladder, 
 
 // ---------- (c) exactly once per run ----------
 
-test('idle, pause/resume, tab-hide and restart ticks leave the persisted meta BYTE-IDENTICAL and the write tally at one (AC2, D1 — leg c)', async () => {
+test('idle, pause/resume, tab-hide and restart ticks leave meta BYTE-IDENTICAL with exactly ONE write per finished run (AC2, D1 — leg c)', async () => {
   const env = await bootRunmarkShell();
   try {
     const st = startRunning(env);
     tripWalk(env, st);
     assert.equal(env.writes.meta, 1, 'the ended run wrote meta exactly once');
     const raw = env.map.get('jumprope-meta');
+    const run1Skips = view(env).run.skips;
     const same = why => {
       assert.equal(env.map.get('jumprope-meta'), raw, `meta byte-identical: ${why}`);
       assert.equal(env.writes.meta, 1, `write tally still ONE: ${why}`);
     };
     for (let i = 0; i < 30; i++) tick(env, st);
     same('idle death-screen ticks cannot re-fire accrual');
-    pauseKey(env);
-    tick(env, st);
-    for (let i = 0; i < 8; i++) tick(env, st);
-    pauseKey(env); // P fully toggles (shell.js:326) — the resume path re-enters frame()
-    for (let i = 0; i < 5; i++) tick(env, st);
-    same('the pause/resume round-trip cannot double-count (FR22 handler hygiene)');
-    env.document.hidden = true;
-    env.handlers.window.visibilitychange();
-    for (let i = 0; i < 4; i++) tick(env, st);
-    env.document.hidden = false;
-    env.handlers.window.visibilitychange();
-    for (let i = 0; i < 4; i++) tick(env, st);
-    same('the tab-hide round-trip cannot double-count');
+    // Review F1: the pause/tab-hide arms run on a LIVE run — enterPause is
+    // running-gated (shell.js:275), so fired over a dead run the keys were
+    // no-ops and the witnesses were unfalsifiable. Restart FIRST, then cycle.
     press(env);
     tick(env, st); // over + press ARMS the restart (shell.js:407)
     release(env);
@@ -263,6 +255,28 @@ test('idle, pause/resume, tab-hide and restart ticks leave the persisted meta BY
     pumpToOver(env, st, 30); // briefly alive — the NEW run must not have ended yet
     assert.equal(view(env).run.status, 'running', 'the restarted run is still live (no second run end happened)');
     same('a live restarted run has written nothing — accrual is once-per-RUN, not once-per-game');
+    pauseKey(env);
+    tick(env, st);
+    assert.match(env.hud['hud-prompt'].textContent, /paused/,
+      'P on a LIVE run really freezes it — the pause witness is falsifiable (review F1)');
+    for (let i = 0; i < 8; i++) tick(env, st);
+    pauseKey(env); // P fully toggles (shell.js:326) — the resume path re-enters frame()
+    for (let i = 0; i < 5; i++) tick(env, st);
+    assert.equal(view(env).run.status, 'running', 'the resumed run is live again');
+    same('a LIVE pause/resume round-trip cannot double-count (FR22 handler hygiene)');
+    env.document.hidden = true;
+    env.handlers.window.visibilitychange();
+    for (let i = 0; i < 4; i++) tick(env, st);
+    env.document.hidden = false;
+    env.handlers.window.visibilitychange();
+    for (let i = 0; i < 4; i++) tick(env, st);
+    assert.equal(view(env).run.status, 'running', 'the tab-hide round-trip kept the run live, unwritten');
+    same('a LIVE tab-hide round-trip cannot double-count');
+    tripWalk(env, st); // the SECOND run ends with a real trip
+    assert.equal(env.writes.meta, 2, 'the second run end wrote meta exactly ONE more time');
+    const meta2 = JSON.parse(env.map.get('jumprope-meta'));
+    assert.equal(meta2.skips, run1Skips + view(env).run.skips,
+      'lifetime skips = run1 + run2 deltas — once-per-RUN accrual across a session (review F1)');
   } finally {
     env.restore();
   }
