@@ -150,15 +150,20 @@ export function startGame(canvas) {
   let calloutRev = -1;
   let best = loadBest(localStorage);
   // Story 7.1 (FR31): the meta ledger boots through the same seam, one
-  // getItem + one JSON.parse (NFR12). The write lane is LIVE since 7.2 —
-  // the ONE write site is the run-end branch below (saveMeta beside saveBest);
-  // since 7.3 the ONE read into gameplay is startFreshRun's lockedIdsFor
-  // derivation — creation-time data only, the record freezes the set for life.
+  // getItem + one JSON.parse (NFR12). The ONE write site is the run-end
+  // branch below (saveMeta beside saveBest); READS into gameplay stay
+  // creation-time — startFreshRun's lockedIdsFor. Story 7.4's ARM diff
+  // only watches the accrual, never feeds a deal (7.3 D3, unchanged).
   let meta = loadMeta(localStorage);
   // Story 2.4 (FR26): run-start best snapshot (drives the "new best" tail)
   // and the restart arming flag — shell-local by design, never in the record.
   let bestAtStart = best;
   let restartArmed = false;
+  // Story 7.4 (FR34, D4): names of the cards whose unlock predicate flipped
+  // at the last run end — shell-local by design, never in the record. Armed
+  // at the accrual diff below, announced on the over/idle prompt surfaces,
+  // cleared by the ONE startFreshRun handler: once per unlock, no backlog.
+  let pendingUnlock = null;
   // Story 1.3 display bookkeeping, same status as `best`: max ropes ever
   // held this run (row width) and the last drawn solid/ghost signature.
   let ropesEver = MIN_ROPES;
@@ -178,6 +183,7 @@ export function startGame(canvas) {
   // holdFrom lets releaseEverything fire a phantom jump inside the fresh run.
   function startFreshRun() {
     bestAtStart = best;
+    pendingUnlock = null; // Story 7.4: the ONE clear site — the announce is spent
     holdFrom = null;
     pressIntent = null;
     resetPips();
@@ -668,6 +674,13 @@ export function startGame(canvas) {
     } else if (run.status === 'running' && run.skips === 0) {
       prompt = 'press space / tap when the rope reaches your feet';
     }
+    // Story 7.4 (FR34/D5): the one-shot unlock line rides the existing prompt
+    // channel (NFR7 by lineage, no new DOM, no timers) on the over/idle
+    // surfaces ONLY — the running branches above stay byte-identical, so a
+    // mid-run announce is structurally impossible.
+    if (pendingUnlock && !paused && (run.status === 'over' || run.status === 'idle')) {
+      prompt += '\nunlocked: ' + pendingUnlock.map((n) => n.toUpperCase()).join(', ');
+    }
     hudPrompt.textContent = prompt;
     hudPrompt.className = roleClass;
     // Story 1.3: pip row re-derived from run.ropes every frame — the clamp is
@@ -732,12 +745,21 @@ export function startGame(canvas) {
           // branch — the run-end seam shared with saveBest, structurally
           // once-per-run (the running-drain gate, :718). MAX area, summits
           // only on 'summit', skips += the run-local delta. Recorded here,
+
+          // Story 7.4 (FR34, D4a): the unlock ARM — two pure reads of the 7.3
+          // derivation bracket the accrual; ids that leave the locked set arm
+          // the shell-local one-shot (pool-order names; ids, never names,
+          // decide the set). No counter law moved, no second write site.
+          const lockedBefore = lockedIdsFor(CARDS, meta);
           meta = {
             furthestArea: Math.max(meta.furthestArea, run.area),
             summits: meta.summits + (run.outcome === 'summit' ? 1 : 0),
             skips: meta.skips + run.skips,
           };
           saveMeta(localStorage, meta);
+          const flipped = CARDS.filter(
+            (c) => lockedBefore.includes(c.id) && !lockedIdsFor(CARDS, meta).includes(c.id));
+          if (flipped.length > 0) pendingUnlock = flipped.map((c) => c.name);
         }
         // D-N02: the events array is the ONLY juice trigger (the tripped
         // fallback is a defensive shim for a channel-less sim build).

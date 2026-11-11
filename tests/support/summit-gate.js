@@ -35,7 +35,7 @@
 
 import { startRun, tickRun, applyCard, resumeRun, ALT_PER_POINT, ROPE_PERIOD, clampRopes } from '../../js/game.js';
 import { AREAS } from '../../js/areas.js';
-import { freshEffects } from '../../js/upgrades.js';
+import { CARDS, freshEffects, lockedIdsFor } from '../../js/upgrades.js';
 import { jump } from '../../js/player.js';
 import { evaluateLadder, mulberry32 } from './balance-harness.js';
 
@@ -92,7 +92,9 @@ function runSeed({ build, seed, horizon, altPerPoint, ladder, altitude0 }) {
   const firsts = {};
   let offers = 0;
   let picks = 0;
-  let { rope, player, run } = startRun();
+  // Story 7.4 (D6): the FRESH-SESSION lock view — the batch deals the shipped
+  // v2 pool; the trio locks at zero meta and the run-scoped set never shifts.
+  let { rope, player, run } = startRun(lockedIdsFor(CARDS, undefined));
   rope = { ...rope, period: ROPE_PERIOD };
   run = { ...run, effects: freshEffects(), owned: {}, altitude: altitude0, ...build };
 

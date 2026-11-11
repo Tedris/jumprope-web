@@ -729,6 +729,16 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // c38070e (6.1) create-round append used; list-only, authorized by the
     // story doc, tripwire stays armed, authorizes nothing else.
     '_bmad-output/implementation-artifacts/7-4-the-peel-unlocks-as-fiction-in-the-ps1-voice.md',
+    // Story 7.4 dev round (2026-11-11): the new unlocks contract suite joins
+    // the census (C1) — same list-only bookkeeping rule, authorized by the
+    // story doc, tripwire stays armed, authorizes nothing else.
+    'tests/unlocks.test.js',
+    // Story 7.4 dev round (2026-11-11): tests/headless-sim.test.js and
+    // tests/winloss.test.js join the census (C1) — the story lands authorized
+    // view-threading / prefix legs there (orchestrator batch 2026-11-11); same
+    // list-only bookkeeping rule, tripwire stays armed, authorizes nothing else.
+    'tests/headless-sim.test.js',
+    'tests/winloss.test.js',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

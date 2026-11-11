@@ -49,6 +49,23 @@ export const CARDS = [
   { id: 'highjump', name: 'Launch Heels', desc: '+10% launch velocity', icon: '△',
     role: 'foundation', color: 'sky', rarity: 'common', cap: 3,
     apply: s => ({ ...s, launchMul: s.launchMul * 1.1 }) },
+  // Story 7.4 (FR33, S2/D1): the catalogue branch — one unlock card per S2
+  // counter family, tier-paired second axes under their siblings (the
+  // float/feather precedent: gentler multiplier, equal-or-higher cap). The
+  // `unlock` gate is the 7.3 derivation's data (lockedIdsFor reads it; the
+  // deal filter hides the trio bit-identically to a capped-owned card).
+  { id: 'springsoles', name: 'Spring Soles', desc: '+5% launch velocity', icon: '⟰',
+    role: 'foundation', color: 'sky', rarity: 'common', cap: 4,
+    unlock: { furthestArea: 2 },      // reach: the second launchMul tier under Launch Heels
+    apply: s => ({ ...s, launchMul: s.launchMul * 1.05 }) },
+  { id: 'luckyecho', name: 'Lucky Echo', desc: '+5% skip score', icon: '♠',
+    role: 'volume', color: 'amber', rarity: 'common', cap: 4,
+    unlock: { summits: 1 },           // summit: the second scoreMul tier under Lucky Tally
+    apply: s => ({ ...s, scoreMul: s.scoreMul * 1.05 }) },
+  { id: 'longstride', name: 'Long Stride', desc: '+5% clearance forgiveness', icon: '∿',
+    role: 'margin', color: 'mint', rarity: 'common', cap: 4,
+    unlock: { skips: 1000 },          // persistence: the second windowMul tier under Wide Stance
+    apply: s => ({ ...s, windowMul: s.windowMul * 1.05 }) },
 ];
 
 // Compat alias: tests/upgrades.test.js freezes the UPGRADES named export.

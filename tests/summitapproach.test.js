@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as game from '../js/game.js';
 import { jump, createPlayer } from '../js/player.js';
-import { CARDS } from '../js/upgrades.js';
+import { CARDS, lockedIdsFor } from '../js/upgrades.js';
 import { mulberry32 } from './support/balance-harness.js';
 
 // Story 4.5 (FR9/FR15/FR6, FR8 seam): summit approach & one-way guarantees.
@@ -367,7 +367,10 @@ test('§2.3 AC3 summit walk: area-4 record to the real 2,100 break — win EXACT
   let draws = 0;
   const rng = () => { draws += 1; return base(); };
   const seedAltitude = AREAS[3].ceiling - 20;
-  let { rope, player, run } = game.startRun();
+  // Story 7.4 (authorized VIEW threading): the fresh-session lock view mirrors
+  // the shell creation site under fresh meta — the walk keeps the v2 deal
+  // stream; the trio locks at zero counters, consuming zero rng.
+  let { rope, player, run } = game.startRun(lockedIdsFor(CARDS, undefined));
   run = { ...run, area: 4, baseAltitude: AREAS[2].ceiling,
     altitude: seedAltitude, score: seedAltitude / ALT_PER_POINT };
   let prevArea = run.area;
@@ -1016,6 +1019,16 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     // c38070e (6.1) create-round append used; list-only, authorized by the
     // story doc, tripwire stays armed, authorizes nothing else.
     '_bmad-output/implementation-artifacts/7-4-the-peel-unlocks-as-fiction-in-the-ps1-voice.md',
+    // Story 7.4 dev round (2026-11-11): the new unlocks contract suite joins
+    // the census (C1) — same list-only bookkeeping rule, authorized by the
+    // story doc, tripwire stays armed, authorizes nothing else.
+    'tests/unlocks.test.js',
+    // Story 7.4 dev round (2026-11-11): tests/headless-sim.test.js and
+    // tests/winloss.test.js join the census (C1) — the story lands authorized
+    // view-threading / prefix legs there (orchestrator batch 2026-11-11); same
+    // list-only bookkeeping rule, tripwire stays armed, authorizes nothing else.
+    'tests/headless-sim.test.js',
+    'tests/winloss.test.js',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');

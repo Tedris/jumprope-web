@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as game from '../js/game.js';
-import { CARDS, freshEffects, pickOffers } from '../js/upgrades.js';
+import { CARDS, freshEffects, pickOffers, lockedIdsFor } from '../js/upgrades.js';
 import { jump } from '../js/player.js';
 
 // Criterion 5 gate: a deterministic 1000-tick headless simulation driving the
@@ -25,7 +25,10 @@ function scriptedRun({ rng, pickStrategy, preApply, seedSkips = 0 }) {
   assert.equal(typeof game.resumeRun, 'function');
   assert.equal(typeof game.applyCard, 'function');
 
-  let { rope, player, run } = game.startRun();
+  // Story 7.4 (authorized VIEW threading): the fresh-session lock view mirrors
+  // the shell creation site under fresh meta — the walk keeps the v2 12-pool
+  // deal stream; the trio locks at zero counters, consuming zero rng.
+  let { rope, player, run } = game.startRun(lockedIdsFor(CARDS, undefined));
   if (preApply) run = preApply(run);
   // Cadence seeding mirrors the established tests/startrun.test.js:20 idiom
   // ({ ...createRun(), skips: 9 }): neutral physics yields only ~6.4 cycles in
@@ -108,9 +111,10 @@ test('scripted picks land through applyCard + resumeRun and never stall', () => 
   assert.equal(owned, stats.picks, 'run.owned totals equal the picks handled');
   assert.ok(run.skips > 10, `skips must advance past the first cadence, got ${run.skips}`);
   assert.equal(run.skips - 9, stats.scoreEvents, 'skips beyond the seed equal score events');
-  // The freeze offer matches the pure-seam draw replayed under the same stub.
+  // The freeze offer matches the pure-seam draw replayed under the same stub
+  // (7.4: the replay carries the same fresh-session lock view the run rode).
   assert.deepEqual(stats.firstOffer.map(c => c.id),
-    pickOffers(CARDS, {}, 2, () => 0.5).map(c => c.id),
+    pickOffers(CARDS, {}, 2, () => 0.5, undefined, lockedIdsFor(CARDS, undefined)).map(c => c.id),
     'freeze offer must equal the deterministic pickOffers draw');
 });
 

@@ -116,17 +116,22 @@ test('(i) derive-then-deal end to end: ids, never names, reach the filter (revie
   assert.equal(free.length, 2, 'unlocked meta deals the full pair — the witness is non-vacuous');
 });
 
-test('(b) INERT guard (story-shape tripwire): the shipped catalogue carries zero unlock metadata', () => {
-  // Story 7.3 ships INERT (AC4): which cards lock and at which thresholds is
-  // decision S2 at Story 7.4 kickoff (FR33, epics.md:1059) — that story will
-  // RE-CONTRACT this leg by adding real `unlock` entries and relaxing the
-  // every-arm. Until then this tripwire catches any drive-by lock.
-  assert.ok(CARDS.every((c) => !('unlock' in c)),
-    'no CARDS entry may carry unlock metadata in 7.3 — deal bit-identity (AC2/AC4)');
-  for (const meta of [undefined, {}, { furthestArea: 9, summits: 9, skips: 999 }]) {
-    assert.deepEqual(lockedIdsFor(CARDS, meta), [],
-      `the shipped catalogue derives zero locks under ${JSON.stringify(meta)} (AC4)`);
-  }
+test('(b) unlock-metadata census (story-shape tripwire): EXACTLY the three catalogue-branch cards carry unlock gates', () => {
+  // Story 7.3 shipped INERT and pre-named Story 7.4 as the re-contractor of
+  // this leg ("7.4 re-contracts this leg when it adds real `unlock` metadata
+  // — say so in the leg comment"). 7.4 SHIPPED the flip: three tier-paired
+  // catalogue-branch cards, one per S2 counter family, predicates per D1 —
+  // the polarity inverts from "zero cards" to "exactly these three".
+  const gated = CARDS.filter((c) => 'unlock' in c);
+  assert.deepEqual(gated.map((c) => c.id), ['springsoles', 'luckyecho', 'longstride'],
+    'EXACTLY the three catalogue-branch cards carry unlock metadata, pool order');
+  assert.deepEqual(gated.map((c) => c.unlock),
+    [{ furthestArea: 2 }, { summits: 1 }, { skips: 1000 }],
+    'the D1 predicates — one per counter family (FR33 kickoff decision)');
+  assert.deepEqual(lockedIdsFor(CARDS, undefined), ['springsoles', 'luckyecho', 'longstride'],
+    'fresh session: all three locked, pool order — the v2 deal stays bit-identical (AC4)');
+  assert.deepEqual(lockedIdsFor(CARDS, { furthestArea: 9, summits: 9, skips: 1000 }), [],
+    'grown counters: zero locks — the census is non-vacuous from both ends');
 });
 
 test('(c) filter point: lockedIds hides across every count; the predicate reads lockedIds, never metadata', () => {
@@ -231,8 +236,11 @@ test("(e') resumeRun freezes the set for the run's life; a record MISSING the ke
 });
 
 test('(f) frozen mid-run: the deal reads the RECORD, never a fresh derivation', () => {
-  assert.deepEqual(lockedIdsFor(CARDS, { furthestArea: 9, summits: 9, skips: 999 }), [],
-    'rig premise: grown counters derive no locks YET (the ship is inert) — the record still rules');
+  // Story 7.4 (authorized premise edit): 7.4 flipped the catalogue from inert
+  // to three unlock entries — the grown-meta premise moves past the new skips
+  // threshold (999 would now derive longstride; the leg body is untouched).
+  assert.deepEqual(lockedIdsFor(CARDS, { furthestArea: 9, summits: 9, skips: 1000 }), [],
+    'rig premise: grown counters derive no locks — the record still rules');
   let frozenSawFloat = false;
   let freeSawFloat = false;
   for (let seed = 1; seed <= 40; seed++) {

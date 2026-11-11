@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as harness from './support/balance-harness.js';
 import * as game from '../js/game.js';
 import { AREAS } from '../js/areas.js';
-import { CARDS, RARITY_WEIGHT, freshEffects } from '../js/upgrades.js';
+import { CARDS, RARITY_WEIGHT, freshEffects, lockedIdsFor } from '../js/upgrades.js';
 import { jump } from '../js/player.js';
 
 // Story 2.5: ascent economy balance harness legs. The harness
@@ -254,6 +254,15 @@ test('dominated / reduceClimb / neutralClimb equal the analytic derivations', ()
       cc: cap.ropeMul * cap.scoreMul - 1,
       pp: one.floatMul - 1,
       pc: cap.floatMul - 1,
+      // Story 7.4 (authorized re-contract): launchMul joins the analytic
+      // deltas — highjump->springsoles is the first same-axis pair on the
+      // climb-visible launch axis (float->feather precedent form). windowMul
+      // stays OUT: it buys forgiveness, not climb rate — the measured
+      // window/longstride verdicts are non-dominated, the same invisibility
+      // class as the run-shape singletons. Verdict semantics and every pin
+      // below are unchanged.
+      lp: one.launchMul - 1,
+      lc: cap.launchMul - 1,
     }];
   }));
 
@@ -261,16 +270,14 @@ test('dominated / reduceClimb / neutralClimb equal the analytic derivations', ()
   for (const [idA, a] of deltas) {
     for (const [idB, b] of deltas) {
       if (idA === idB || a.axis !== b.axis) continue;
-      const ge = a.cp <= b.cp && a.cc <= b.cc && a.pp <= b.pp && a.pc <= b.pc;
-      const strict = a.cp < b.cp || a.cc < b.cc || a.pp < b.pp || a.pc < b.pc;
+      const ge = a.cp <= b.cp && a.cc <= b.cc && a.pp <= b.pp && a.pc <= b.pc && a.lp <= b.lp && a.lc <= b.lc;
+      const strict = a.cp < b.cp || a.cc < b.cc || a.pp < b.pp || a.pc < b.pc || a.lp < b.lp || a.lc < b.lc;
       if (ge && strict) expectedDominated.push({ id: idA, by: idB });
     }
   }
   const byId = (list) => [...list].sort((x, y) => x.id.localeCompare(y.id));
   assert.deepEqual(byId(report.dominated), byId(expectedDominated), 'one-axis-one-card verdicts match the closures');
 
-  // Story 6.1 re-contract R2 (sanctioned, Decided 5 fold): the neutralClimb
-  // and reduceClimb EXPECTATION derivations branch on the card.shape marker.
   // Effects-shape cards keep the analytic ropeMul x scoreMul derivation
   // VERBATIM; for run-shaped cards the expectation is record-derived -
   // neutral iff the apply writes no climb-axis effect field AND the record
@@ -380,7 +387,11 @@ function exactCollisionRate(pick) {
       else walk([...pool.slice(0, i), ...pool.slice(i + 1)], q, [...axes, harness.AXIS[card.id]], depth + 1);
     });
   };
-  walk(CARDS, 1, [], 0);
+  // Story 7.4 (D6, authorized INPUT re-contract): the walk pools carry the
+  // FRESH-SESSION lock view — the trio locks at zero meta, so the enumeration
+  // keeps walking the 12-card v2 pool and both pinned baselines stay TRUE.
+  // The walk body and the pins below are byte-identical.
+  walk(CARDS.filter((c) => !lockedIdsFor(CARDS, undefined).includes(c.id)), 1, [], 0);
   return probability;
 }
 

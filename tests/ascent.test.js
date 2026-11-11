@@ -344,8 +344,12 @@ test('shell: the summit win saves best-altitude on the win tick, shows no Missed
     // (b) a summit run never reads the loss copy
     assert.ok(!env.hud['hud-prompt'].textContent.includes('Missed'),
       'the over-prompt is gated on outcome');
-    assert.match(env.hud['hud-prompt'].textContent, /^Summit\. Altitude \d+ best \d+$/,
-      'story 2.4 ships the Summit. copy in the prompt slot');
+    // Story 7.4 (authorized PREFIX re-contract): the summit win from fresh meta
+    // is a real first summit — summits>=1 flips and the D4 announce line rides
+    // the over-summit surface. The frozen Summit. copy contract becomes a
+    // prefix; unlocks.test.js owns the announce string itself.
+    assert.match(env.hud['hud-prompt'].textContent, /^Summit\. Altitude \d+ best \d+(\n|$)/,
+      'story 2.4 ships the Summit. copy in the prompt slot (prefix — the unlock line may trail)');
     // (c) the EXISTING over-restart branch restarts it (FR22: zero new handlers)
     env.handlers.window.keydown({ code: 'Space', repeat: false, preventDefault() {} });
     env.handlers.window.keyup({ code: 'Space' });

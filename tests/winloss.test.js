@@ -232,7 +232,11 @@ test('the win line reads Summit. Altitude best B in win amber, distinct from the
     startRunning(env);
     const v = winViaCeiling(env);
     const n = Math.round(v.run.altitude);
-    assert.equal(env.hud['hud-prompt'].textContent, `Summit. Altitude ${n} best ${n}`);
+    // Story 7.4 (authorized PREFIX re-contract): the scripted summit flips the
+    // summits>=1 predicate — the D4 announce line may trail the frozen win
+    // copy on this surface; unlocks.test.js owns the announce string itself.
+    assert.ok(env.hud['hud-prompt'].textContent.startsWith(`Summit. Altitude ${n} best ${n}`),
+      'the win line STARTS with the frozen Summit. copy (the unlock line may trail)');
     assert.equal(env.hud['hud-prompt']._cn, 'role-amber', 'the DESIGN win token #ffcf6e');
     assert.ok(!env.hud['hud-prompt'].textContent.includes('Missed'), 'a summit run never reads loss copy');
   } finally { env.restore(); }

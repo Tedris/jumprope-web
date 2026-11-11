@@ -135,7 +135,9 @@ interlock); level-triggered, no banking (4.5).
 versioned `jumprope-best-altitude` of `game-architecture.md` was never
 shipped; accepted 2026-11-10 per ledger :162) + `'jumprope-meta'` (Story 7.1,
 FR31: the bare unversioned meta ledger — flat `{furthestArea, summits, skips}`,
-write lane dormant until Story 7.2 accrual) + mute/volume, all via the
+write lane live since 7.2's run-end accrual; from 7.4 its counters gate the
+catalogue unlocks — the derived lock set freezes as the record's 17th key at
+run creation) + mute/volume, all via the
 injected storage seam; degrades to session-only; **no run record is ever
 persisted** (permadeath, FR23).
 

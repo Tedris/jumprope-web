@@ -124,9 +124,10 @@ upgrade card → build toward both a taller jump (to break ceilings) and enough
 altitude (to reach them) → ropes are lost to trips; the last rope makes every
 pass sudden death → break the summit ceiling → win.
 
-**Meta (indefinite):** die, keep best score/altitude, retry with a different
-build. (Between-run *progression* — META-01 — stays deferred; see Out of
-Scope.)
+**Meta (indefinite):** die, keep best score/altitude plus the outcome counters
+(furthest area, summits, lifetime skips), retry with a different build.
+(Between-run *progression* — META-01 — shipped as Epic 7: the counters gate
+catalogue-branch unlocks; see Persistence and Out of Scope.)
 
 ### Win/Loss Conditions
 
@@ -317,13 +318,15 @@ row added later:
 
 - **Permadeath:** trip with one rope = run over; all cards, ropes, effects,
   streak reset. Final altitude is the final score (one number).
-- **What persists:** best altitude (subsumes v1's best score) and audio
-  settings, in on-device storage that degrades to session-only when
+- **What persists:** best altitude (subsumes v1's best score), audio
+  settings, and the meta ledger — outcome counters `{furthestArea, summits,
+  skips}` (Epic 7) — in on-device storage that degrades to session-only when
   unavailable. That is the entire persistence surface.
-- **Meta-progression:** **none shipped, deliberately.** META-01 (unlocks,
-  persistent currency) is the prestige-shaped next lever — deferred, see Out
-  of Scope. Unlock conditions: nothing locked; whole catalogue live from
-  first load.
+- **Meta-progression:** **shipped as Epic 7 (META-01)** — unlocks gated by the
+  outcome counters; no currency, no prestige. Unlock conditions: a zero
+  counter (fresh) session locks exactly the three catalogue-branch cards —
+  the v2 catalogue, whole from first load; they unlock at furthestArea ≥ 2
+  (reach), summits ≥ 1 (summit), lifetime skips ≥ 1000 (persistence).
 
 ### Item and Upgrade System
 
@@ -516,8 +519,11 @@ server; anything stored stays in the browser):
 
 - **Beat-locked music / rhythm-synced rope** — explicitly rejected: drifts the
   demake too close to Scarlet Skips (demake-ethics line), violates pillar 2.
-- **Meta progression / unlocks / currency (META-01)** — deferred; the natural
-  next lever *after* the ladder ships (prestige = permanent climb power).
+- **Meta progression / unlocks / currency (META-01)** — unlocks SHIPPED as
+  Epic 7 (outcome-counter gates; no currency). The *prestige* clause —
+  permanent climb power — stays direction only: anything feeding climb power
+  into run start enters as a named story decision with summit-gate evidence,
+  catalogue-rule conformance, and the CARD-09 constraint (FR35).
 - **Multiplayer, leaderboards, accounts, native packaging** — static delivery.
 - **Faithful reproduction** of Scarlet Skips' cards, story, or characters.
 - **Procedural levels, enemies, character select, difficulty modes** — declared

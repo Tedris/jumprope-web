@@ -5,7 +5,7 @@
 
 import { startRun, tickRun, applyCard, resumeRun, ALT_PER_POINT, ROPE_PERIOD, MAX_ROPES, clampRopes, clampCharged, clampAirJumps } from '../../js/game.js';
 import { AREAS } from '../../js/areas.js';
-import { CARDS, freshEffects, pickOffers } from '../../js/upgrades.js';
+import { CARDS, freshEffects, pickOffers, lockedIdsFor } from '../../js/upgrades.js';
 import { jump } from '../../js/player.js';
 
 const STEP = 1 / 120;
@@ -32,6 +32,10 @@ export const AXIS = Object.freeze({
   reinforce: 'charged',
   doublejump: 'airJumps',
   highjump: 'launchMul',
+  // Story 7.4 (D6): the three unlock-card axes (tier-paired siblings).
+  springsoles: 'launchMul',
+  luckyecho: 'scoreMul',
+  longstride: 'windowMul',
 });
 
 // Deterministic seeded rng (Decided 9): collision draw i gets its own
@@ -75,7 +79,9 @@ export function runBot(config = {}) {
     rng = () => 0.5,
   } = config;
 
-  let { rope, player, run } = startRun();
+  // Story 7.4 (D6): the FRESH-SESSION lock view — the measurement pool is the
+  // shipped v2 12-card deal; the trio locks at zero meta, consuming zero rng.
+  let { rope, player, run } = startRun(lockedIdsFor(CARDS, undefined));
   rope = { ...rope, period };
   // Story 6.1 (Decided 3): `build` seeds run-shaped state (ropes/charged/
   // airJumps) on the RECORD where tickRun reads it (game.js:146-164), never
@@ -352,7 +358,9 @@ export function collisionReport(options = {}) {
   const { draws = 20000, pick = 2, seed = 0 } = options;
   let collisions = 0;
   for (let i = 0; i < draws; i++) {
-    const offer = pickOffers(CARDS, {}, pick, mulberry32(seed + i));
+    // Story 7.4 (D6): fresh-session lock view — the same 12-card reference the
+    // exact-enumeration twin walks; the lock read consumes zero rng.
+    const offer = pickOffers(CARDS, {}, pick, mulberry32(seed + i), undefined, lockedIdsFor(CARDS, undefined));
     const axes = new Set(offer.map((c) => AXIS[c.id]));
     if (axes.size < offer.length) collisions += 1;
   }
