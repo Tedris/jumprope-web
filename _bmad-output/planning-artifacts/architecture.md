@@ -52,9 +52,9 @@ test-reachable sim graph).
 
 ## Key Abstractions
 
-- **Run** — immutable 16-key record
-  `{ status, score, altitude, skips, effects, offer, owned, buffer, streak, ropes, charged, airJumps, iFrames, area, baseAltitude, outcome }`
-  (fenced by `tests/altitude.test.js:43`; full field census under
+- **Run** — immutable 17-key record
+  `{ status, score, altitude, skips, effects, offer, owned, buffer, streak, ropes, charged, airJumps, iFrames, area, baseAltitude, outcome, lockedIds }`
+  (`lockedIds` joins with Story 7.3: the derived lock set as immutable run-record data, frozen at run creation — FR32; fenced by `tests/altitude.test.js:45`; full field census under
   *Run Record & Event Channel* below);
   states `idle → running ↔ choose → over → (restart)`. Invalid states are data
   (`status: 'over'`, `tripped: true`), never thrown errors.
@@ -72,9 +72,9 @@ test-reachable sim graph).
 ## Run Record & Event Channel (as-built)
 
 Recorded by Story 6.4 (2026-11-10); every field verified against
-`js/game.js:116-118,164-301` and the 16-key fence `tests/altitude.test.js:43`.
+`js/game.js:116-118,164-301` and the 17-key fence `tests/altitude.test.js:45`.
 
-**Run** — immutable record, 16 keys (fence: `tests/altitude.test.js:43`);
+**Run** — immutable record, 17 keys (fence: `tests/altitude.test.js:45`);
 states `idle → running ↔ choose → over` (`idle` is written ONLY shell-side at
 `js/shell.js:130`; `tickRun` never emits it). Fields:
 
@@ -109,6 +109,9 @@ states `idle → running ↔ choose → over` (`idle` is written ONLY shell-side
   (`AREAS[area−2].ceiling`; arealadder §pinned)
 - `outcome` — `null | 'tripped' | 'summit'` (2.2/2.4; drives saveBest-once +
   win/lose presentation)
+- `lockedIds` — the lock set frozen at run creation (7.3, FR32; sanitized to
+  strings; the deal filter's trailing read — DERIVED from `jumprope-meta`
+  counters at run creation, never itself persisted, never re-derived mid-run)
 
 **Event channel** — `tickRun` returns a per-tick `events` array (order =
 causality): `jump`, `skip`, `nearMiss`, `offer`, `chargeUsed` (3.3),
