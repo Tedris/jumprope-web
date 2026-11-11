@@ -349,3 +349,42 @@ export function saveBest(storage, score) {
     // storage unavailable; best score is session-only
   }
 }
+
+// Story 7.1 (FR31): the meta ledger — the ONLY cross-run persisted state;
+// run records are never persisted (architecture §Persistence). Same seam as
+// loadBest/saveBest: injected storage, one bare key, shape-pinned, silent
+// degradation. The counters follow the clampVolume finiteness doctrine:
+// 0 is legitimate data, so invalid values fall through an explicit guard,
+// never a || coalesce.
+const clampCounter = v => {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+};
+
+export function loadMeta(storage) {
+  try {
+    const raw = storage.getItem('jumprope-meta');
+    if (!raw) return { furthestArea: 0, summits: 0, skips: 0 };
+    const m = JSON.parse(raw);
+    if (typeof m !== 'object' || m === null) return { furthestArea: 0, summits: 0, skips: 0 };
+    return {
+      furthestArea: clampCounter(m.furthestArea),
+      summits: clampCounter(m.summits),
+      skips: clampCounter(m.skips),
+    };
+  } catch {
+    return { furthestArea: 0, summits: 0, skips: 0 };
+  }
+}
+
+export function saveMeta(storage, meta) {
+  try {
+    storage.setItem('jumprope-meta', JSON.stringify({
+      furthestArea: clampCounter(meta.furthestArea),
+      summits: clampCounter(meta.summits),
+      skips: clampCounter(meta.skips),
+    }));
+  } catch {
+    // storage unavailable; the ledger is session-only
+  }
+}

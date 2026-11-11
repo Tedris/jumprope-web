@@ -1,4 +1,4 @@
-import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA, clampCharged, clampAirJumps } from './game.js';
+import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, loadMeta, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA, clampCharged, clampAirJumps } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
@@ -149,6 +149,10 @@ export function startGame(canvas) {
   let revCount = 0;
   let calloutRev = -1;
   let best = loadBest(localStorage);
+  // Story 7.1 (FR31): the meta ledger boots through the same seam, one
+  // getItem + one JSON.parse (NFR12). Nothing consumes it yet — 7.2 accrues,
+  // 7.3 reads (D2/D5); saveMeta stays dormant, no runtime meta write exists.
+  let meta = loadMeta(localStorage);
   // Story 2.4 (FR26): run-start best snapshot (drives the "new best" tail)
   // and the restart arming flag — shell-local by design, never in the record.
   let bestAtStart = best;

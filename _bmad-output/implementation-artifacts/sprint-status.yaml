@@ -104,7 +104,7 @@ development_status:
   # Epic 7: The Peel — registered by the 2026-11-10 epics planning pass (epics.md FR31–FR35, NFR12–13)
   # Open decisions ride story kickoff: S2/S3 at 7-4, S4 (retro A3) + A4 pack at 7-5; S1 scope by 7-4 latest.
   epic-7: in-progress # 7-1 created 2026-11-11 — first story created, auto backlog→in-progress per workflow rule
-  7-1-meta-ledger-persistence-without-run-records: ready-for-dev # created 2026-11-11: meta ledger + dormant write lane; baseline gate 566/566 @ 0c5185f
+  7-1-meta-ledger-persistence-without-run-records: review # dev 2026-11-11: loadMeta/saveMeta in js/game.js below the FR24 seam (bare key jumprope-meta {furthestArea,summits,skips}, shape-pinned both sides, DORMANT write lane per D2), shell boot load beside loadBest, ONE re-contract L10(a) (setItem census → three sites; pausemenu censuses byte-identical-green = dormancy proof), tests/metalegger.test.js NEW (7 legs), C1 census appends x2; gate 573/573 @ 8.6 s (was 566/566 @ 0c5185f); one red iteration (feelcap AUD-02 comment token, reworded)
   7-2-every-run-leaves-a-mark-outcome-counters: backlog
   7-3-locked-in-the-deal-the-catalogue-learns-locks: backlog
   7-4-the-peel-unlocks-as-fiction-in-the-ps1-voice: backlog

@@ -646,16 +646,17 @@ test('L9 sim purity + boot A/B (FR23): reducedMotion reaches ONLY shell+render3d
 // the sole snap-grid authority.
 // ---------------------------------------------------------------------------
 
-test('L10 the reduced-motion flag is NEVER persisted: two setItem sites in js/, the audio key shape {muted,volume} closed, motion keys dropped by construction, the matchMedia block storage-free', async () => {
-  // (a) Persistence-surface census: there is no third channel to leak into.
+test('L10 the reduced-motion flag is NEVER persisted: three setItem sites in js/, the audio key shape {muted,volume} closed, motion keys dropped by construction, the matchMedia block storage-free', async () => {
+  // (a) Persistence-surface census: the three pinned sites — audio settings,
+  // best, meta ledger — are the whole write surface; no other channel to leak into.
   const files = (await readdir(jsDir)).filter(f => f.endsWith('.js')).sort();
   const sites = [];
   for (const f of files) {
     const src = await readFile(resolve(jsDir, f), 'utf8');
     for (let i = (src.match(/setItem\(/g) ?? []).length; i > 0; i--) sites.push(f);
   }
-  assert.deepEqual(sites.sort(), ['audio.js', 'game.js'],
-    `setItem( appears EXACTLY twice across js/ (audio.js jumprope-audio + game.js jumprope-best) — got ${sites}`);
+  assert.deepEqual(sites.sort(), ['audio.js', 'game.js', 'game.js'],
+    `setItem( appears EXACTLY three times across js/ (audio.js jumprope-audio + game.js jumprope-best + game.js jumprope-meta) — got ${sites}`);
 
   // (b) The audio settings seam: save writes ONLY {muted, volume}; load
   // drops unknown keys. audio.js is a zero-import leaf — dynamic file-URL

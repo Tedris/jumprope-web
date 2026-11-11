@@ -3,7 +3,7 @@ baseline_commit: 0c5185f6f8df93cf69c67528c5be073a8a041e81
 ---
 # Story 7.1: Meta ledger — persistence without run records
 
-Status: ready-for-dev
+Status: review
 
 *Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-11).*
 
@@ -38,22 +38,22 @@ Exactly ONE existing test leg is re-authorized: `tests/reducedmotion.test.js` L1
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — meta helpers in the sim module's seam (AC: 1, 2)
-  - [ ] `js/game.js`: export `loadMeta(storage)` — try `JSON.parse(storage.getItem('jumprope-meta'))`; on missing/corrupt/non-object → `{ furthestArea: 0, summits: 0, skips: 0 }`; sanitize each counter to a finite non-negative number, else 0 (invalid values are data — mirror the `clampVolume`-style finiteness guard, `js/audio.js:12-16`, not a `||` coalesce); catch → same fresh default (shape: `loadBest` game.js:337-343, `loadSettings` audio.js:20-31).
-  - [ ] `js/game.js`: export `saveMeta(storage, meta)` — try `storage.setItem('jumprope-meta', JSON.stringify({ furthestArea, summits, skips }))` — EXACTLY those three keys, each sanitized on the write side too (shape-pinned write, `audio.js:33-43` precedent); catch → silent session-only (shape: `saveBest` game.js:345-351). Named exports, POJO in/out, 2-space indent, camelCase, no `console.*` (AGENTS.md:46-51).
-  - [ ] No changes to any sim function, constant, or the tickRun/startRun/applyCard/resumeRun bodies — the addition sits below `saveBest` and is never called by the sim.
-- [ ] Task 2 — boot wiring in the shell (AC: 1)
-  - [ ] `js/shell.js`: load meta once at boot beside the existing `loadBest(localStorage)` (:151) into a shell-local (`meta`); nothing consumes it in 7.1 (D2/D5) — exactly one `getItem`, one `JSON.parse`, no retry/loop (NFR12, epics.md:96).
-  - [ ] NO `saveMeta` call anywhere in `js/` (D2 — dormant write lane; a runtime write reddens the pausemenu census legs, D3).
-- [ ] Task 3 — the frozen-leg re-contract (AC: 3; D3)
-  - [ ] `tests/reducedmotion.test.js` L10: update title "two setItem sites" → "three", the (a) census comment, the expected array at :657 → `['audio.js', 'game.js', 'game.js']`, the message string's count word; list the three sites (jumprope-audio + jumprope-best + jumprope-meta) in the message. Touch NOTHING else in the file.
-- [ ] Task 4 — the new contract suite (AC: 2, 3, 4; D6)
-  - [ ] `tests/metalegger.test.js` NEW: round-trip, missing/corrupt/blocked-storage legs (data not errors), shape-pinned write (three keys exactly), and the persisted-key-set census ({jumprope-audio, jumprope-best, jumprope-meta} exactly; no run-record write site anywhere in js/). Patterns: game.test.js:49-61, audio.test.js:216-247. Import ONLY `../js/game.js` (static) — never a `tests/*.test.js`.
-  - [ ] C1: append `tests/metalegger.test.js` to BOTH §6 allow-sets (`tests/ceilingbreak.test.js`, `tests/summitapproach.test.js`), list-only comment, tripwire stays armed.
-- [ ] Task 5 — gates and bookkeeping (AC: all)
-  - [ ] `./run_tests.sh` green (baseline 566/566 @ ~8.5 s; expect 566 + new metalegger legs; budget NFR4 < 10 s — these legs are microseconds).
-  - [ ] `tests/boundary.test.js` green unchanged (D4); summit-gate/balance suites green unchanged (D5 — sim behavior bit-identical, helpers uncalled).
-  - [ ] Story Status → done; File List + Debug Log filled; sprint-status stamp per house style.
+- [x] Task 1 — meta helpers in the sim module's seam (AC: 1, 2)
+  - [x] `js/game.js`: export `loadMeta(storage)` — try `JSON.parse(storage.getItem('jumprope-meta'))`; on missing/corrupt/non-object → `{ furthestArea: 0, summits: 0, skips: 0 }`; sanitize each counter to a finite non-negative number, else 0 (invalid values are data — mirror the `clampVolume`-style finiteness guard, `js/audio.js:12-16`, not a `||` coalesce); catch → same fresh default (shape: `loadBest` game.js:337-343, `loadSettings` audio.js:20-31).
+  - [x] `js/game.js`: export `saveMeta(storage, meta)` — try `storage.setItem('jumprope-meta', JSON.stringify({ furthestArea, summits, skips }))` — EXACTLY those three keys, each sanitized on the write side too (shape-pinned write, `audio.js:33-43` precedent); catch → silent session-only (shape: `saveBest` game.js:345-351). Named exports, POJO in/out, 2-space indent, camelCase, no `console.*` (AGENTS.md:46-51).
+  - [x] No changes to any sim function, constant, or the tickRun/startRun/applyCard/resumeRun bodies — the addition sits below `saveBest` and is never called by the sim.
+- [x] Task 2 — boot wiring in the shell (AC: 1)
+  - [x] `js/shell.js`: load meta once at boot beside the existing `loadBest(localStorage)` (:151) into a shell-local (`meta`); nothing consumes it in 7.1 (D2/D5) — exactly one `getItem`, one `JSON.parse`, no retry/loop (NFR12, epics.md:96).
+  - [x] NO `saveMeta` call anywhere in `js/` (D2 — dormant write lane; a runtime write reddens the pausemenu census legs, D3).
+- [x] Task 3 — the frozen-leg re-contract (AC: 3; D3)
+  - [x] `tests/reducedmotion.test.js` L10: update title "two setItem sites" → "three", the (a) census comment, the expected array at :657 → `['audio.js', 'game.js', 'game.js']`, the message string's count word; list the three sites (jumprope-audio + jumprope-best + jumprope-meta) in the message. Touch NOTHING else in the file.
+- [x] Task 4 — the new contract suite (AC: 2, 3, 4; D6)
+  - [x] `tests/metalegger.test.js` NEW: round-trip, missing/corrupt/blocked-storage legs (data not errors), shape-pinned write (three keys exactly), and the persisted-key-set census ({jumprope-audio, jumprope-best, jumprope-meta} exactly; no run-record write site anywhere in js/). Patterns: game.test.js:49-61, audio.test.js:216-247. Import ONLY `../js/game.js` (static) — never a `tests/*.test.js`.
+  - [x] C1: append `tests/metalegger.test.js` to BOTH §6 allow-sets (`tests/ceilingbreak.test.js`, `tests/summitapproach.test.js`), list-only comment, tripwire stays armed.
+- [x] Task 5 — gates and bookkeeping (AC: all)
+  - [x] `./run_tests.sh` green (baseline 566/566 @ ~8.5 s; expect 566 + new metalegger legs; budget NFR4 < 10 s — these legs are microseconds).
+  - [x] `tests/boundary.test.js` green unchanged (D4); summit-gate/balance suites green unchanged (D5 — sim behavior bit-identical, helpers uncalled).
+  - [x] Story Status → done; File List + Debug Log filled; sprint-status stamp per house style. (Dev round stamps `review` per the loop contract — `done` is the review round's stamp.)
 
 ## Dev Notes
 
@@ -125,12 +125,39 @@ Exactly ONE existing test leg is re-authorized: `tests/reducedmotion.test.js` L1
 
 ### Agent Model Used
 
+lane-qwen38-ultra/qwen (omp worker session Dev71)
+
 ### Debug Log References
+
+- Baseline gate (pre-edit, this round): **566/566 @ 8.58 s** (time builtin; baseline commit 0c5185f verified via git log).
+- Final gate: **573/573 @ 8.6 s** (measured 8.60–8.69 s across runs; NFR4 < 10 s held). The 7 new metalegger legs add ~0.1 s wall — the suite alone: 7 legs @ 70 ms.
+- One red iteration: first full gate **572/573** — `tests/feelcap.test.js` AUD-02 (D-N09: the sim holds zero audio references, *comments included*) reddened on the literal token `audio.js` inside the new game.js header comment. Fixed by rewording the comment (zero behavior change); second run green. No frozen leg was touched to get here.
+- NFR12 boot budget: `loadMeta` issues exactly ONE `getItem` + one `JSON.parse` — pinned by the metalegger counting leg (getItem calls === 1).
+- D3 dormancy proof: `git diff --name-only` shows `tests/pausemenu.test.js` untouched; its runtime key censuses (:424, :431-432) pass byte-identical — no runtime meta write exists.
+- Frozen-surface audit: the reducedmotion diff is exactly the L10(a) re-contract region (title, (a) comment, expected array, message); parts (b)+ byte-identical.
 
 ### Completion Notes List
 
+- `loadMeta`/`saveMeta` + private `clampCounter` landed in `js/game.js` below `saveBest` — injected-storage seam, one bare key `jumprope-meta` (D1), value the flat `{furthestArea, summits, skips}` object, per-field finite/non-negative sanitize both directions (finiteness guard, no `||` coalesce), silent degradation, zero `localStorage` literals (boundary IO fence unaffected, D4).
+- Shell boot: `let meta = loadMeta(localStorage);` beside `loadBest` (js/shell.js:151 → +4 comment lines); `meta` unconsumed in 7.1 (D2/D5); `saveMeta` has ZERO runtime callers — dormant write lane for 7.2.
+- AC4 stays vacuous per D5: no sim signature moved (`git diff` shows no `startRun`/`tickRun`/`applyCard`/`resumeRun` change); `tests/boundary.test.js` unchanged-green.
+- The ONE frozen-leg change: reducedmotion L10(a) re-contracted exactly to the D3 wording — census `['audio.js','game.js','game.js']`, title "three", message names the three keys.
+- `tests/metalegger.test.js` NEW — 7 law-form legs: bare-key round-trip + closed value shape; one-getItem boot budget (NFR12); corrupt/missing/valid-JSON-non-object → fresh default; per-field data-degradation (bare `{}`, hostile values, Infinity, legitimate zeros); blocked storage both directions; shape-pinned write with a run record offered and rejected (permadeath); persisted-key-set census over `js/` — write sites AND literal key space both exactly {jumprope-audio, jumprope-best, jumprope-meta}.
+- C1 bookkeeping: `tests/metalegger.test.js` appended to both §6 diff-census allow-sets, list-only comments, tripwires stay armed.
+- Task 5 note: dev round sets story + sprint-status to `review` (loop contract); `done` belongs to the review round.
+
 ### File List
+
+- js/game.js (loadMeta/saveMeta/clampCounter — additive, below saveBest)
+- js/shell.js (import loadMeta; boot load beside loadBest; comment)
+- tests/metalegger.test.js (NEW — 7 contract legs)
+- tests/reducedmotion.test.js (L10(a) re-contract only — authorized by this story, D3)
+- tests/ceilingbreak.test.js (census allow-set append only — C1)
+- tests/summitapproach.test.js (census allow-set append only — C1)
+- _bmad-output/implementation-artifacts/7-1-meta-ledger-persistence-without-run-records.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
 
 ## Change Log
 
 - 2026-11-11 (create round): story created from epics.md:995-1015 + Epic 7 delta/riders + architecture §Persistence; Decided D1-D6 (entry-probe batch) embedded; single frozen-leg re-contract L10(a) authorized with the pausemenu dormancy proof; census allow-append (this artifact, list-only) x2; sprint-status ready-for-dev, epic-7 in-progress; gate baseline 566/566 @ 0c5185f.
+- 2026-11-11 (dev round): Tasks 1-4 landed — `loadMeta`/`saveMeta` in js/game.js below the FR24 seam (bare key `jumprope-meta`, shape-pinned both sides, DORMANT lane per D2), shell boot load beside `loadBest`, the L10(a) re-contract verbatim to D3 (setItem census → three sites), tests/metalegger.test.js NEW (7 legs), C1 census appends x2. Gate **573/573 @ 8.6 s** (was 566/566 @ 8.58 s); one red iteration (feelcap AUD-02 — `audio.js` token in a game.js comment, reworded, zero behavior). pausemenu censuses byte-identical-green (dormancy proof). Status: review.
