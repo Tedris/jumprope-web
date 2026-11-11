@@ -62,8 +62,11 @@ const cleanCross = (run0, rng = rngStub, ropeMul = 1) => scriptCrossing({
 // metadata, VACUOUS an empty threshold set, LOCK_* single- and multi-key S2
 // mirrors. NO stateCap anywhere — this is the leg that falsifies the D1
 // ordering landmine (a lock check below the early return would never run).
+// name !== id ON PURPOSE (review 7.3 Blind F1): leg (a)'s id-projection pin —
+// a derivation mapping to card.name instead of card.id reddens here, where a
+// name===id fixture would sail through and ship silently-inert locks.
 const mkCard = (id, extra) => ({
-  id, name: id, desc: id, icon: 'x', role: 'foundation', color: 'sky',
+  id, name: id + ' card', desc: id, icon: 'x', role: 'foundation', color: 'sky',
   rarity: 'common', cap: 3, apply: (s) => ({ ...s }), ...extra,
 });
 const LOCK_AREA = mkCard('lockarea', { unlock: { furthestArea: 3 } });
@@ -94,6 +97,23 @@ test('(a) derivation law: locked iff unlock metadata exists AND not every thresh
   }
   assert.deepEqual(lockedIdsFor([LOCK_PAIR, PLAIN, LOCK_AREA], {}), ['lockpair', 'lockarea'],
     'pool-order output, deterministic, no rng (D4)');
+});
+
+test('(i) derive-then-deal end to end: ids, never names, reach the filter (review 7.3 Blind F1)', () => {
+  // The 7.4 caller chain is lockedIdsFor(CARDS, meta) → run.lockedIds → the
+  // deal filter. A name-projection bug between derivation and deal would ship
+  // locks that never lock; this leg DEALS from the DERIVED set with names
+  // distinct from ids, across seeds, so the projection is witnessed.
+  const POOL = [LOCK_AREA, PLAIN];
+  const locked = lockedIdsFor(POOL, { furthestArea: 1 });
+  assert.deepEqual(locked, ['lockarea'], 'derivation emits the ID, not the name');
+  for (let seed = 1; seed <= 30; seed++) {
+    const deals = pickOffers(POOL, {}, 2, seeded(seed), undefined, locked);
+    assert.ok(!deals.some((c) => c.id === 'lockarea'), `seed ${seed}: the derived lock holds in the deal`);
+    assert.ok(deals.some((c) => c.id === 'plain'), `seed ${seed}: the unlocked sibling still deals`);
+  }
+  const free = pickOffers(POOL, {}, 2, seeded(7), undefined, lockedIdsFor(POOL, { furthestArea: 3 }));
+  assert.equal(free.length, 2, 'unlocked meta deals the full pair — the witness is non-vacuous');
 });
 
 test('(b) INERT guard (story-shape tripwire): the shipped catalogue carries zero unlock metadata', () => {
@@ -255,4 +275,37 @@ test('(g) tickRun-level bit-identity inside the shipped cadence (AC2/AC3 witness
   assert.deepEqual(b.events, a.events, 'identical event channel — the empty/healed set changes no tick');
   assert.deepEqual(b.offers, a.offers, 'identical offers across every boundary');
   assert.equal(b.calls, a.calls, 'identical rng consumption — the stream never shifted');
+});
+
+test('(h) the FORGIVEN deal twin honors locks — buffer-forgiven 30th-skip deal (D2 twins, review F1 falsifier)', () => {
+  // Review F1: leg (g) crosses only cleared paths, so unthreading the 6.2
+  // forgiven twin (game.js:227-228) stayed green. This leg drives a FORGIVEN
+  // crossing onto the 30th skip where float is the ONLY available card
+  // (every sibling pinned at its owned cap): threaded locks exclude it —
+  // exhausted pool arms NO choose (Pitfall 6) — while the unthreaded/healed
+  // pool deals it. If the twin ever drops the 6th arg, the locked arm deals
+  // float and this leg reddens deterministically.
+  const capsOwn = {};
+  for (const c of CARDS) if (c.id !== 'float') capsOwn[c.id] = c.cap ?? Infinity;
+  const forgone = (withKey) => {
+    const rng = counting(0x5EED);
+    const run0 = { ...createRun(), skips: 29, buffer: 0.1, owned: { ...capsOwn } };
+    if (withKey === 'locked') run0.lockedIds = ['float'];
+    else if (withKey === 'empty') run0.lockedIds = [];
+    else delete run0.lockedIds; // the heal arm: key absent, `?? []` must cover
+    const out = scriptCrossing({ run: run0, rope: rigRope(CROSS_TICKS, 1), player: airPlayer(8), rng });
+    return out;
+  };
+  const locked = forgone('locked');
+  assert.equal(locked.run.skips, 30, 'rig: the crossing was FORGIVEN onto the 30th skip (buffer consumed, scored)');
+  assert.ok(locked.events.includes('nearMiss') && !locked.events.includes('trip'), 'rig: forgiven pass, not a trip');
+  assert.equal(locked.run.status, 'running',
+    'locks exclude the only available card — the exhausted pool arms NO choose (Pitfall 6) and no locked card deals');
+  assert.ok(!locked.events.includes('offer'), 'no offer fired with every dealable card locked (review F1 falsifier)');
+  const open = forgone('empty');
+  assert.equal(open.run.status, 'choose', 'rig: with empty locks the forgiven twin DOES deal at the 30th — the arm is live');
+  assert.deepEqual(open.run.offer.map((c) => c.id), ['float'], 'the forgiven deal routes the filter: the unlocked pool is exactly [float]');
+  const healed = forgone('heal');
+  assert.equal(healed.run.status, 'choose', 'the `?? []` heal at the forgiven twin behaves as the empty set');
+  assert.deepEqual(healed.run.offer.map((c) => c.id), ['float'], 'heal and explicit-empty deal identically at the twin');
 });
