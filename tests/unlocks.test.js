@@ -87,7 +87,11 @@ async function bootUnlocksShell({ storageMap = new Map(), inject = DEAL_GAME_WRA
     viewsKey, createElement: true, insertBefore: true, spans: true, hudRoot: true,
     fetchReject: true,
     // leg (e) A/B: the reducedmotion :276 donor — the ONE boot difference.
-    ...(reduced === null ? {} : { matchMedia: () => ({ matches: reduced, addEventListener() {} }) }),
+    // metrics:true is REQUIRED for the flag to exist: installStage wires
+    // matchMedia only inside its metrics window (shell-harness :199-201), so
+    // without it the stub was silently dropped and both arms booted
+    // full-motion (review 7.4 Edge F1: (e) was a vacuous A/B).
+    ...(reduced === null ? {} : { metrics: true, matchMedia: () => ({ matches: reduced, addEventListener() {} }) }),
   });
   if (stage.hud['hud-ropes']) stage.hud['hud-ropes'] = stage.mk('span');
   for (const el of [stage.hud['hud-score'], stage.hud['hud-best'], stage.hud['hud-ropes'],

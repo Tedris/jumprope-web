@@ -290,3 +290,15 @@
 
 - **Enable CONCURRENT story development** — the epic loop serializes stories because shared write-sets make parallel writers unsafe in this repo's shape: `js/shell.js` (842 lines) is touched by nearly every story; `deferred-work.md` + the two §6 census allow-lists are single-file append surfaces every round edits; artifacts/tests cite by `file:line`, which concurrent edits invalidate. Proposed enabling work (user: "devs should be able to do multiple stories at once"): split `shell.js` into focused owned leaves (boot/input/presentation/persistence), per-story ledger/census surfaces, symbol-anchored cites, and the readability half — JSDoc + `tsc --checkJs --noEmit` as a dev-time-only type check (TypeScript proper collides with static-files-only/NFR6: no build step).
   - **OWNER: post-Epic-7 planning pass** (2026-11-11, user directive — capture now, no planning proceeds mid-epic): disposition at the Epic 7 close ledger check; shape belongs in a `gds-correct-course`-style prep commit before whichever epic first wants parallel writers.
+- **Creation-site lock threading has a single witness** (review 7.4 Edge note, 2026-11-11): only
+  `tests/unlocks.test.js` leg (b) boots a shell with grown-meta storage and observes the deal
+  stream — a mutation of `startFreshRun`'s `lockedIdsFor(CARDS, meta)` call is legible ONLY
+  there. If (b) is ever re-contracted or relaxed, the creation-site threading goes blind while
+  every other leg stays green. **OWNER: any future story touching unlocks.test.js leg (b) or the
+  creation site (shell.js startFreshRun)** — add a second witness or cite this line in the story.
+- **L9 cross-boot determinism rides V8 tier uniformity** (review 7.4 Edge note, 2026-11-11,
+  PRE-EXISTING not 7.4): under deliberately asymmetric render shapes, reducedmotion L9's phase
+  A/B fails the FINAL sample by one phase-step — the arms' `updateHud` hot shapes diverge and
+  JIT tiers drift, not pure virtual-time nondeterminism. Shipped code keeps one shared render
+  path so it cannot trigger this. **OWNER: first story whose L9 leg misfires "for no reason"** —
+  check render-path shape symmetry before chasing rng.

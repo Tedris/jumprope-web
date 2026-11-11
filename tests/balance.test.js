@@ -278,6 +278,8 @@ test('dominated / reduceClimb / neutralClimb equal the analytic derivations', ()
   const byId = (list) => [...list].sort((x, y) => x.id.localeCompare(y.id));
   assert.deepEqual(byId(report.dominated), byId(expectedDominated), 'one-axis-one-card verdicts match the closures');
 
+  // Story 6.1 re-contract R2 (sanctioned, Decided 5 fold): the neutralClimb
+  // and reduceClimb EXPECTATION derivations branch on the card.shape marker.
   // Effects-shape cards keep the analytic ropeMul x scoreMul derivation
   // VERBATIM; for run-shaped cards the expectation is record-derived -
   // neutral iff the apply writes no climb-axis effect field AND the record

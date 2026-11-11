@@ -323,7 +323,7 @@ function cadenceSim({ seed, seedArea }) {
   const rng = () => { draws += 1; return base(); };
   const seedAltitude = AREAS[seedArea - 1].ceiling - 20;
   assert.ok(seedAltitude % ALT_PER_POINT === 0, 'rig: keep the altitude/score invariant exact');
-  let { rope, player, run } = game.startRun();
+  let { rope, player, run } = game.startRun(lockedIdsFor(CARDS, undefined)); // 7.4 review Blind F1: fresh-session view — the locked trio must not leak into the cadence walk's deals (D6; sibling of the §2.3 threading)
   run = { ...run, area: seedArea,
     baseAltitude: seedArea === 1 ? 0 : AREAS[seedArea - 2].ceiling,
     altitude: seedAltitude, score: seedAltitude / ALT_PER_POINT, skips: 9 };
