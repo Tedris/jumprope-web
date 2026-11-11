@@ -353,12 +353,13 @@ export function saveBest(storage, score) {
 // Story 7.1 (FR31): the meta ledger — the ONLY cross-run persisted state;
 // run records are never persisted (architecture §Persistence). Same seam as
 // loadBest/saveBest: injected storage, one bare key, shape-pinned, silent
-// degradation. The counters follow the clampVolume finiteness doctrine:
-// 0 is legitimate data, so invalid values fall through an explicit guard,
-// never a || coalesce.
+// degradation. The counters follow the file's own clamp doctrine (clampRopes,
+// clampArea): 0 is legitimate data, so invalid values fall through an explicit
+// finiteness guard, never a || coalesce — and they are INTEGERS: finite
+// fractional input truncates, never persists as a fraction.
 const clampCounter = v => {
   const n = Number(v);
-  return Number.isFinite(n) && n >= 0 ? n : 0;
+  return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : 0;
 };
 
 export function loadMeta(storage) {

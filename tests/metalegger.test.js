@@ -49,6 +49,16 @@ test('the boot read is ONE getItem — one seam read, no retry, no loop (AC1, NF
   assert.equal(gets, 1, 'the meta boot read is exactly one getItem — it adds nothing measurable to the first-jump budget');
 });
 
+test('fence: the shell boot loads meta EXACTLY once, beside the FR24 seam (AC1 — review F2)', async () => {
+  // harness.test.js:27-34 pattern: a static source fence — deleting the boot
+  // line silently unloads the ledger at boot while every runtime suite stays green.
+  const src = await readFile(resolve(jsDir, 'shell.js'), 'utf8');
+  assert.equal((src.match(/loadMeta\(localStorage\)/g) ?? []).length, 1,
+    'js/shell.js holds EXACTLY one loadMeta(localStorage) boot site');
+  assert.match(src, /loadBest\(localStorage\);[\s\S]{0,400}?loadMeta\(localStorage\);/,
+    'the surviving site sits in the boot region beside the FR24 seam (shell.js:151/155)');
+});
+
 test('corrupt and missing payloads are data, not errors: fresh default, nothing thrown (AC2)', () => {
   // 'not json' degrades like audio.test.js:231; valid-JSON-non-object payloads
   // degrade through the typeof arm, not the try/catch (story pitfall).
@@ -69,6 +79,11 @@ test('per-field degradation: bare {} and hostile values are data — invalid fie
   assert.deepEqual(read('{"furthestArea":3,"summits":null,"skips":1}'), { furthestArea: 3, summits: 0, skips: 1 },
     'valid fields ride; only the invalid field falls');
   assert.deepEqual(read('{"skips":0}'), ZEROS, 'zero is legitimate data — read as 0, never rewritten');
+  assert.deepEqual(read('{"furthestArea":1,"run":{"status":"over","score":99},"metaVersion":7}'),
+    { furthestArea: 1, summits: 0, skips: 0 },
+    'unknown fields never ride into shell state — the read is shape-pinned like loadSettings (review F4)');
+  assert.deepEqual(read('{"furthestArea":2.7,"summits":3,"skips":9.99}'), { furthestArea: 2, summits: 3, skips: 9 },
+    'counters are integers — finite fractional data truncates like the sibling clamps (review F3)');
 });
 
 test('blocked storage degrades silently both directions: default read, session-only write, nothing thrown (AC2)', () => {
@@ -85,6 +100,10 @@ test('shape-pinned write: saveMeta serializes EXACTLY {furthestArea,summits,skip
     'the serialized shape is closed — a run record passed to saveMeta never rides along (permadeath, architecture §Persistence)');
   assert.deepEqual(JSON.parse(storage.data.get('jumprope-meta')), ZEROS,
     'invalid values are sanitized on the write side too, before stringify (audio.js:33-43 precedent)');
+  const int = mapStorage();
+  saveMeta(int, { furthestArea: 2.7, summits: -0.5, skips: 4.9 });
+  assert.deepEqual(JSON.parse(int.data.get('jumprope-meta')), { furthestArea: 2, summits: 0, skips: 4 },
+    'the write side truncates too — a fractional counter never survives a round-trip (review F3)');
 });
 
 test('the persisted key set is EXACTLY {jumprope-audio, jumprope-best, jumprope-meta}: no run record is EVER persisted (AC3, D6-d)', async () => {
@@ -102,7 +121,9 @@ test('the persisted key set is EXACTLY {jumprope-audio, jumprope-best, jumprope-
       assert.ok(typeof key === 'string' && key.startsWith('jumprope-'),
         `${f}: a setItem site writes a key outside the pinned jumprope-* namespace: ${key ?? m[3]}`);
       writeKeys.push(key);
-      const line = src.slice(0, m.index).split('\n').pop();
+      // From the match forward: the line PREFIX before `.setItem(` can never
+      // contain the token, so slicing backwards made this guard dead (review F1).
+      const line = src.slice(m.index).split('\n')[0];
       assert.doesNotMatch(line, /setItem\([^)]*(?:\brun\b|\brecord\b)/,
         `${f}: a setItem site references a run record — the permadeath contract forbids persisting it`);
     }

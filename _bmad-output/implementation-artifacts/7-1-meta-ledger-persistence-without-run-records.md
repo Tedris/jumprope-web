@@ -3,7 +3,7 @@ baseline_commit: 0c5185f6f8df93cf69c67528c5be073a8a041e81
 ---
 # Story 7.1: Meta ledger — persistence without run records
 
-Status: review
+Status: done
 
 *Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-11).*
 
@@ -161,3 +161,4 @@ lane-qwen38-ultra/qwen (omp worker session Dev71)
 
 - 2026-11-11 (create round): story created from epics.md:995-1015 + Epic 7 delta/riders + architecture §Persistence; Decided D1-D6 (entry-probe batch) embedded; single frozen-leg re-contract L10(a) authorized with the pausemenu dormancy proof; census allow-append (this artifact, list-only) x2; sprint-status ready-for-dev, epic-7 in-progress; gate baseline 566/566 @ 0c5185f.
 - 2026-11-11 (dev round): Tasks 1-4 landed — `loadMeta`/`saveMeta` in js/game.js below the FR24 seam (bare key `jumprope-meta`, shape-pinned both sides, DORMANT lane per D2), shell boot load beside `loadBest`, the L10(a) re-contract verbatim to D3 (setItem census → three sites), tests/metalegger.test.js NEW (7 legs), C1 census appends x2. Gate **573/573 @ 8.6 s** (was 566/566 @ 8.58 s); one red iteration (feelcap AUD-02 — `audio.js` token in a game.js comment, reworded, zero behavior). pausemenu censuses byte-identical-green (dormancy proof). Status: review.
+- 2026-11-11 (review round): 3 layers (Blind/Edge/Acceptance) — **4 patches + 1 defer + ~10 dismissed**. P1 (Edge F1, MAJOR): dead run-record line-guard in the metalegger census repaired (backward `slice(0, m.index)` → forward from match; mutation-probed: run-record-through-pinned-key now reddens, real tree green). P2 (Blind F2): static boot-site fence `loadMeta(localStorage)` EXACTLY ONCE in shell.js beside loadBest (harness.test.js pattern — deletion of the boot line reddens). P3 (Blind F3): clampCounter gains `Math.trunc` — counters are integers like every sibling clamp; read+write legs extended. P4 (Blind F4): read-side unknown-field drop leg pinned (shape-pinned read, loadSettings doctrine). Defer F5: saveMeta try-scope → **Story 7.2** (ledger entry). Dismissed with reasons: dormancy/unused-local (D2/D5), coercion parity with loadBest, aliased-write census evasion (story Pitfalls), mapStorage shadow (D6 donor pattern), law-form numerics (NFR12 doctrine). Architecture §Persistence + diagram now list `jumprope-meta` (separate planning-doc commit, Blind F4). Gate **574/574 @ 8.6 s**. Status: done.

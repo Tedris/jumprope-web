@@ -275,3 +275,8 @@
   retune). `js/` edits were forbidden in Story 6.4 (its Decided 1) →
   **OWNER: next js-touching story** (one-word comment fix, zero behavior).
   - **CLOSED by ledger chore** (2026-11-10, user disposition "resolve now" at the Epic 6 close check): the one-word comment fix landed in `f1bb230` (comment-only, zero behavior, gate 566/566).
+
+## Deferred from: code review of story 7-1-meta-ledger-persistence-without-run-records (2026-11-11)
+
+- **`saveMeta` try-block wraps the field reads — a caller bug is indistinguishable from blocked storage** (`js/game.js:380-390`) — a nullish `meta` argument throws a TypeError inside the `try` and dies by the storage-unavailable catch: silent, unlogged (no `console.*` in pure modules). Dormant in 7.1 (zero runtime callers, Blind-review F5 INFO); the first caller makes a lost shell-local a silent persistence stop. Fix: hoist the three `clampCounter` reads above the `try` (post-sanitize values cannot throw in `stringify`), keeping blocked storage silent. Same scope exists in `saveBest`/`saveSettings` — do NOT re-shape those in this pass.
+  - **OWNER Story 7.2** (2026-11-11): the run-end accrual is the first `saveMeta` caller; make programmer error loud there, red-green with the accrual legs.
