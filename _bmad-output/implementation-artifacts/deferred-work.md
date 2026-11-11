@@ -302,3 +302,27 @@
   JIT tiers drift, not pure virtual-time nondeterminism. Shipped code keeps one shared render
   path so it cannot trigger this. **OWNER: first story whose L9 leg misfires "for no reason"** —
   check render-path shape symmetry before chasing rng.
+
+## Epic 7 close — boundary dispositions (2026-11-11, autopilot ledger check, user batch answers)
+
+- **:94 same-axis duplicates — CLOSED (ratified as the pattern)**: Story 7.4's tier-pair law
+  (D2, float/feather precedent) made the same-axis pair the shipped design pattern — the three
+  unlock cards ARE tier pairs; a merge is now contrary to the fiction lane. No owner needed.
+- **:132 collision-model state-less draws — RETIRED (by-design)**: the state-less gate is the
+  pinned REFERENCE model (3.2 D-e); live-path honesty flows through `tickRun`'s state-aware draw
+  (proven 3.2/3.3) and 7.4 threaded its lock view. Nothing left to fold in.
+- **:8 / :11 revisit-if-touched conditionals — RE-AFFIRMED, armed**: triggers last checked at
+  6.2/6.3 (never met; worst phase increment ~10x under the window). Owners: whichever story
+  next touches the crossing clock / the mod-1 domain.
+- **:153 / :154 owned-cap lifetime walls — ACCEPTED with owner standing**: the w1 decision
+  (lifetime-locks vs buy-back) stays PARKED post-v2, owner Ed; the A4 input pack rides 7.5 D4
+  as-shipped ("wall stands"); no unowned residue.
+- **:219 tier-variant ascend voice / :263 v2-deploy UAT bundle — ACCEPTED with owners standing**
+  (UAT feel lane / v2 deploy respectively; the uniform voice and current perf profile SHIP).
+- **:293 / :299 the two 7.4 review notes — ACCEPTED, trigger-owned** (single-witness creation-site
+  threading; L9 JIT tier fragility). Armed, no action until triggered.
+- **:291 concurrent-development enabling — ACCEPTED-PARKED**: owner stands as scheduled — a
+  `gds-correct-course`-style planning pass before whichever epic first wants parallel writers;
+  serialization costs accepted meanwhile (this epic ran 5 stories serially at ~2 h each).
+
+No unowned deferred items survive the boundary. Next-epic entry probe may proceed.
