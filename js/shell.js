@@ -1,4 +1,4 @@
-import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, loadMeta, saveMeta, startRun, ROPE_PERIOD, CARDS, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA, clampCharged, clampAirJumps } from './game.js';
+import { createRun, tickRun, applyCard, resumeRun, loadBest, saveBest, loadMeta, saveMeta, startRun, ROPE_PERIOD, CARDS, lockedIdsFor, clampRopes, MIN_ROPES, AREAS, SUMMIT_AREA, clampCharged, clampAirJumps } from './game.js';
 import { createRope } from './rope.js';
 import { createPlayer, jump } from './player.js';
 import { createScene } from './render3d.js';
@@ -152,7 +152,8 @@ export function startGame(canvas) {
   // Story 7.1 (FR31): the meta ledger boots through the same seam, one
   // getItem + one JSON.parse (NFR12). The write lane is LIVE since 7.2 —
   // the ONE write site is the run-end branch below (saveMeta beside saveBest);
-  // nothing reads it into gameplay yet (7.3).
+  // since 7.3 the ONE read into gameplay is startFreshRun's lockedIdsFor
+  // derivation — creation-time data only, the record freezes the set for life.
   let meta = loadMeta(localStorage);
   // Story 2.4 (FR26): run-start best snapshot (drives the "new best" tail)
   // and the restart arming flag — shell-local by design, never in the record.
@@ -180,7 +181,7 @@ export function startGame(canvas) {
     holdFrom = null;
     pressIntent = null;
     resetPips();
-    ({ rope, player, run } = rearmCalloutGate(startRun()));
+    ({ rope, player, run } = rearmCalloutGate(startRun(lockedIdsFor(CARDS, meta))));
     armLeadInHop(); // one write covers the cold-boot and death-restart callers
   }
   let acc = 0;

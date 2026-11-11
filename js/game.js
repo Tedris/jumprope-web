@@ -6,7 +6,7 @@ import { AREAS } from './areas.js';
 // Shell-side HUD reads the catalogue through game.js: tests/shell.test.js's
 // frozen bootShell harness only rewrites the game/rope/player/render3d
 // specifiers, so shell.js must not gain a direct './upgrades.js' import.
-export { CARDS } from './upgrades.js';
+export { CARDS, lockedIdsFor } from './upgrades.js';
 // Story 2.3 (FR8): the ceiling marker reads the ladder through the same
 // harness-rewritten channel — shell must not import areas.js directly.
 export { AREAS } from './areas.js';
@@ -105,16 +105,16 @@ export function leadIn() {
   };
 }
 
-export function startRun() {
-  return { ...leadIn(), run: { ...createRun(), status: 'running' } };
+export function startRun(lockedIds) {
+  return { ...leadIn(), run: { ...createRun(lockedIds), status: 'running' } };
 }
 
 export function resumeRun(run) {
   return { ...leadIn(), run: { ...run, status: 'running', offer: null } };
 }
 
-export function createRun() {
-  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, charged: 0, airJumps: 0, iFrames: 0, area: 1, baseAltitude: 0, outcome: null };
+export function createRun(lockedIds) {
+  return { status: 'running', score: 0, altitude: 0, skips: 0, effects: freshEffects(), offer: null, owned: {}, buffer: 0, streak: 0, ropes: 1, charged: 0, airJumps: 0, iFrames: 0, area: 1, baseAltitude: 0, outcome: null, lockedIds: Array.isArray(lockedIds) ? lockedIds.filter(id => typeof id === 'string') : [] };
 }
 
 export function tickRun(run, rope, player, dt, rng = Math.random, press = null) {
@@ -200,7 +200,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
         // FR10 state-aware dead-pick filter (Story 3.1): ropeCount and
         // charged are the clamped live values from the loop's heal (3.3).
         const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng,
-          { ropes: ropeCount, charged });
+          { ropes: ropeCount, charged }, run.lockedIds ?? []);
         // Pitfall 6: an exhausted pool must never freeze the run in choose.
         if (offers.length > 0) {
           status = 'choose';
@@ -225,7 +225,7 @@ export function tickRun(run, rope, player, dt, rng = Math.random, press = null) 
       // pool must never arm choose.
       if (shouldOfferUpgrade(skips)) {
         const offers = pickOffers(CARDS, run.owned ?? {}, offerCount(skips), rng,
-          { ropes: ropeCount, charged });
+          { ropes: ropeCount, charged }, run.lockedIds ?? []);
         if (offers.length > 0) {
           status = 'choose';
           offer = offers;

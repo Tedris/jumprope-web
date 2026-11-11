@@ -3,7 +3,7 @@ baseline_commit: ecea324897014396ad8553fb75d057a90943d9ca
 ---
 # Story 7.3: Locked in the deal — the catalogue learns locks
 
-Status: ready-for-dev
+Status: review
 
 *Ultimate context engine analysis completed — comprehensive developer guide created (2026-11-11).*
 
@@ -41,32 +41,32 @@ Exactly ONE existing test leg is re-authorized: `tests/altitude.test.js` factory
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — the one predicate, at the one filter point (AC: 1; D1, D2)
-  - [ ] `js/upgrades.js`: `isAvailable(card, owned, state, lockedIds)` — the lock `if` directly after the cap check (:68), ABOVE the stateCap early return (:70); `Array.isArray(lockedIds) && lockedIds.includes(card.id) → false`. `pickOffers(pool, owned, count, rng, state, lockedIds)` threads it at the filter line (:83) and nowhere else. Extend the :64-66 / :80-81 comments (one sentence each; the rng-never-shift law verbatim stays).
-  - [ ] `pickTwo` (:101-103) untouched; `shouldOfferUpgrade`/`offerCount` untouched (CARD-09); no second filter path anywhere (grep check: no new `.filter` on CARDS/pool outside upgrades.js:83).
-- [ ] Task 2 — the run-creation landing (AC: 1; D3)
-  - [ ] `js/game.js:108-118`: `startRun(lockedIds)` passes through; `createRun(lockedIds)` gains the sanitized `lockedIds` key (17th; `Array.isArray(...) ? .filter(typeof string) : []`). No other field, no meta import, no storage touch.
-  - [ ] `js/game.js:202-203` and `:227-228`: identical trailing arg `run.lockedIds ?? []` at BOTH deal sites (the 6.2 cadence twins — divergence re-opens the FR10 gap the offercadence witness closes). `tickRun` signature unchanged; cadence code paths byte-identical.
-  - [ ] `tests/altitude.test.js:42-44`: the ONE authorized re-contract, exactly as written above.
-  - [ ] `architecture.md` run-record entry: 16 → 17 keys with the lock-set ride (doc truth; in both allow-sets already).
-- [ ] Task 3 — the derivation helper + the shell call site (AC: 1, 4; D4)
-  - [ ] `js/upgrades.js`: `export function lockedIdsFor(pool, meta)` — pure; locked(card) = `card.unlock && !Object.entries(card.unlock).every(([k, min]) => (meta?.[k] ?? 0) >= min)`; no-`unlock` cards skipped; returns card ids in pool order. Comment names FR32 and the S2-mirror key set.
-  - [ ] `js/game.js:9`: extend the re-export line to `export { CARDS, lockedIdsFor } from './upgrades.js'`.
-  - [ ] `js/shell.js`: `startRun(lockedIdsFor(CARDS, meta))` at the ONE creation site :183; add `lockedIdsFor` to the existing game.js import line :1. No other meta reader, no second `startRun` call site, no loadMeta call moved, no persistence change (:726-740 accrual branch untouched — it feeds the NEXT run's derivation through the shell-local).
-  - [ ] `tests/boundary.test.js` untouched-green: no storage/DOM token in game.js/upgrades.js (the derivation takes meta as DATA — exactly like rng takes a function).
-- [ ] Task 4 — new contract suite `tests/locks.test.js` (AC: 1, 2, 3, 4; D6) — direct `node --test` imports of js/upgrades.js + js/game.js
-  - [ ] (a) Derivation law: crafted pool (`unlock: { furthestArea: 3 }`, `{ summits: 1, skips: 100 }`, none, `{}`) against crafted counters — locked iff NOT every threshold met, `(meta?.[k] ?? 0)` missing-key reads 0, absent meta = fresh session (all unlocks above 0 lock), `{}` = unlocked (vacuity note, D4), no-`unlock` cards never lock under any meta.
-  - [ ] (b) INERT guard (story-shape tripwire): `CARDS.every(c => !('unlock' in c))` and `lockedIdsFor(CARDS, meta)` deep-equals `[]` for every meta probe incl. `{ furthestArea: 9, summits: 9, skips: 9 }` — AC4's shipped proof; 7.4 re-contracts this leg when it adds real `unlock` metadata (say so in the leg comment).
-  - [ ] (c) Filter point: `pickOffers` on a crafted locked pool with `lockedIds` hides the locked card across count 1..pool-size, never repeats, fewer-than-count on exhausted pool; the SAME pool without `unlock` metadata + any `lockedIds` returns identical deals at identical rng-call counts.
-  - [ ] (d) rng-stream pin (AC2): scripted batch over seeded streams — for identical seeds, the deal-by-deal card-id sequence with `lockedIds: []` / omitted 6th arg equals the 5-arg shipped call, AND the counting-rng wrapper reports EQUAL call counts (the no-shift law directly observed); ×2 determinism witnesses (whole batch run twice, equal). No recorded numerics anywhere.
-  - [ ] (e) Run-creation ride: `createRun()`/`startRun()` carry `lockedIds: []` (default contract); `startRun(['float','multi'])` carries it sanitized; sanitize legs — non-array arg → `[]`, mixed array → strings kept, non-strings dropped; `resumeRun` preserves the record's `lockedIds` across the spread; a tickRun deal on a crafted record MISSING the key heals via `?? []` and deals exactly like `[]` (the `run.owned ?? {}` twin heal).
-  - [ ] (f) Frozen-mid-run witness: run A created with `lockedIds: ['float']` deals no float even when a later `lockedIdsFor` under grown counters returns `[]`; a run created with `[]` under shrunken counters still deals float. (Lock set = run data, derivation = creation-time only.)
-  - [ ] (g) tickRun-level bit-identity: scripted rng-driven deal crossings (the offerstate/offercadence tick idiom) on a real-CARDS record with `lockedIds: []` vs one lacking the key — identical `events` sequences, identical offers, identical rng call counts (AC2 inside the shipped cadence; doubles as the CARD-09 witness beside the untouched offercadence suite).
-  - [ ] C1 (dev round): append `'tests/locks.test.js'` AND `'js/upgrades.js'` to both §6 allow-sets, list-only comment (the 7.2 wording), tripwires stay armed — NOT part of this create round.
-- [ ] Task 5 — inert-ship proof, gates, bookkeeping (AC: all)
-  - [ ] `./run_tests.sh` green (baseline **581/581 @ ecea324**, ~8.6 s; expect 581 + the new locks legs; NFR4 < 10 s).
-  - [ ] Green UNTOUCHED (the proof obligations): boundary, offercadence, balance, upgrades, catalogue, offerstate, summitgate, metalegger, runmark, pausemenu, winloss — only altitude.test.js:42-44 moves, per the authorization above; `git diff` proves the CARDS array and both cadence functions byte-identical (AC3/AC4 diff facts).
-  - [ ] Dev round stamps `review`; final gate re-run; sprint-status per house style.
+- [x] Task 1 — the one predicate, at the one filter point (AC: 1; D1, D2)
+  - [x] `js/upgrades.js`: `isAvailable(card, owned, state, lockedIds)` — the lock `if` directly after the cap check (:68), ABOVE the stateCap early return (:70); `Array.isArray(lockedIds) && lockedIds.includes(card.id) → false`. `pickOffers(pool, owned, count, rng, state, lockedIds)` threads it at the filter line (:83) and nowhere else. Extend the :64-66 / :80-81 comments (one sentence each; the rng-never-shift law verbatim stays).
+  - [x] `pickTwo` (:101-103) untouched; `shouldOfferUpgrade`/`offerCount` untouched (CARD-09); no second filter path anywhere (grep check: no new `.filter` on CARDS/pool outside upgrades.js:83).
+- [x] Task 2 — the run-creation landing (AC: 1; D3)
+  - [x] `js/game.js:108-118`: `startRun(lockedIds)` passes through; `createRun(lockedIds)` gains the sanitized `lockedIds` key (17th; `Array.isArray(...) ? .filter(typeof string) : []`). No other field, no meta import, no storage touch.
+  - [x] `js/game.js:202-203` and `:227-228`: identical trailing arg `run.lockedIds ?? []` at BOTH deal sites (the 6.2 cadence twins — divergence re-opens the FR10 gap the offercadence witness closes). `tickRun` signature unchanged; cadence code paths byte-identical.
+  - [x] `tests/altitude.test.js:42-44`: the ONE authorized re-contract, exactly as written above.
+  - [x] `architecture.md` run-record entry: 16 → 17 keys with the lock-set ride (doc truth; in both allow-sets already).
+- [x] Task 3 — the derivation helper + the shell call site (AC: 1, 4; D4)
+  - [x] `js/upgrades.js`: `export function lockedIdsFor(pool, meta)` — pure; locked(card) = `card.unlock && !Object.entries(card.unlock).every(([k, min]) => (meta?.[k] ?? 0) >= min)`; no-`unlock` cards skipped; returns card ids in pool order. Comment names FR32 and the S2-mirror key set.
+  - [x] `js/game.js:9`: extend the re-export line to `export { CARDS, lockedIdsFor } from './upgrades.js'`.
+  - [x] `js/shell.js`: `startRun(lockedIdsFor(CARDS, meta))` at the ONE creation site :183; add `lockedIdsFor` to the existing game.js import line :1. No other meta reader, no second `startRun` call site, no loadMeta call moved, no persistence change (:726-740 accrual branch untouched — it feeds the NEXT run's derivation through the shell-local).
+  - [x] `tests/boundary.test.js` untouched-green: no storage/DOM token in game.js/upgrades.js (the derivation takes meta as DATA — exactly like rng takes a function).
+- [x] Task 4 — new contract suite `tests/locks.test.js` (AC: 1, 2, 3, 4; D6) — direct `node --test` imports of js/upgrades.js + js/game.js
+  - [x] (a) Derivation law: crafted pool (`unlock: { furthestArea: 3 }`, `{ summits: 1, skips: 100 }`, none, `{}`) against crafted counters — locked iff NOT every threshold met, `(meta?.[k] ?? 0)` missing-key reads 0, absent meta = fresh session (all unlocks above 0 lock), `{}` = unlocked (vacuity note, D4), no-`unlock` cards never lock under any meta.
+  - [x] (b) INERT guard (story-shape tripwire): `CARDS.every(c => !('unlock' in c))` and `lockedIdsFor(CARDS, meta)` deep-equals `[]` for every meta probe incl. `{ furthestArea: 9, summits: 9, skips: 9 }` — AC4's shipped proof; 7.4 re-contracts this leg when it adds real `unlock` metadata (say so in the leg comment).
+  - [x] (c) Filter point: `pickOffers` on a crafted locked pool with `lockedIds` hides the locked card across count 1..pool-size, never repeats, fewer-than-count on exhausted pool; the SAME pool without `unlock` metadata + any `lockedIds` returns identical deals at identical rng-call counts.
+  - [x] (d) rng-stream pin (AC2): scripted batch over seeded streams — for identical seeds, the deal-by-deal card-id sequence with `lockedIds: []` / omitted 6th arg equals the 5-arg shipped call, AND the counting-rng wrapper reports EQUAL call counts (the no-shift law directly observed); ×2 determinism witnesses (whole batch run twice, equal). No recorded numerics anywhere.
+  - [x] (e) Run-creation ride: `createRun()`/`startRun()` carry `lockedIds: []` (default contract); `startRun(['float','multi'])` carries it sanitized; sanitize legs — non-array arg → `[]`, mixed array → strings kept, non-strings dropped; `resumeRun` preserves the record's `lockedIds` across the spread; a tickRun deal on a crafted record MISSING the key heals via `?? []` and deals exactly like `[]` (the `run.owned ?? {}` twin heal).
+  - [x] (f) Frozen-mid-run witness: run A created with `lockedIds: ['float']` deals no float even when a later `lockedIdsFor` under grown counters returns `[]`; a run created with `[]` under shrunken counters still deals float. (Lock set = run data, derivation = creation-time only.)
+  - [x] (g) tickRun-level bit-identity: scripted rng-driven deal crossings (the offerstate/offercadence tick idiom) on a real-CARDS record with `lockedIds: []` vs one lacking the key — identical `events` sequences, identical offers, identical rng call counts (AC2 inside the shipped cadence; doubles as the CARD-09 witness beside the untouched offercadence suite).
+  - [x] C1 (dev round): append `'tests/locks.test.js'` AND `'js/upgrades.js'` to both §6 allow-sets, list-only comment (the 7.2 wording), tripwires stay armed — NOT part of this create round.
+- [x] Task 5 — inert-ship proof, gates, bookkeeping (AC: all)
+  - [x] `./run_tests.sh` green (baseline **581/581 @ ecea324**, ~8.6 s; expect 581 + the new locks legs; NFR4 < 10 s).
+  - [x] Green UNTOUCHED (the proof obligations): boundary, offercadence, balance, upgrades, catalogue, offerstate, summitgate, metalegger, runmark, pausemenu, winloss — only altitude.test.js:42-44 moves, per the authorization above; `git diff` proves the CARDS array and both cadence functions byte-identical (AC3/AC4 diff facts).
+  - [x] Dev round stamps `review`; final gate re-run; sprint-status per house style.
 
 ## Dev Notes
 
@@ -137,14 +137,40 @@ Exactly ONE existing test leg is re-authorized: `tests/altitude.test.js` factory
 
 ### Agent Model Used
 
-_lane model name/version (dev session)_
+lane-qwen38-ultra/qwen (omp worker session Dev73)
 
 ### Debug Log References
 
+- Baseline gate (pre-edit, this round): **581/581 @ 8.611 s** wall (time builtin; TAP duration_ms 8549.6; HEAD 74daad9 = the create commit, story baseline ecea324 per frontmatter).
+- RED phase: `tests/locks.test.js` alone **0/1 pass** — suite-level `SyntaxError: The requested module '../js/upgrades.js' does not provide an export named 'lockedIdsFor'`: red for the right reason (the derivation did not exist), zero legs runnable before the GREEN step.
+- GREEN phase: locks suite alone **8/8** (~40 ms); first full gate **589/589 @ 8.593 s** wall (duration_ms 8529 — NFR4 < 10 s held; the 8 locks legs cost ~4 ms suite-wide). **Zero red iterations**: the first implementation run went green suite-wide; no balance/offercadence leg moved, so no rng shift occurred (AC2's conditional never fired).
+- Diff-shape audit (`git diff`): js/upgrades.js has EXACTLY two hunks, both at :61+ — the CARDS array (:1-52) and both cadence functions are byte-identical by diff fact (AC3/AC4); js/game.js totals 16 ± lines (re-export, startRun/createRun bodies, the two one-line deal-site args — `tickRun`/`resumeRun` signatures byte-identical); js/shell.js three hunks (import line, boot comment, the ONE creation site); deal-site arg lines verified IDENTICAL across the 6.2 twins.
+- Frozen-leg audit (`git diff tests/`): altitude.test.js touched ONLY the authorized key-set leg (hunk @@ -39,9 :39-48); the two census files append-only; EVERY other test file byte-identical — the 581 baseline legs passing as-is IS the bit-identity proof.
+
 ### Completion Notes List
 
+- Tasks 1-2 landed exactly per D1/D3: the lock `if` sits directly beside the owned-cap check and ABOVE the stateCap early return (the ordering landmine commented at the site and falsified by leg (c)'s stateCap-free crafted pool); `pickOffers` gains the trailing 6th arg threaded at the one filter line and nowhere else — `pickTwo`, `shouldOfferUpgrade`, `offerCount` byte-identical (CARD-09); both tickRun deal sites (game.js :202/:227) pass the identical `run.lockedIds ?? []` trailing arg, mirroring the `run.owned ?? {}` heal.
+- Task 2 ride: `createRun(lockedIds)`/`startRun(lockedIds)` gain the trailing optional param; `lockedIds` is the 17th key, sanitized `Array.isArray(...) ? .filter(id => typeof id === 'string') : []`; `tickRun`'s signature untouched. The ONE re-contract executed as written: altitude.test.js key set gains `'lockedIds'` (sorted position after `'iFrames'`), message names the key, comment mirrors the charged/airJumps precedent.
+- Task 3 derivation: `lockedIdsFor(pool, meta)` exported from js/upgrades.js (pure — pool-order ids, `card.unlock && !every((meta?.[k] ?? 0) >= min)`, `{}` vacuously UNLOCKED per D4's polarity), re-exported through game.js :9, consumed at the ONE shell creation site `startRun(lockedIdsFor(CARDS, meta))` — the shell boot comment refreshed from "nothing reads it into gameplay yet (7.3)" to the LIVE first-reader truth. Zero meta/storage reads added to the sim (boundary.test.js byte-identical green); the :726-740 accrual branch untouched.
+- Task 4: `tests/locks.test.js` NEW — 8 legs (a, b, c, d, e, e', f, g) direct-import, no shell harness, zero recorded numerics; the rng-stream pins compare shipped-form vs extended-form behavior with counting-rng call equality (A2 seed-honesty) and carry the ×2 batch witness; leg (b) names Story 7.4 as its re-contractor.
+- INERT ship verified three ways (AC2/AC4): leg (b) tripwire, the CARDS-array byte-identical diff fact, and the untouched 581-leg frozen suite (incl. offercadence, whose spread records inherit `lockedIds: []` and deal exactly as before).
+- C1 bookkeeping: `'tests/locks.test.js'` AND `'js/upgrades.js'` appended to both §6 census allow-sets, list-only comments in the 7.2 wording, tripwires stay armed. Dev round stamps `review` (loop contract); `done` belongs to the review round.
+
 ### File List
+
+- js/upgrades.js (`lockedIdsFor` derivation; `isAvailable` 4th-arg lock predicate; `pickOffers` 6th-arg thread at the one filter line)
+- js/game.js (re-export line; `startRun`/`createRun` trailing param + sanitized 17th key; both deal sites' `run.lockedIds ?? []`)
+- js/shell.js (import line; ONE creation-site derivation; boot-comment refresh)
+- tests/locks.test.js (NEW — 8 contract legs)
+- tests/altitude.test.js (key-set re-contract only — authorized)
+- tests/ceilingbreak.test.js (census allow-set append only — C1)
+- tests/summitapproach.test.js (census allow-set append only — C1)
+- _bmad-output/planning-artifacts/architecture.md (run record 16 → 17 keys, both censuses, fence cites)
+- _bmad-output/implementation-artifacts/7-3-locked-in-the-deal-the-catalogue-learns-locks.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
 
 ## Change Log
 
 - 2026-11-11 (create round): story created from epics.md:1039-1059 + FR32/FR33 + Epic 7 riders (:117-122) + architecture §Persistence/§One Rule; live re-verification at ecea324 confirmed every cite (isAvailable :67-75, pickOffers filter :83, deal twins :202/:227, startFreshRun :183, meta local :156, altitude key-set :42-44, census append points). Decided D1-D6 embedded: predicate extends isAvailable beside the cap check ABOVE the stateCap early return (ordering landmine); pickOffers trailing 6th arg, rng law untouched; lockedIds rides the 17-key run record sanitized at creation (resumeRun spread freezes it for the run's life) — ONE authorized re-contract (altitude.test.js:42-44, the charged/airJumps precedent); locks DERIVED via pure lockedIdsFor(pool, meta) in upgrades.js called at the one shell creation site — no fourth meta key, no persistence change, STOP-and-ask escape if a persisted set ever proves required; ships INERT (zero unlock metadata, frozen suite = regression proof, new locks.test.js adds the rng-stream pins). Census allow-append (this artifact, list-only) ×2 — dev round must also append js/upgrades.js + tests/locks.test.js (upgrades.js is a new census member); sprint-status backlog→ready-for-dev; gate baseline 581/581 @ ecea324. Questions: none outstanding.
+- 2026-11-11 (dev round): implemented per D1-D6 — lock predicate in `isAvailable` beside the cap check ABOVE the stateCap early return, threaded through `pickOffers`' one filter line as the trailing 6th arg (rng law untouched); `lockedIds` rides the sanitized 17th run-record key, both tickRun deal sites pass the identical `run.lockedIds ?? []`; `lockedIdsFor(pool, meta)` derivation exported from upgrades.js, consumed at the ONE shell creation site (shell boot comment refreshed); ships INERT (zero unlock metadata — CARDS byte-identical by diff fact). ONE authorized re-contract altitude.test.js:42-44 key set; tests/locks.test.js NEW (8 legs a-g, red-for-right-reason → green in one pass, zero red iterations); C1 census appends x2 incl. js/upgrades.js; architecture.md 16→17 keys (both censuses + fence cites). Gate 589/589 @ 8.6 s (was 581/581); status review.

@@ -61,11 +61,28 @@ export function freshEffects() {
   return { floatMul: 1, ropeMul: 1, scoreMul: 1, windowMul: 1, launchMul: 1 };
 }
 
+// FR32 (Story 7.3): the lock DERIVATION — a card is locked iff it carries
+// `unlock` metadata (the S2 counter-map mirror: furthestArea, summits, skips)
+// whose thresholds the meta counters do NOT all satisfy; a missing counter key
+// reads 0 and absent meta reads as a fresh session. Pure data: pool-order ids,
+// no rng, no persistence — the shell derives once at run creation.
+export function lockedIdsFor(pool, meta) {
+  return pool
+    .filter((card) => card.unlock
+      && !Object.entries(card.unlock).every(([key, min]) => (meta?.[key] ?? 0) >= min))
+    .map((card) => card.id);
+}
+
 // state (Story 3.1, FR10) is the optional run-state view ({ ropes, charged, ... },
 // plain data). A card whose stateCap thresholds are ALL met is a dead pick and
 // hides; state omitted keeps the exact 2-arg contract for every frozen caller.
-export function isAvailable(card, owned, state) {
+// lockedIds (Story 7.3, FR32) is the TRAILING optional 4th arg — ids in the
+// run's frozen lock set hide, and invalid (non-array) data reads as no locks.
+export function isAvailable(card, owned, state, lockedIds) {
   if ((owned[card.id] ?? 0) >= (card.cap ?? Infinity)) return false;
+  // Story 7.3: the lock check sits ABOVE the early return — most cards carry
+  // no stateCap, so a check below it would never run for them (dead locks).
+  if (Array.isArray(lockedIds) && lockedIds.includes(card.id)) return false;
   const cap = card.stateCap;
   if (!cap || !state) return true;
   const thresholds = Object.entries(cap);
@@ -79,8 +96,10 @@ export function isAvailable(card, owned, state) {
 // replacement. May return fewer than count, never a repeat; mutates nothing.
 // state is the TRAILING optional 5th arg — the inverse-CDF consumes rng
 // positionally, so rng must never shift (determinism legs depend on it).
-export function pickOffers(pool, owned, count, rng, state) {
-  const remaining = pool.filter(c => isAvailable(c, owned, state));
+// lockedIds is the TRAILING optional 6th arg — availability-only reading, it
+// consumes zero rng, so the stream never shifts for it either (FR32).
+export function pickOffers(pool, owned, count, rng, state, lockedIds) {
+  const remaining = pool.filter(c => isAvailable(c, owned, state, lockedIds));
   const out = [];
   while (out.length < count && remaining.length > 0) {
     const total = remaining.reduce((t, c) => t + (RARITY_WEIGHT[c.rarity] ?? 1), 0);
