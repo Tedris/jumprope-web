@@ -1050,6 +1050,11 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     // the census (C1) — same list-only bookkeeping rule, authorized by the
     // story doc, tripwire stays armed, authorizes nothing else.
     'tests/skins.test.js',
+    // Story 8.2 create round (2026-11-12): the story artifact joins the census
+    // by this file's own written authorization — the same bookkeeping rule the
+    // c38070e (6.1) create-round append used; list-only, authorized by the
+    // story doc, tripwire stays armed, authorizes nothing else.
+    '_bmad-output/implementation-artifacts/8-2-equip-without-a-menu-the-no-chrome-surface.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');
