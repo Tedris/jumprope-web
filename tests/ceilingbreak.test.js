@@ -792,6 +792,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     'tests/glbspike.test.js',
     'tests/fixtures/make-probe-glb.js',
     'tests/fixtures/probe.glb',
+    // Story 8.5 create round (2026-11-12): the story artifact joins the census
+    // by this file's own written authorization — the same bookkeeping rule the
+    // c38070e (6.1) create-round append used; list-only, authorized by the
+    // story doc, tripwire stays armed, authorizes nothing else.
+    '_bmad-output/implementation-artifacts/8-5-nothing-installed-nothing-changed-player-fuel-prove.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
