@@ -1,6 +1,7 @@
 ---
 stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation']
 peelPassStepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation']
+playerFuelPassStepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation']
 inputDocuments:
   - _bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md
   - _bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/decision-log.md
@@ -8,6 +9,10 @@ inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/implementation-artifacts/epic-6-retro-2026-11-10.md
   - docs/kickoff/readiness-audit-2026-11-07/decisions.md
+  - _bmad-output/implementation-artifacts/epic-7-retro-2026-11-11.md
+  - _bmad-output/planning-artifacts/sprint-change-proposal-2026-11-05.md
+  - _bmad-output/brainstorming/brainstorm-mods-skins-engine-2026-11-05/.memlog.md
+  - _bmad-output/brainstorming-session-2026-11-10.md
 ---
 
 # jumprope-web - Epic Breakdown
@@ -80,6 +85,13 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 - FR34: Unlocks present as in-game fiction in the PS1 voice — the tech tree the disguise was hiding (PRD thesis). Any new meta surface (title strip, unlock card, meta screen) lands inside the letterbox resize path (NFR7), never re-clocks the rope (NFR8), and never breaks the fiction.
 - FR35 (prestige clause): "prestige = permanent climb power" is direction only (GDD Out-of-Scope). If anything permanent feeds climb power into run start, it enters as a named story decision with summit-gate evidence, catalogue-rule conformance (no score-reduction; one axis, one card), and the CARD-09 constraint (no offer-frequency escalation through the back door).
 
+**Player Fuel — Epic 8 delta (minted 2026-11-11 by the Player Fuel requirements pass; sources: the Epic 8 stub above, the 2026-11-05 mods/skins brainstorm memlog, sprint-change proposal 2026-11-05, Epic 7 retro riders. No-invention rule: every row cites its source; rows marked OPEN DECISION have no source yet — designer lane at story creation, the FR33 pattern)**
+
+- FR36 (Mods surface): Data-only mods ship as JSON manifests fetched from static files at runtime; a manifest is parsed and applied as DATA only — nothing a manifest carries is ever evaluated, imported, or executed (`JSON.parse` only; no eval, no dynamic import). Absent or unloadable mods leave the shipped defaults fully in place. The manifest schema and patchable field-set are an OPEN DECISION (candidates: cosmetic fields first — skins, names, palette LUTs; gameplay-parameter fields second, and those trigger the band-gate rider: re-run the 7.5 sweep shapes before landing numbers). *(Sources: epics.md Epic 8 stub; memlog:9,17–18 — JSON native, YAML declined; sprint-change:37)*
+- FR37 (Palette skins): A palette skin recolors the skipper by rewriting the colors of the three shared character materials only (rose/prop/limb, `js/render3d.js:185-316` material census) — no geometry change, no new asset class, no touch to the vertex-snap/flat-shading/dither render path (pillar 3). With no skin equipped, rendering is byte-identical to the Epic 7 ship state — the regression pin. *(Sources: memlog:11 skin-tiers insight; Epic 8 stub "palette skins first")*
+- FR38 (Model skins — spike-gated): A `.glb` model skin may replace the skipper's meshes, bound by a documented joint-name contract with the `render3d.js` rig (named joints for torso/head/limbs/scarf/handles), posed by the same phase-clock pipeline. It SHIPS ONLY IF a spike proves the contract — spike-gated is the stub's condition, not a phase; declined spike, declined feature. NFR10's zero-bitmap rule is amended only by a documented spike outcome (pillar 3's "documented exception" clause). *(Sources: Epic 8 stub; sprint-change:37; memlog:11,18 — `.glb` embeds PNG natively)*
+- FR39 (Equip surface): The player can equip a palette skin and load a manifest mod from a surface that keeps the no-chrome identity: no panels, no settings screen, nothing deeper than the prompt line, inside the letterbox resize path (NFR7), PS1-voiced copy. The equip mechanism itself is an OPEN DECISION (candidates on record: URL query param; conventional path with a manifest index, e.g. `mods/index.json`; title-strip key cycle). Persisting an equipped choice would add a fourth `jumprope-*` storage key → the STOP-AND-ASK tripwire stands (retro :58) unless the decision explicitly names it non-meta. *(Source: no spec source exists — surfaces must satisfy EXPERIENCE/DESIGN rules; mechanism = designer lane)*
+
 ### NonFunctional Requirements
 
 - NFR1: 60 FPS sustained on low-end/integrated GPUs at the 240-row internal render target.
@@ -95,6 +107,9 @@ Derived from GDD (the GDD states design intent without numbered FRs; these are e
 - NFR11: Modern evergreen browsers (desktop + mobile) with WebGL; storage degrades gracefully when unavailable.
 - NFR12: Meta-state storage reads at boot add nothing measurable to the page-load-to-first-jump budget (NFR3) — small synchronous reads only, no parse stalls. (Derived, 2026-11-10 pass.)
 - NFR13: A missing or corrupt meta key degrades to fresh session-only state with no thrown errors — invalid states are data. (Derived, 2026-11-10 pass.)
+- NFR14: Mod/skin discovery and parsing stay inside the NFR3 load budget (<2 s page-load to first jump): zero extra blocking requests on the default path when nothing is installed; cosmetic application never touches sim timing (NFR2). (Derived, 2026-11-11 pass — extends the NFR3/NFR12 boot-budget pattern.)
+- NFR15: A `.glb` model skin holds NFR1 (60 FPS on integrated GPUs) and NFR10's geometry budget (a few hundred triangles), or the spike documents the revised budget as an aesthetic exception (pillar 3) with measurements as evidence. (Derived from Epic 8 stub spike-gate + pillar 3.)
+- NFR16: A malformed, partial, or missing mod/skin degrades to the shipped default with no thrown errors — invalid states are data; the NFR13 storage-degradation pattern's sibling for mod input. (Derived, 2026-11-11 pass.)
 
 ### Additional Requirements
 
@@ -120,6 +135,11 @@ From Architecture (technical requirements that impact epic/story creation):
 - Meta state lives shell-side (storage seam); the sim receives it as an immutable input at run creation — like rng — and never writes storage; the `tests/boundary.test.js` purity fence stays unchanged. (Extraction from the purity rule + the `loadBest` seam pattern.)
 - Persistence naming: the as-built key is bare `jumprope-best`; new meta keys follow the same naming; the never-shipped versioned `jumprope-best-altitude` stays unshipped unless a story explicitly migrates (architecture §Persistence, ledger :162).
 - Doc-drift flag (retro A5 rule): GDD body text still says META-01 "deferred" (loop §Meta; Out of Scope) — superseded by the PRD pin; GDD text rides the SAME commit as the Epic 7 story that ages it out.
+- **Epic 8 riders (Epic 7 retro, binding on every Epic 8 story at creation — retro :57):** A2 re-contract pre-scan is effective FROM THE FIRST create-story: any story touching the `render3d.js` material/recolor path statically enumerates the frozen legs its shared shapes affect (census key-sets, prompt/copy prefix legs, harness call sites, deal twins, run-record key lists) and lists them in the authorization BEFORE dev — 7.4's six-surprise round is the named failure mode. Seed-honesty (:259 standing), creation-site single-witness (:293) and L9 JIT (:299) riders apply when their triggers are touched.
+- **Band-gate honesty (retro :59):** any Epic 8 change to the deal or physics re-runs the 7.5 sweep shapes before landing numbers; the band gate stays run-scoped by decision (S4, `architecture.md`).
+- **Meta-creep tripwires stand (retro :58):** "no fourth meta key" and "persisted-flag = STOP-AND-ASK" bind any Epic 8 persistence, skin choices included. Character-select / alternate skipper was CONSIDERED AND DECLINED in Epic 7 S3 — `.glb` skins are the same skipper wearing another body; reopening needs a new source, not a model file.
+- Mods/skins load SHELL-side (the `loadBest`/storage-seam and rng pattern): the sim core receives any mod-derived value as immutable data at boot/run creation, never fetches, never parses; the `tests/boundary.test.js` import-graph fence stays byte-identical — no new file joins the sim graph for Epic 8.
+- Character-rig joint names become a public contract with FR38 — renaming a rig part in `render3d.js` is a breaking contract change and belongs in story text, not drive-by refactors.
 
 ### UX Design Requirements
 
@@ -129,6 +149,12 @@ From Architecture (technical requirements that impact epic/story creation):
   [`ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md`](ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md)
   (HUD slots, prompt voice, role colors); re-validate this section against it
   when new screens (e.g. Epic 7 candidates) are planned.
+
+**Player Fuel — UX delta (minted 2026-11-11 pass; sources: ux-designs 2026-10-28 + Epic 8 material)**
+
+- UX-DR1: The equip/selection surface (FR39) is built inside the DESIGN.md vocabulary — zero new panels, borders, radius, webfonts; copy lives in the prompt slot, ≤40 chars, PS1-plausible, dry; the HUD center-axis stack position is unchanged. Any equip confirmation rides the existing prompt-line mechanism, never a new layer.
+- UX-DR2: Failure surfaces as silence: mod/skin load failure behaves like the storage-unavailable pattern (EXPERIENCE.md State Patterns) — the game just plays with shipped defaults, no error chrome. If the FR39 decision chooses any failure notice, it is a PS1-voiced prompt-slot copy line, nothing more.
+- UX-DR3 (derived): Skin legibility floor — an equipped skin keeps the skipper readable against ALL five area palettes (alley→moon, `js/areas.js`); the scene owns spectacle, a skin must not camouflage the character. Verified per palette at story time, not just the default area.
 
 ### FR Coverage Map
 
@@ -167,6 +193,10 @@ FR32: Epic 7 - lock-aware deal filter (zero-locks deal = v2 deal, regression pin
 FR33: Epic 7 - run-outcome unlock rules (set/thresholds = open decisions S2/S3 at story creation)
 FR34: Epic 7 - unlocks present as PS1-voiced in-game fiction on letterboxed surfaces
 FR35: Epic 7 - prestige clause: decision-gated, conditional story only; default = no permanent climb power
+FR36: Epic 8 - data-only JSON-manifest mods, parsed as data, schema = open decision; gameplay-param fields band-gate-riders
+FR37: Epic 8 - palette skins via the three shared character materials; no-skin = byte-identical default (regression pin)
+FR38: Epic 8 - .glb model skins via rig joint-name contract — spike-gated, ships only on proven contract
+FR39: Epic 8 - no-chrome equip/load surface (mechanism = open decision; fourth-meta-key tripwire armed)
 
 NFR1–NFR3: All gameplay epics - performance budget held per epic; NFR3 verified at final validation
 NFR4/NFR5: Every story - frozen-test discipline + red-green legs; boundary fence per epic
@@ -178,6 +208,9 @@ NFR10: Epics 4–5 - area vistas and rigs stay within geometry budget
 NFR11: Final validation - browser/storage degradation check
 NFR12: Epic 7 - meta boot reads stay inside the NFR3 load budget
 NFR13: Epic 7 - corrupt/missing meta keys degrade to fresh session-only state (data, not errors)
+NFR14: Epic 8 - mod/skin boot cost inside the NFR3 load budget; default path unchanged when nothing is installed
+NFR15: Epic 8 - model-skin FPS/geometry budgets held or amended by spike evidence
+NFR16: Epic 8 - malformed mods/skins degrade to shipped defaults (data, not errors)
 
 ## Epic List
 
@@ -230,13 +263,20 @@ S2 **Unlock currency** = all three 7.2 counters, mapped: reach-unlocks gate on f
 S3 **What unlocks** = catalogue branch through the 7.3 locks. Alternate skipper NOT in Epic 7 — character-select revisit rides Epic 8/v3-era material.
 S4 **(retro A3)** = band gate recorded **run-scoped** in `architecture.md` (same prep pass); 7.5's meta-build sweeps name exceptions with sweep evidence; the policy-bot build space stays as shipped by 6.1.
 
-### Epic 8 (candidate): Player Fuel
+### Epic 8: Player Fuel
 
-Depth from outside the roadmap: data-only mods (JSON manifests) and palette
-skins first; `.glb` model skins behind a spike (joint-name contract with the
-`render3d.js` rig). Serves surprise-by-escalation without touching the sim
-core's purity rules. Plotted post-v2; spike-gated.
-(Source: 2026-11-05 sprint-change-proposal; PRD thesis.)
+Depth from the players' side of the screen: data-only mods (JSON manifests), palette skins recoloring the three shared character materials, and `.glb` model skins bound by a rig joint-name contract — spike-gated. The disguise's depth becomes community-driven while the sim core's purity, the phase clock, the band gate, and the default view stay provably untouched: with no mods or skins installed, the shipped game renders byte-identical to the Epic 7 state.
+(Promoted from candidate by the 2026-11-11 Player Fuel planning pass; sources: sprint-change-proposal-2026-11-05, PRD thesis, brainstorm-mods-skins-engine-2026-11-05 memlog, epic-7-retro-2026-11-11 §Epic 8 preview.)
+
+**FRs covered:** FR36, FR37, FR38, FR39 · **NFRs:** NFR14, NFR15, NFR16 (FR38 may amend NFR10 only via spike outcome; NFR6/NFR7/NFR8 hold unchanged)
+
+**Decisions (designer lane; OPEN — resolved at story creation, the FR33/Epic 7 S1–S4 pattern):**
+P1 **Manifest schema** = the patchable field-set a JSON manifest may declare. No source exists. Cosmetic fields first; any gameplay-parameter field triggers the band-gate rider — re-run the 7.5 sweep shapes before landing numbers (retro :59).
+P2 **Equip mechanism** = how a player loads a mod or equips a skin. No source exists. Candidates on record: URL query param; conventional path with a manifest index (`mods/index.json`); title-strip key cycle. Must satisfy the no-chrome rules (UX-DR1); persisting a choice arms the fourth-key STOP-AND-ASK tripwire (retro :58).
+
+**Single-epic rationale (step-02 Step C):** one value theme (community depth for the disguise); every story targets the same core files — the `render3d.js` material/recolor path and the shell's load path — so the material consolidates into one epic with ordered stories, not file-churn siblings. The one real risk boundary (the `.glb` joint-name contract) is a spike-gated story *inside* the epic: a declined spike kills one story, not a milestone.
+
+**Disposition — v3 direction (2026-11-10 capture):** stays ON HOLD, not cut by this pass; its fun-proven condition (v2 deploy/UAT + playtesting) is unmet. Checked 2026-11-11: zero mods/skins overlap with the v3 material. The retro's "un-parked only by that pass" is honored as: fuel recorded (FR36–FR39), v3 stories not spawned.
 
 ## Epic 1: Ropes as Health
 
@@ -1105,3 +1145,150 @@ So that the peel cannot quietly break the balance.
 **Then** bare-build results are unchanged — the peel moves no bare dial, and batch-driven meta legs hold the seed-honesty contract (A2; FR10/FR11 protection)
 
 **And** the FR35 prestige clause is dispositioned explicitly: if prestige (permanent climb power) was not adopted by the S1 scope decision at 7.4 kickoff, this story records the default — no permanent climb power ships — and the A4 owned-cap decision input pack rides this story's text if the correct-course session hasn't landed
+
+## Epic 8: Player Fuel
+
+Depth from the players' side of the screen: data-only mods (JSON manifests), palette skins recoloring the three shared character materials, and `.glb` model skins bound by a rig joint-name contract — spike-gated. The disguise's depth becomes community-driven while the sim core's purity, the phase clock, the band gate, and the default view stay provably untouched: with no mods or skins installed, the shipped game renders byte-identical to the Epic 7 state.
+
+**FRs covered:** FR36, FR37, FR38, FR39 · **NFRs:** NFR14, NFR15, NFR16 · **Protected:** NFR1/NFR2/NFR3 (budgets), NFR6 (static-only), NFR7 (letterbox), NFR8 (phase clock), NFR10 (amendable only by 8.4's spike), NFR4/NFR5 (gate + frozen-test discipline)
+
+**Epic-level riders (binding on every Epic 8 story — epic-7 retro :57–59, A2 effective NOW):**
+- **A2 re-contract pre-scan** — the shared shapes this epic provably touches, statically enumerated 2026-11-11; each story's dev authorization MUST re-affirm and exact-leg-enumerate before code: **(a)** boot storage-key census `tests/pausemenu.test.js` L2 (`jumprope-audio`+`jumprope-best`+`jumprope-meta` EXACTLY — :432) — reddens the instant a skin/mod choice persists; **(b)** setItem write-site censuses `tests/metalegger.test.js` (readdir idiom, :110) and reducedmotion L10(a) — new persistence paths are the kill target; **(c)** material censuses `tests/areavistas.test.js` (vista materials never shared with rig/rope/particle meshes :292; ghost mats birth-static `color.hex === birth` :276) and `tests/ceilingbreak.test.js` §3/§4 rope-write census (`Color#set` wrap :291) — recoloring must be sets on existing shared materials, never construction of new ones; **(d)** shared-snap-uniform legs riding EVERY world material (`tests/render3d.test.js:156`, `tests/areavistas.test.js:477`) — a new material breaks them; **(e)** the i-frame body-dim path (`GHOST_DIM`, `js/render3d.js:42` — ghostspread/feelcap reads); **(f)** the `#hud` live-children census (`tests/ropehud.test.js` #hud contract; pausemenu :303, ceilingmarker/runmark reads) — equip surfaces must add zero #hud children. Mid-round surprises: STOP-and-report, written batch — 7.4's six-surprise round is the named failure mode.
+- **Seed honesty** (:259 standing) for any batch-driven leg; creation-site single-witness (:293) and L9 JIT (:299) if their triggers are touched.
+- **Band gate (retro :59):** any story changing the deal or physics re-runs the 7.5 sweep shapes before landing numbers; band gate stays run-scoped (S4).
+- **Purity:** `tests/boundary.test.js` stays byte-identical; fetch/parse/eval-of-mod-content NEVER enters the sim graph — the loader lives shell-side, mod values enter the sim as immutable boot/run-creation inputs at most.
+- **Character-select boundary (S3, retro :58):** `.glb` skins are the same skipper in another body; nothing in this epic spawns a second character, a fourth meta key, or a persisted flag without STOP-AND-ASK.
+
+### Story 8.1: Skins as data — the palette-skin seam
+
+As a player who wants the skipper to look like mine,
+I want the character's three shared material colors to be overridable data,
+So that a recolor is a numbers change, not a code change — the first breath of the mod surface.
+
+**Acceptance Criteria:**
+
+**Given** a fresh boot with no skin supplied
+**When** the renderer builds and a run plays
+**Then** the rose/prop/limb materials carry the shipped default colors and every render leg is byte-identical to the Epic 7 ship state — the untouched frozen suite IS the proof (FR37, doctrine "untouched-green IS the proof")
+
+**Given** a skin record `{ name, colors: { rose, prop, limb } }` delivered through a shell-side seam at boot
+**When** rendering runs
+**Then** the three shared materials carry the skin's colors — applied at ONE application site (the one-seam law), as `Color#set` writes on the EXISTING shared materials; no new material construction, no geometry change, and the vertex-snap/sRGB-Bayer/flat-shading path is untouched (FR37, rider (c)/(d))
+
+**Given** a partial skin record (one or two colors missing)
+**When** it is applied
+**Then** missing colors fall back to shipped defaults, no thrown error — invalid states are data (NFR16)
+
+**And** the i-frame dim (`GHOST_DIM` over the body materials) behaves identically under any skin — i-frames juice reads unchanged (rider (e); protected behavior)
+
+**And** no player-facing equip UI ships in this story: the record arrives via the seam (boot-time parameter/test injection) — the surface is Story 8.2's. The story ships INERT against the default (the 7.3 pattern), with the A2 pre-scan re-affirmed in its dev authorization naming exact legs from riders (a)–(f)
+
+**And** a Node-side contract test for the skin-record factory ships in the same change (factory-convention rule), and a legibility witness samples the three skin-vs-vista checks that Story 8.5 extends to all five palettes (UX-DR3 seed)
+
+### Story 8.2: Equip without a menu — the no-chrome surface
+
+As a player,
+I want to equip a skin (and later, load mods) without any settings screen existing,
+So that the game stays one interaction from play and the diorama stays chrome-free.
+
+**Acceptance Criteria:**
+
+**Given** decision P2 (OPEN at kickoff — resolve BEFORE implementation, record in story text + PRD Open Items, the D-006/Epic-7-S pattern): equip mechanism = one of { URL query param; conventional path with manifest index `mods/index.json`; title-strip key cycle }
+**When** this story starts
+**Then** the choice is written with reasons, and every AC below reads against the chosen mechanism (FR39, P2)
+
+**Given** the shipped game booting with nothing equipped/installed
+**When** the page loads
+**Then** the network shape is unchanged from baseline — zero extra requests — and the load-to-first-jump budget holds (NFR14, NFR3)
+
+**Given** the chosen mechanism in use
+**When** a palette skin is equipped
+**Then** it flows through Story 8.1's seam; the surface adds NO panels, NO borders, NO #hud children (rider (f)), keeps the HUD center-axis stack byte-positioned, and any copy lands in the prompt slot ≤40 chars in the PS1 voice, scaled inside the letterbox path (FR39, UX-DR1, NFR7)
+
+**Given** a failed or absent equip (missing file, bad record)
+**When** boot continues
+**Then** the game plays with shipped defaults and shows NOTHING — silence is the error surface, per the storage-unavailable pattern (UX-DR2, NFR16)
+
+**And** the mechanism adds NO new key bindings unless P2 chose the key cycle — in which case the key-comparison census (pausemenu L5, zero-new-bindings fence) is re-contracted IN THE AUTHORIZATION before dev, exact legs listed (A2)
+
+**And** persistence default: equip does NOT persist; persisting a choice is a named decision requiring written STOP-AND-ASK, explicit non-meta naming, AND the pausemenu L2 storage-key census re-contract before any fourth `jumprope-*` key ships (tripwires retro :58, riders (a)/(b))
+
+**And** `prefers-reduced-motion` dampens any equip cosmetic; judgment and timing byte-identical (FR23 pattern)
+
+### Story 8.3: Mods are data — the JSON-manifest surface
+
+As a mod maker,
+I want to describe changes in a JSON manifest the game reads,
+So that the disguise's depth can grow without anyone touching the engine.
+
+**Acceptance Criteria:**
+
+**Given** decision P1 (OPEN at kickoff — resolve BEFORE implementation, record in story text + PRD Open Items): manifest schema + patchable field-set; default posture = cosmetic fields only (skin records, display names, palette LUT entries); a gameplay-parameter field may be ADDED by this decision ONLY together with the band-gate rider — 7.5 sweep shapes re-run and in-band before its numbers land (FR36, P1, retro :59)
+**When** this story starts
+**Then** the schema is written with the field list and every field's fallback (FR36)
+
+**Given** a manifest reachable through the P2 mechanism
+**When** the boot processes it
+**Then** it is fetched and `JSON.parse`d once, shell-side, applied as DATA — and a red-green leg proves a manifest carrying a script-looking string field executes NOTHING: no `eval`, no `new Function`, no dynamic import fed by manifest content (FR36, the data-only law)
+
+**Given** a manifest violating the schema — unknown keys, wrong types, out-of-range colors, oversized payload
+**When** the boot processes it
+**Then** the whole manifest or the offending fields (per the P1 decision) fall back to defaults with no thrown error and no half-applied cosmetics reaching a frame (NFR16)
+
+**Given** the sim import graph after this change
+**When** `tests/boundary.test.js` runs
+**Then** it is byte-identical and green — no fetch/parse/IO entered the sim graph; rng draw streams stay bit-identical for cosmetic mods, proven by the counting-wrapper technique (FR36, purity riders)
+
+**And** the manifest-loader factory gets a Node-side contract test over JSON fixtures in the same change — no DOM anywhere (factory-convention rule)
+
+**And** an example shipped manifest (one cosmetic skin, the epic's dogfood) rides this story so the schema has a live witness, not just fixtures
+
+### Story 8.4: The joint-name contract — the `.glb` spike
+
+As a 3D artist with Blender or Blockbench,
+I want the rig's joint names to be a published contract,
+So that a `.glb` I made drops into the game without touching engine code.
+
+**Acceptance Criteria:**
+
+**Given** the shipped `render3d.js` rig
+**When** the spike runs
+**Then** the joint inventory — torso, head, cap, eyes, scarf chain segments, arms L/R, legs L/R, handles, jiggle props — is enumerated, names pinned by a Node leg, and documented as the public contract: renaming a rig part is a BREAKING contract change that belongs in story text, never a drive-by refactor (FR38)
+
+**Given** a probe `.glb` bound by that contract (committed test asset — the second committed binary, so the ledger precedent ride applies: sha/size recorded like TRACK-1)
+**When** it is posed through the phase-clock pipeline at sampled phases
+**Then** it tracks the default skipper's pose within tolerance at every sample, and the scarf-chain/jiggle semantics are decided ON RECORD: bind, or fall off gracefully (FR38)
+
+**Given** the probe measured
+**When** the spike reports
+**Then** triangle count vs NFR10's budget and an FPS read vs NFR1 are written INTO story text as evidence — numbers never enter tests (seed-honesty style); NFR10's zero-bitmap rule is amended ONLY if the evidence justifies a documented aesthetic exception (NFR15, pillar 3)
+
+**And** if the contract or the budgets do not hold: the story records the spike DECLINED, the feature stays shelved with the reasons — spike-gated means no proof, no ship (FR38)
+
+**And** the default path is untouched either way: no `.glb` equipped means zero new fetches and byte-identical render — the spike's assets and loaders live test/shell-side only (NFR14)
+
+### Story 8.5: Nothing installed, nothing changed — Player Fuel prove
+
+As the designer,
+I want the bare build provably equal to the Epic 7 game,
+So that Player Fuel can never quietly regress the shipped feel.
+
+**Acceptance Criteria:**
+
+**Given** the 8.4 baseline
+**When** this story lands
+**Then** `js/` and `tests/support/` are byte-identical — ZERO product code in the prove story (the 7.5 pattern)
+
+**Given** a default boot
+**When** the prove census runs
+**Then** witnesses hold: the three character materials carry shipped default colors and the materials census is unchanged; zero extra network requests vs baseline; the `#hud` shape census is unchanged; boot storage keys are still EXACTLY the shipped three; the boundary fence is byte-identical; gate <10 s green (FR37 pin, NFR14, NFR4, riders (a)/(c)/(d)/(f))
+
+**Given** every shipped palette skin
+**When** the skipper renders on EACH of the five area palettes
+**Then** the legibility floor holds per palette — the skipper never camouflages against the scene; witnesses run all five vistas, not just Alley (UX-DR3, FR37)
+
+**Given** the shipped example mod applied
+**When** the bare-build gate re-run executes
+**Then** bare summit rates are bit-identical to the 7.5 record, and IF P1 kept the schema cosmetic-only, the story records "no deal/physics touch — sweep unchanged" WITH the 7.5 citation instead of re-running it (band-gate rider, S4, seed-honesty: numerics live only in story text)
+
+**And** this story's docs pass lands in the SAME commit (A5 doc-drift rule): GDD §Asset Requirements gains the mods-as-data sentence + the `.glb`/NFR10 disposition from 8.4, the PRD gains the Player Fuel open-items row with P1/P2 outcomes, and `architecture.md` records the loader seam and the joint-name contract in one place
