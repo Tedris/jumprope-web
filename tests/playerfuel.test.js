@@ -23,7 +23,7 @@ import { startRun } from '../js/game.js';
 // Donor craft, COPIED never imported (the suites are self-contained): the
 // three-stub boot from tests/skins.test.js:106-121 (identity-address law: the
 // three character materials are the FIRST THREE constructions, render3d.js:
-// 187-189, in order rose/limb/prop — birthHex-addressing is DEAD on the seam),
+// 191-193, in order rose/limb/prop — birthHex-addressing is DEAD on the seam),
 // the withFetch/responseFor channels and the mirror boot from
 // tests/mods.test.js:209-243, the shippedConst/table/normalizeSkin extraction
 // family from the same file, the withLocation stub from tests/equip.test.js:
@@ -133,7 +133,7 @@ async function bootSkin(skin, canvas = { width: 480, height: 640 }) {
   const scene = mod.createScene(canvas, skin);
   const world = reg.scenes[0];
   // IDENTITY-ADDRESS law: the character materials are the first three
-  // constructions, in order rose, limb, prop (render3d.js:187-189).
+  // constructions, in order rose, limb, prop (render3d.js:191-193).
   const mats = reg.materials.slice(0, 3);
   return { scene, reg, world, mats };
 }
@@ -241,9 +241,28 @@ async function mirrorBoot(search, serveText, recorder = null) {
     }));
 }
 
+// Boot-arm rng census (review round BH-1): count Math.random draws across a
+// mirrorBoot. The shipped renderer/boot draws ZERO (render3d.js:679 law,
+// shell never draws at boot) — so a boot-time rng leak into ANY arm reddens
+// its count, and the twin's equality is witnessed at the boot, not inferred
+// from streams a boot cannot reach.
+async function rngCensus(fn) {
+  const real = Math.random;
+  let draws = 0;
+  Math.random = () => { draws++; return real(); };
+  try {
+    return { result: await fn(), draws };
+  } finally {
+    Math.random = real;
+  }
+}
+
 // Seeded LCG (numerical-recipes constants, exact 32-bit via Math.imul) and
 // the counting wrapper (the locks.test.js:15-29 donor) — the rng-never-shift
-// law is OBSERVED (equal call counts), never argued.
+// law is OBSERVED (equal call counts), never argued. The boot census
+// (rngCensus, review round BH-1) makes the BOOT ARMS themselves observable:
+// the shipped renderer consumes zero randomness at boot (render3d.js:679),
+// so any boot-time rng leak reddens the draw count, never rides a stream.
 function seeded(seed) {
   let s = (seed >>> 0) || 1;
   return () => {
@@ -267,7 +286,7 @@ function counting(seed) {
 function dealStream() {
   const ids = [];
   const calls = [];
-  for (let seed = 0; seed < 10; seed++) {
+  for (let seed = 1; seed <= 10; seed++) {
     const rng = counting(seed);
     const { run } = startRun();
     for (let n = 0; n < 3; n++) {
@@ -287,7 +306,7 @@ test('§a(1) the default boot carries the shipped colors on the identity-address
   const env = await bootSkin(undefined);
   const defaults = [await shippedConst('ROSE'), await shippedConst('FLOOR'), await shippedConst('PROP')];
   assert.deepEqual(env.mats.map(m => m.color.hex), defaults,
-    'rose/limb/prop carry the DERIVED shipped defaults [ROSE, FLOOR, PROP] — never inlined (the identity-address law: the FIRST THREE constructions, render3d.js:187-189, in order rose/limb/prop)');
+    'rose/limb/prop carry the DERIVED shipped defaults [ROSE, FLOOR, PROP] — never inlined (the identity-address law: the FIRST THREE constructions, render3d.js:191-193, in order rose/limb/prop)');
   assert.equal(env.reg.colorSets, 0,
     'EXACTLY zero color writes at the default boot — the skins §d inert tripwire re-observed inside the prove suite (FR37)');
 });
@@ -343,6 +362,8 @@ test('§c the #hud shape census is unchanged: five static children in shipped do
   const ids = ['hud-score', 'hud-best', 'hud-ropes', 'hud-prompt', 'hud-owned'];
   const at = ids.map(id => block.indexOf(`id="${id}"`));
   assert.ok(at.every(i => i >= 0), 'the five STATIC #hud children all ship (index.html untouched)');
+  assert.equal((block.match(/<span/g) ?? []).length, 5,
+    'EXACTLY five <span> children inside #hud — a SIXTH static child is chrome creep this AC2c witness exists to catch (review round BH-2); a non-span wrapper reddens the id-presence assert above');
   assert.deepEqual(at, [...at].sort((a, b) => a - b),
     'the static #hud children stay in shipped document order — the panel is runtime-built, never markup-built (NFR6); the runtime half stays untouched-green in pausemenu L1/L5 own boots');
   for (const p of ['index.html', 'css/style.css']) {
@@ -389,7 +410,7 @@ test('§d the boot storage keys are EXACTLY the shipped three at the shipped sit
 
 test('§e zero-sim-adjacency: js/game.js carries ZERO skin tokens, createScene(canvas, skin) is the ONE consumer, modManifest lives ONLY in shell.js (AC4, D5)', async () => {
   const gameCode = (await readFile(resolve(jsDir, 'game.js'), 'utf8')).replace(/^[ \t]*\/\/.*$/gm, '');
-  assert.equal((gameCode.match(/\bskin\b/g) ?? []).length, 0,
+  assert.equal((gameCode.match(/\bskin/ig) ?? []).length, 0,
     'js/game.js contains ZERO skin tokens (comment-stripped, the BH-3 lesson) — the sim literally cannot see a skin (FR37; startRun(lockedIds) game.js:108 takes no cosmetic input)');
   const render = await readFile(render3dPath, 'utf8');
   assert.equal((render.match(/createScene\(canvas, skin\)/g) ?? []).length, 1,
@@ -428,21 +449,25 @@ test('§g the mod-applied twin: the shipped example mod RECOLORS the renderer ar
   const mint = JSON.parse(text).skin.colors; // DERIVED from the committed witness — never re-typed
   // Arm A — the bare composition; the deal stream is observed right after it.
   const bareCalls = [];
-  const bare = await mirrorBoot('', text, bareCalls);
+  const bareArm = await rngCensus(() => mirrorBoot('', text, bareCalls));
+  const bare = bareArm.result;
   assert.deepEqual(bareCalls, [], 'the bare composition requested nothing (the NFR14 law, one more witness)');
   assert.equal(bare.reg.colorSets, 0, 'and its materials ride the shipped defaults (colorSets 0)');
+  assert.equal(bareArm.draws, 0, 'the bare BOOT drew ZERO shipped rng (review round BH-1: the boot arm is OBSERVED, not argued)');
   const A = dealStream();
   // Arm B — the skin-carrying composition: ?mods=mods/mint.json served from
   // the committed bytes (the mods §d :483 donor — live proof the mod DID apply).
   const modCalls = [];
-  const modded = await mirrorBoot('?mods=mods/mint.json', text, modCalls);
+  const modArm = await rngCensus(() => mirrorBoot('?mods=mods/mint.json', text, modCalls));
+  const modded = modArm.result;
   assert.deepEqual(modCalls, ['mods/mint.json'], 'the manifest read EXACTLY one request, url verbatim');
   assert.deepEqual(modded.mats.map(m => m.color.hex), [mint.rose, mint.limb, mint.prop],
     'the three identity-addressed materials carry the mint hexes — the shipped example mod APPLIES through the ONE seam');
   assert.equal(modded.reg.colorSets, 3, 'EXACTLY three color writes — the 8.1 application law unchanged, once per material');
+  assert.equal(modArm.draws, 0, 'the skin-carrying BOOT drew ZERO shipped rng TOO — the manifest path never touches the shipped randomness at boot (review round BH-1)');
   const B = dealStream();
   assert.deepEqual(B.ids, A.ids,
-    'the same-seed offer-id streams are deepEqual between the bare and the skin-carrying compositions — the sim never sees the boot (D5, the deal twin at seeds 0..9)');
+    'the same-seed offer-id streams are deepEqual between the bare and the skin-carrying compositions — the sim never sees the boot (D5, the deal twin at seeds 1..10; BH-3: the LCG guard aliases seeds 0 and 1, so 0..9 would witness 9 streams)');
   assert.deepEqual(B.calls, A.calls,
-    'identical rng consumption across the twin (the locks :25-29/:166 law) — no draw ever shifted; the counting wrapper wraps a LOCAL seeded(), never the shipped rng');
+    'identical rng consumption across the twin (the locks :25-29/:166 law) — no draw ever shifted; the streams share a LOCAL seeded() (their invariance witness), and the BOOT arms are censused SEPARATELY above for zero shipped-rng draws (review round BH-1: boot-induced shifts land in the census, never hide in a stream)');
 });
