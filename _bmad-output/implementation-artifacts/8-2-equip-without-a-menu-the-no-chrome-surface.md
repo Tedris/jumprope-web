@@ -3,7 +3,7 @@ baseline_commit: f7ab750ede831b28c9c0626f66e94c3a6312d0f8
 ---
 # Story 8.2: Equip without a menu — the no-chrome surface
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -178,6 +178,7 @@ lane-qwen38-ultra/qwen (omp worker Dev82)
 - Boot-region law held: the equip read lands at the boot site inside `startGame` (now :110-111), ABOVE the boot loads (`loadBest`/`loadMeta` shifted :200/:206) — nothing between them, the metalegger ≤400-char window untouched; the module-scope insert sits at :62-83, beside `normalizeSkin` (:53-60 byte-identical).
 - New suite: 12 legs (§a x3, §b x1, §c x1, §d x3, §e x2, §f x2); final gate **632/632 @ 8.52 s** (620 + 12; NFR4 < 10 s holds).
 - Diff-fact audit (`git diff --stat`): js/shell.js +34/−4, the two §6 allow-sets +4/+4, new tests/equip.test.js — exactly the D7 file set; zero new js/ files, zero new specifiers (summitapproach :831-832 untouched-green).
+- **Review round (3 layers @ f7ab750..ebf2985; Auditor mutation-walk executed in scratch):** 4 patches applied — (P1/A82-1+BH-1, MED) the boot-site COMPOSITION had no source fence: the computed-and-discarded mutant (`normalizeSkin(undefined)` restored at the seam, guard line kept) survived all 632 legs — §e gains the pairing assert `normalizeSkin(resolveSkinParam(equipSearch, SKINS))` count EXACTLY 1 (live: count = 1 at shell.js:111); (P2/BH-2+EH-1) §f no-VCS catch now `continue`s per file (was `return` — skipped both files) and the assert message states the ownership split (this leg = working-tree dirt; committed drift = §6 twins); (P3/BH-3) §e token censuses now run on comment-stripped shell source (`shellCode`) — the dev-round comment incident proved the trap; (P4/BH-4) §b asserts `normalizeSkin`'s colors bag is a fresh copy — the shared-table-record pitfall mechanized (copy already held by source fact, shell.js:53-59). Dismissals: BH-5 (exact-line extraction regexes — breakage is loud, A81-5 precedent), BH-6 (`Object.hasOwn` — NFR11 evergreen targets, epics.md:107), BH-7 (param-name case — the designed garbage/silence law), BH-8 (prose cites), EH-1 (HEAD-compare kept per twins-split; message fixed by P2). Cite refresh (EH-2, doc-only): story-text `:81`/`:170-:176` cites are PRE-DEV positions — post-dev truth: boot site shell.js:110-111, loads :200/:206 (Debug Log :178 already carried the measured positions). Zero new legs (12 stands); every frozen leg still untouched-green; gate **632/632 @ 8.5 s**.
 
 ### Completion Notes List
 
@@ -193,10 +194,11 @@ lane-qwen38-ultra/qwen (omp worker Dev82)
 - `tests/equip.test.js` (new — 12 legs §a-§f, the equip contract suite)
 - `tests/ceilingbreak.test.js` (modified — §6 allow-set dev-round append, list-only)
 - `tests/summitapproach.test.js` (modified — §4.3 allow-set dev-round append, list-only)
-- `_bmad-output/implementation-artifacts/8-2-equip-without-a-menu-the-no-chrome-surface.md` (this file — tasks, record, Status review)
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` (8-2 → review)
+- `_bmad-output/implementation-artifacts/8-2-equip-without-a-menu-the-no-chrome-surface.md` (this file — tasks, record, Status done)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (8-2 → done)
 
 ## Change Log
 
 - 2026-11-12 (create round): story created from epics.md:1188-1216 + FR39 :93 / NFR14 :110 / NFR16 :112 / UX-DR1-3 :155-157 + Epic 8 riders :1155-1160; **P2 ANSWERED by the user 2026-11-12 — URL query param — recorded in AC1 + prd.md Open Items (D-006 pattern)**; the A2 re-contract pre-scan re-affirmed with exact legs — **19 rows, ZERO authorized re-contracts, zero questions**; design pinned D1-D7 (shell-side guarded read, SKINS table with the mint witness, pure `resolveSkinParam`, no-copy, non-persistent); the L5 key-census clause of AC5 mooted by the chosen mechanism. **C1 census allow-append x2 SPENT IN THIS CREATE COMMIT** (story artifact into both §6 twins — mechanical list-only rule, precedent 6845157/ff1d97b; prd.md + sprint-status.yaml verified ALREADY members of both sets — no appends needed) + prd.md Open Items row + sprint-status (`8-2` → ready-for-dev). Tests delta: 0/0 (create only); gate 620/620.
 - 2026-11-12 (dev round): P2 mechanism SHIPPED per D1-D7 — `SKINS` table (the mint witness, D2) + pure `resolveSkinParam` (D3: `Object.hasOwn` law, lowercase keys, never throws, zero IO) landed shell-internal; the :81 boot-site source expression replaced by the guarded shell-side `equipSearch` read (D4, LOOK_KNOBS idiom) — a miss is `normalizeSkin(undefined)`, the byte-inert 8.1 composition, every frozen boot bit-identical; zero new js/ files, zero imports, zero copy, zero keys, zero storage; `tests/equip.test.js` NEW (12 legs §a-§f); **zero re-contracts — all 19 A2 rows untouched-green**; C1 dev-round allow-append x2 (list-only); gate **632/632 @ 8.52 s**; Status: review.
+- 2026-11-12 (review round): 3 layers, 4 patches (boot-site composition fence — the discard mutant dies; §f continue-per-file + ownership message; comment-stripped token censuses; normalizeSkin copy assert) + 5 dismissal groups (BH-5/6/7/8, EH-1) + EH-2 doc-cite note; zero re-contracts, zero new legs; all 7 ACs + all 7 Ds PASS per Auditor; gate **632/632 @ 8.5 s**; status done.

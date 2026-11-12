@@ -241,6 +241,8 @@ test('§b the SKINS table is clean data: lowercase keys, every entry survives no
     assert.equal(k, k.toLowerCase(), `table key '${k}' is lowercase (the resolver lowercases the param against it)`);
     const out = normalizeSkin(SKINS[k]);
     assert.ok(Object.keys(out.colors).length > 0, `entry '${k}' survives normalizeSkin with non-empty colors`);
+    assert.notEqual(out.colors, SKINS[k].colors,
+      "normalizeSkin's colors bag is a FRESH copy — the shared table record can never be mutated through the seam (review BH-4)");
   }
   const MINT = await mintWitness();
   assert.deepEqual(SKINS.mint, MINT,
@@ -326,13 +328,14 @@ test('§d a garbage location twin (?skin=nosuch) boots the shipped defaults with
 
 test('§e the URL read is shell-side ONLY: one guarded read site in shell.js, render3d untouched, no persistence, one boot call (AC5/AC6, D1)', async () => {
   const shell = await readFile(shellPath, 'utf8');
+  const shellCode = shell.replace(/^[ \t]*\/\/.*$/gm, ''); // comment-stripped source for token censuses (review BH-3)
   const render = await readFile(render3dPath, 'utf8');
   assert.equal((shell.match(/typeof location !== 'undefined'/g) ?? []).length, 1,
     'the guarded read shape appears EXACTLY once in shell.js (D4 — the LOOK_KNOBS idiom, one site)');
-  assert.equal((shell.match(/location\.search/g) ?? []).length, 2,
-    'location.search appears in shell.js exactly twice — BOTH inside the one guard expression (D1: exactly one READ SITE)');
-  assert.equal(shell.split('\n').filter(l => l.includes('location.search')).length, 1,
-    'all location.search reads sit on ONE line — the guard line, nowhere else in the shell');
+  assert.equal((shellCode.match(/location\.search/g) ?? []).length, 2,
+    'location.search appears in shell CODE exactly twice — BOTH inside the one guard expression (D1: exactly one READ SITE; comments can never inflate this census)');
+  assert.equal(shellCode.split('\n').filter(l => l.includes('location.search')).length, 1,
+    'all location.search reads sit on ONE code line — the guard line, nowhere else in the shell');
   assert.equal((render.match(/location\.search/g) ?? []).length, 2,
     'render3d keeps EXACTLY its two LOOK_KNOBS location.search tokens (render3d.js:53) — the param read leaked NOT into the render/sim graph (epics.md:1159; BROWSER_IO_RE would NOT catch this, so this leg owns it)');
   assert.equal((shell.match(/loadMeta\(localStorage\)/g) ?? []).length, 1,
@@ -341,6 +344,8 @@ test('§e the URL read is shell-side ONLY: one guarded read site in shell.js, re
     'the shell gains ZERO setItem sites — the URL is a per-load choice, nothing persists (AC6; the pausemenu L5 sibling fence)');
   assert.equal((shell.match(/createScene\(/g) ?? []).length, 1,
     'shell.js still calls createScene exactly once — the swap landed INSIDE the one consumption site');
+  assert.equal((shell.match(/normalizeSkin\(resolveSkinParam\(equipSearch, SKINS\)\)/g) ?? []).length, 1,
+    'the boot site composes the resolver INTO the seam (D4 verbatim) — the URL read is CONSUMED, never computed-and-discarded (review A82-1/BH-1: the discard mutant dies here)');
 });
 
 test('§e zero new jumprope-* storage key literals: the fourth-key tripwire stays armed, unspent (AC6)', async () => {
@@ -359,11 +364,11 @@ test('§f index.html and css/style.css are byte-identical to HEAD — zero DOM, 
     try {
       ({ stdout: head } = await runGit('git', ['show', `HEAD:${p}`], { encoding: 'buffer', maxBuffer: 1 << 24 }));
     } catch (err) {
-      if (/not a git repository|bad revision|invalid object/i.test(String(err.stderr) + String(err.message))) return; // no VCS: nothing to diff-census
+      if (/not a git repository|bad revision|invalid object/i.test(String(err.stderr) + String(err.message))) continue; // no VCS for THIS file: skip it, keep checking the other (review BH-2)
       throw err;
     }
     const work = await readFile(resolve(rootDir, p));
-    assert.ok(work.equals(Buffer.from(head)), `${p} is byte-identical to HEAD — the no-chrome law holds by diff fact (the census skips this file otherwise)`);
+    assert.ok(work.equals(Buffer.from(head)), `${p} is byte-identical to HEAD — working-tree chrome dirt dies here; COMMITTED chrome drift is owned by the §6 twins (neither file sits in an allow-set) — this leg owns uncommitted drift (review BH-2/EH-1)`);
   }
 });
 
