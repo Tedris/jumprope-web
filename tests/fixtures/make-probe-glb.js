@@ -52,7 +52,7 @@ const ROWS = [
 const ROOTS = ['torso', 'legL', 'legR', 'handleL', 'handleR'];
 
 // The chest joint is a pure group (the spring rides it); every other contract
-// name carries a mesh (D3: 16 nodes, 16 meshes).
+// name carries a mesh (D3: 17 nodes, 16 meshes).
 function hasMesh(name) {
   return name !== 'chest';
 }
