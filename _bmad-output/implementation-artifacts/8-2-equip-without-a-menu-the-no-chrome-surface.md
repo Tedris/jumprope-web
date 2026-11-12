@@ -3,7 +3,7 @@ baseline_commit: f7ab750ede831b28c9c0626f66e94c3a6312d0f8
 ---
 # Story 8.2: Equip without a menu — the no-chrome surface
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -76,16 +76,16 @@ Pre-scan re-affirmed at create time against HEAD f7ab750 (gate 620/620 @ 8.5 s),
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — js/shell.js: the no-chrome equip surface (AC: 1, 2, 3, 4, 5, 6, 7; D1-D7)
-  - [ ] Module scope (next to normalizeSkin, :53-60 region): `SKINS` table literal (D2 — the mint witness colors verbatim) + `function resolveSkinParam(search, table)` (D3 shape, `Object.hasOwn`, `.toLowerCase()`, zero IO tokens). `normalizeSkin` untouched.
-  - [ ] Boot site :81: the guarded `equipSearch` read + `normalizeSkin(resolveSkinParam(equipSearch, SKINS))` (D4) — the ONE consumption site regex stays satisfied; comments name FR39/P2/UX-DR2 silence + the zero-request law; nothing between :170 and :176.
-  - [ ] Diff fact: no import line change, no new file, no setItem/localStorage/DOM/copy/key token added.
-- [ ] Task 2 — new suite tests/equip.test.js (AC: all; see Testing guidance) — legs (a)-(f).
-- [ ] Task 3 — bookkeeping + gate (AC: 2, 3, 5, 6)
-  - [ ] C1 dev round: append `'tests/equip.test.js'` to BOTH §6 allow-sets, list-only comment (after the 8.2 create-round entry in each twin).
-  - [ ] `./run_tests.sh` green (baseline **620/620 @ f7ab750**, ~8.5 s; expect 620 + the equip legs, NFR4 < 10 s).
-  - [ ] Diff-fact audit in the Debug Log (the 7.3/8.1 pattern): `git diff --stat` = shell.js + the two allow-sets + tests/equip.test.js only.
-  - [ ] Dev round stamps `review`; final gate re-run; sprint-status per house style.
+- [x] Task 1 — js/shell.js: the no-chrome equip surface (AC: 1, 2, 3, 4, 5, 6, 7; D1-D7)
+  - [x] Module scope (next to normalizeSkin, :53-60 region): `SKINS` table literal (D2 — the mint witness colors verbatim) + `function resolveSkinParam(search, table)` (D3 shape, `Object.hasOwn`, `.toLowerCase()`, zero IO tokens). `normalizeSkin` untouched.
+  - [x] Boot site :81: the guarded `equipSearch` read + `normalizeSkin(resolveSkinParam(equipSearch, SKINS))` (D4) — the ONE consumption site regex stays satisfied; comments name FR39/P2/UX-DR2 silence + the zero-request law; nothing between :170 and :176.
+  - [x] Diff fact: no import line change, no new file, no setItem/localStorage/DOM/copy/key token added.
+- [x] Task 2 — new suite tests/equip.test.js (AC: all; see Testing guidance) — legs (a)-(f).
+- [x] Task 3 — bookkeeping + gate (AC: 2, 3, 5, 6)
+  - [x] C1 dev round: append `'tests/equip.test.js'` to BOTH §6 allow-sets, list-only comment (after the 8.2 create-round entry in each twin).
+  - [x] `./run_tests.sh` green (baseline **620/620 @ f7ab750**, ~8.5 s; expect 620 + the equip legs, NFR4 < 10 s).
+  - [x] Diff-fact audit in the Debug Log (the 7.3/8.1 pattern): `git diff --stat` = shell.js + the two allow-sets + tests/equip.test.js only.
+  - [x] Dev round stamps `review`; final gate re-run; sprint-status per house style.
 
 ## Testing guidance — tests/equip.test.js
 
@@ -167,14 +167,36 @@ Donors: the cross-source extraction idiom in tests/skins.test.js:159-166 (shell.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+lane-qwen38-ultra/qwen (omp worker Dev82)
 
 ### Debug Log References
 
+- Baseline: frontmatter `baseline_commit` PRESERVED from the create round (`f7ab750`, gate 620/620 @ 8.5 s, tree clean at dev start) — workflow Step 4 law: an existing baseline is never overwritten (HEAD at dev start was `d55175b`, the create commit).
+- New-suite red iteration (1 red, fixed in PRODUCT-comment, zero frozen-test edits): the §e `location.search` token census measured 3 ≠ 2 — the boot-site COMMENT had named the token literally; the comment was reworded ("URL-search") so the census stays token-exact (the guard line holds both reads; one READ SITE by D1).
+- Ownership censuses measured post-change: shell.js — `typeof location !== 'undefined'` ×1, `location.search` ×2 (both inside the one guard expression, one line), `setItem(` ×0, `createScene(` ×1, `loadMeta(localStorage)` ×1, `jumprope-` ×0; render3d.js `location.search` ×2 UNCHANGED (LOOK_KNOBS only — the boundary `BROWSER_IO_RE` carries no `location` token, so §e owns the purity rider).
+- Guidance §d verdict: the location-stub boots ARE feasible — `globalThis.location = { search }` set immediately before the data-URL boot, restored in `finally`, stub carries NO knob keys; the mint boot also pins fog near/far at the LOOK_KNOBS fallbacks (derive-from-source) — the `skin` param cannot collide with a look knob.
+- Boot-region law held: the equip read lands at the boot site inside `startGame` (now :110-111), ABOVE the boot loads (`loadBest`/`loadMeta` shifted :200/:206) — nothing between them, the metalegger ≤400-char window untouched; the module-scope insert sits at :62-83, beside `normalizeSkin` (:53-60 byte-identical).
+- New suite: 12 legs (§a x3, §b x1, §c x1, §d x3, §e x2, §f x2); final gate **632/632 @ 8.52 s** (620 + 12; NFR4 < 10 s holds).
+- Diff-fact audit (`git diff --stat`): js/shell.js +34/−4, the two §6 allow-sets +4/+4, new tests/equip.test.js — exactly the D7 file set; zero new js/ files, zero new specifiers (summitapproach :831-832 untouched-green).
+
 ### Completion Notes List
 
+- Ships the P2 mechanism exactly as pinned: `?skin=<name>` read SHELL-side at boot — ONE guarded `location.search` site (LOOK_KNOBS idiom, epics.md:1159 purity rider) — resolved against the shipped `SKINS` table through the pure `resolveSkinParam`; a hit composes `normalizeSkin(record)` into the 8.1 seam at the ONE consumption site, render3d.js byte-zero.
+- AC1: the mechanism legs (§a resolver contract, §d location-stub boots) + the recorded decision (AC1 text, prd.md P2-EQUIP row — create commit). AC2: diff facts — zero new fetch/import/script tokens, the param is a table KEY never a path, `index.html`/`css/style.css` byte-identical to HEAD (§f leg), gate time unchanged.
+- AC3: `?skin=mint` end-to-end recolors the identity-addressed rose/limb/prop materials at the ONE site, three writes (§d); §c proves the Node boot composition (`resolveSkinParam('')`) takes ZERO color writes — the frozen 620 boot bit-identical by construction. AC4: silence — 9 garbage/hostile inputs undefined + 2 garbage boots zero-write, nothing thrown, nothing shown (§a/§d).
+- AC5/AC6/AC7: zero new bindings (pausemenu L5 :536 untouched-green + §f donor-form key census); zero persistence (§e `setItem` 0 / `loadMeta` 1 / zero `jumprope-*` literals + L2/metalegger/reducedmotion censuses untouched-green, fourth-key tripwire armed not spent); no cosmetic → reducedmotion untouched-green by diff fact.
+- Deviations: zero. Deferrals: zero new (the Deferred items section already owns P1/persistence/display/legibility/color-range). Questions: zero — all 19 A2 rows GREEN untouched, zero re-contracts spent.
+
 ### File List
+
+- `js/shell.js` (modified — `SKINS` + `resolveSkinParam` at module scope beside `normalizeSkin`; the boot-site source expression replaced by the guarded `equipSearch` read; +34/−4)
+- `tests/equip.test.js` (new — 12 legs §a-§f, the equip contract suite)
+- `tests/ceilingbreak.test.js` (modified — §6 allow-set dev-round append, list-only)
+- `tests/summitapproach.test.js` (modified — §4.3 allow-set dev-round append, list-only)
+- `_bmad-output/implementation-artifacts/8-2-equip-without-a-menu-the-no-chrome-surface.md` (this file — tasks, record, Status review)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (8-2 → review)
 
 ## Change Log
 
 - 2026-11-12 (create round): story created from epics.md:1188-1216 + FR39 :93 / NFR14 :110 / NFR16 :112 / UX-DR1-3 :155-157 + Epic 8 riders :1155-1160; **P2 ANSWERED by the user 2026-11-12 — URL query param — recorded in AC1 + prd.md Open Items (D-006 pattern)**; the A2 re-contract pre-scan re-affirmed with exact legs — **19 rows, ZERO authorized re-contracts, zero questions**; design pinned D1-D7 (shell-side guarded read, SKINS table with the mint witness, pure `resolveSkinParam`, no-copy, non-persistent); the L5 key-census clause of AC5 mooted by the chosen mechanism. **C1 census allow-append x2 SPENT IN THIS CREATE COMMIT** (story artifact into both §6 twins — mechanical list-only rule, precedent 6845157/ff1d97b; prd.md + sprint-status.yaml verified ALREADY members of both sets — no appends needed) + prd.md Open Items row + sprint-status (`8-2` → ready-for-dev). Tests delta: 0/0 (create only); gate 620/620.
+- 2026-11-12 (dev round): P2 mechanism SHIPPED per D1-D7 — `SKINS` table (the mint witness, D2) + pure `resolveSkinParam` (D3: `Object.hasOwn` law, lowercase keys, never throws, zero IO) landed shell-internal; the :81 boot-site source expression replaced by the guarded shell-side `equipSearch` read (D4, LOOK_KNOBS idiom) — a miss is `normalizeSkin(undefined)`, the byte-inert 8.1 composition, every frozen boot bit-identical; zero new js/ files, zero imports, zero copy, zero keys, zero storage; `tests/equip.test.js` NEW (12 legs §a-§f); **zero re-contracts — all 19 A2 rows untouched-green**; C1 dev-round allow-append x2 (list-only); gate **632/632 @ 8.52 s**; Status: review.

@@ -59,6 +59,30 @@ function normalizeSkin(raw) {
   return { name: String(raw?.name ?? ''), colors };
 }
 
+// Story 8.2 (FR39, P2 = URL query param): the shipped built-in skin table —
+// plain DATA with lowercase keys. The value of ?skin= is a KEY into this
+// table, NEVER a path or URL — the zero-request law (AC2: nothing is ever
+// fetched from the param). 'mint' is Story 8.1's legibility-certified
+// witness (tests/skins.test.js §g; the 8.1 D4 colors), so the mechanism has
+// a live proof: ?skin=mint visibly recolors the run, no art decision needed.
+const SKINS = { mint: { name: 'mint', colors: { rose: 0x7ce38b, prop: 0x10151f, limb: 0x9aa4b2 } } };
+
+// Story 8.2 (D3, AC4): the equip resolver — a PURE factory, shell-internal
+// (the 8.1 D3 landing lesson holds: a fifth static specifier would break the
+// frozen four-specifier shell census, summitapproach §4.2). Raw search STRING
+// in ('' = none), table record or undefined out. URLSearchParams is a pure
+// global — the LOOK_KNOBS idiom (render3d.js:53) is the precedent; keys are
+// lowercase so ?skin=Mint hits; Object.hasOwn is the law — NOT table[v]:
+// ?skin=constructor must MISS, the prototype chain is not inventory. Never
+// throws, never does IO; a miss yields undefined -> normalizeSkin -> the
+// shipped defaults, i.e. inert default + total silence (UX-DR2, NFR16).
+function resolveSkinParam(search, table) {
+  const v = new URLSearchParams(search).get('skin');
+  if (typeof v !== 'string') return undefined;
+  const k = v.toLowerCase();
+  return Object.hasOwn(table, k) ? table[k] : undefined;
+}
+
 export function startGame(canvas) {
   // UI-03 (D-07/D-10): one contain-fit band computation sizes BOTH the CSS box
   // and the backing buffer — render3d's passive poll re-derives RT, snap grid
@@ -75,10 +99,16 @@ export function startGame(canvas) {
     [canvas.width, canvas.height] = [Math.max(2, dw), Math.max(2, dh)];
   }
   applyWindowSize();
-  // Story 8.1 (FR36/FR39): the ONE skin boot site. The source expression is
-  // the INERT placeholder (undefined -> shipped defaults); Story 8.2's P2
-  // equip mechanism replaces the source expression only, at this one site.
-  const scene = createScene(canvas, normalizeSkin(undefined));
+  // Story 8.1 (FR36/FR39): the ONE skin boot site; Story 8.2's P2 mechanism
+  // (FR39, URL query param — the user decision 2026-11-12) replaces ONLY the
+  // source expression, at this one site: the guarded shell-side URL-search
+  // read — the LOOK_KNOBS idiom (render3d.js:53), shell-only per the Epic 8
+  // purity rider — resolved against the shipped SKINS table. A miss is inert
+  // default + silence (UX-DR2/NFR16); nothing is fetched (zero-request law),
+  // nothing persisted (AC6), nothing shown. Node boots take '' -> undefined ->
+  // the byte-inert 8.1 composition: every frozen boot is bit-identical.
+  const equipSearch = typeof location !== 'undefined' && location.search ? location.search : '';
+  const scene = createScene(canvas, normalizeSkin(resolveSkinParam(equipSearch, SKINS)));
   const rng = Math.random;
   // D-N07: js/shell.js is audio.js's sole consumer. The import is dynamic so
   // the frozen data:-URL Node harnesses (which cannot resolve new relative
