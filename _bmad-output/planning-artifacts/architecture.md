@@ -154,6 +154,8 @@ persisted** (permadeath, FR23).
 - Every factory return contract gets a Node-side contract test in the same
   change that introduces it; gesture/audio guards get red-green test legs when
   written, not at verification. (v1.0 retrospective lessons.)
+- **Player Fuel loader seam (Epic 8):** the mods/skins loader is SHELL-INTERNAL — `js/shell.js` owns the ONE guarded `location.search` read (:202), the ONE `fetch` site, and the ONE top-level-await pre-resolution (:203) with `startGame` still synchronous; the default boot makes ZERO requests (NFR14). Skin/manifest values enter the product ONLY as the `createScene(canvas, skin)` argument (`js/render3d.js:154`) — `js/game.js` contains zero `skin` tokens; fetch/parse/eval NEVER enters the sim graph (boundary fence).
+- **Joint-name contract (FR38):** the 17 bindable joint names published in `8-4-the-joint-name-contract-the-glb-spike.md` §Contract are the public contract; renaming, reparenting, or inserting/reordering children inside the rig block is a BREAKING CONTRACT CHANGE that belongs in story text with the table re-published — never a drive-by refactor. The spike's verdict is ACCEPTED (NFR10 NOT amended); `.glb` wiring requires its own authorized story.
 
 ## Delivery & Tooling
 

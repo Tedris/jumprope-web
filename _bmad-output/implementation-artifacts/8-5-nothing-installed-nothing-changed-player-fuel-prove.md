@@ -3,7 +3,7 @@ baseline_commit: 5f1637dbf5d53f668a914db453977902211ba776
 ---
 # Story 8.5: Nothing installed, nothing changed — Player Fuel prove
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -92,20 +92,20 @@ Pre-scan re-affirmed at create time against HEAD 5f1637d (gate 692/692 @ 8.518 s
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — the prove suite (AC: 2; D2/D3)
-  - [ ] `tests/playerfuel.test.js` NEW — legs (a)-(e) exactly as D3 pins them (boot donor: skins.test.js:106-121 craft; channel donors: mods.test.js:209-243; counting wrapper: locks.test.js:25-29; `shippedConst()` donor: skins.test.js:150-157). Mechanism assertions only; zero inlined hexes (derive or read from the booted scene); zero current-build numerics (A2).
-  - [ ] Leg (f): the R1-pairing fence — `skins.test.js` source contains `for (const tier of [1, 2, 3, 4, 5])` EXACTLY once (the mods §f donor form).
-  - [ ] C1 census append: `tests/playerfuel.test.js` into BOTH allow-sets (list-only, the 7.5-D7/8.4 wording) in the dev commit.
-- [ ] Task 2 — R1: the §g five-tier extension (AC: 3; D4/R1)
-  - [ ] Apply EXACTLY the three authorized edits in the R1 section (banner/comment+loop/title + the re-contract comment line); everything else in skins.test.js byte-identical.
-  - [ ] Run §g alone; all five tiers green (pre-check D4: min margins 0x42/0x45/0x4c/0x53/0x41). A red tier ⇒ STOP-AND-ASK with the offending pair (D4's breach clause) — never a palette or skin-table retune inside a prove story.
-- [ ] Task 3 — the AC4 record + the citation check (AC: 4; D5)
-  - [ ] Re-read the cited rows (prd.md :137; 7-5 story D3 :29-33; architecture.md :168-172/:190-193) and confirm they read as quoted; the sentence "no deal/physics touch — sweep unchanged" lands in this file's Debug Log row + the mod-applied leg (g) runs green (renderer arm live + sim arm twin equal).
-- [ ] Task 4 — the docs pass, same commit (AC: 5; D6)
-  - [ ] GDD §Asset Requirements paragraph (D6a verbatim); architecture.md two Invariants bullets (D6b verbatim, anchored after :156); prd.md UNTOUCHED — D6c reconcile record (no new row).
-- [ ] Task 5 — diff-facts and the green gate (AC: 1; D1/D8)
-  - [ ] Diff fact: `git diff --name-only 5f1637d` = story file, sprint-status.yaml, twins, `tests/playerfuel.test.js`, `tests/skins.test.js`, gdd.md, architecture.md — NOTHING else; `js/`, `index.html`, `css/`, `tests/support/` byte-identical (log the empty `git diff --name-only 5f1637d -- js/ tests/support/ index.html css/` in the Debug Log — the 7.5 Task-4 form).
-  - [ ] `./run_tests.sh` green: **692 baseline @ 8.518 s re-measured at create; expect 700/700 < 10 s** (D8); status → review.
+- [x] Task 1 — the prove suite (AC: 2; D2/D3)
+  - [x] `tests/playerfuel.test.js` NEW — legs (a)-(e) exactly as D3 pins them (boot donor: skins.test.js:106-121 craft; channel donors: mods.test.js:209-243; counting wrapper: locks.test.js:25-29; `shippedConst()` donor: skins.test.js:150-157). Mechanism assertions only; zero inlined hexes (derive or read from the booted scene); zero current-build numerics (A2).
+  - [x] Leg (f): the R1-pairing fence — `skins.test.js` source contains `for (const tier of [1, 2, 3, 4, 5])` EXACTLY once (the mods §f donor form).
+  - [x] C1 census append: `tests/playerfuel.test.js` into BOTH allow-sets (list-only, the 7.5-D7/8.4 wording) in the dev commit.
+- [x] Task 2 — R1: the §g five-tier extension (AC: 3; D4/R1)
+  - [x] Apply EXACTLY the three authorized edits in the R1 section (banner/comment+loop/title + the re-contract comment line); everything else in skins.test.js byte-identical.
+  - [x] Run §g alone; all five tiers green (pre-check D4: min margins 0x42/0x45/0x4c/0x53/0x41). A red tier ⇒ STOP-AND-ASK with the offending pair (D4's breach clause) — never a palette or skin-table retune inside a prove story.
+- [x] Task 3 — the AC4 record + the citation check (AC: 4; D5)
+  - [x] Re-read the cited rows (prd.md :137; 7-5 story D3 :29-33; architecture.md :168-172/:190-193) and confirm they read as quoted; the sentence "no deal/physics touch — sweep unchanged" lands in this file's Debug Log row + the mod-applied leg (g) runs green (renderer arm live + sim arm twin equal).
+- [x] Task 4 — the docs pass, same commit (AC: 5; D6)
+  - [x] GDD §Asset Requirements paragraph (D6a verbatim); architecture.md two Invariants bullets (D6b verbatim, anchored after :156); prd.md UNTOUCHED — D6c reconcile record (no new row).
+- [x] Task 5 — diff-facts and the green gate (AC: 1; D1/D8)
+  - [x] Diff fact: `git diff --name-only 5f1637d` = story file, sprint-status.yaml, twins, `tests/playerfuel.test.js`, `tests/skins.test.js`, gdd.md, architecture.md — NOTHING else; `js/`, `index.html`, `css/`, `tests/support/` byte-identical (log the empty `git diff --name-only 5f1637d -- js/ tests/support/ index.html css/` in the Debug Log — the 7.5 Task-4 form).
+  - [x] `./run_tests.sh` green: **692 baseline @ 8.518 s re-measured at create; expect 700/700 < 10 s** (D8); status → review.
 
 ## Dev Notes
 
@@ -186,19 +186,29 @@ lane-qwen38-ultra/qwen (omp worker session Create85)
 ### Debug Log References
 
 - (create round) Pre-check: offline legibility matrix — mint rose/limb × {slab, sky, floor} × tiers 1-5 (hexes from render3d.js:14-18/:73-97): 30/30 pass `channelDelta ≥ 0x40`; per-tier minimum deltas 0x42/0x45/0x4c/0x53/0x41 (D4 table). A2 facts re-read at 5f1637d: gate 692/692 @ 8.518 s; zero `skin` tokens in js/game.js; jumprope literal sites audio.js:7 + game.js:339/347/367/390; twins tails :794/:1084.
+- 2026-11-12 (dev round): Baseline gate re-measured before edits: **692/692 @ 8.52 s** (wall 8.58 s) @ ddd0577, tree clean. Diff fact (Task 5): `git diff --name-only 5f1637d -- js/ tests/support/ index.html css/` **EMPTY** — AC1's product half discharged by the diff (7.5 Task-4 form); the dev-round change set is EXACTLY {tests/playerfuel.test.js NEW, tests/skins.test.js (R1 §g only, +9/−7 lines, all inside the §g block — boot/render/grounds/assert/MINT/channelDelta byte-identical), gdd.md, architecture.md, this file, sprint-status.yaml, twins ×2 (C1 list-only append)}. Red-green order observed: with the suite written but R1 NOT yet applied, the ONLY red in the tree was playerfuel §f (the R1 pairing fence, 8/9 legs green) — skins §g untouched-green at three tiers, nothing else reddened; after the three authorized §g edits the full gate reads **701/701 @ 8.5 s** (wall 8.57 s; NFR4 < 10 s). Leg count measured: **9 new legs** (§a(1), §a(2), §b(1), §b(2), §c(1), §d(1), §e(1), §f(1), §g(1) — the Testing-guidance enumeration), so 692 + 9 = 701, NOT the D8/header expectation of 700: the guidance enumerates nine numbered legs while the header/D8 counted eight — the enumerated legs are the spec, the count here is the measurement (Completion Notes). playerfuel alone: 0.13 s (< 2 s budget, the metagate law). Citation audit (Task 3) re-read as quoted: 7-5 D3 :29-33 — bare-shape aggregate **0.14167** (bare 0.150 / ropeHeavy 0.150 / chargeHeavy 0.125, in band (0.05, 0.20], dev-round re-run identical to the create round, ×2 cmp-identical processes); prd.md :136/:137 P2-EQUIP/P1-MANIFEST rows ANSWERED with dates; architecture.md :168-172/:190-193 read the S4 run-scoped band-gate rows. No sweep re-ran (band rider UNTRIGGERED, P1 cosmetic-only — AC4). R1 live re-check of the D4 pre-check: the five-tier §g is GREEN — no legibility breach, the STOP-AND-ASK clause (D4/D1) never fired.
 
 ### Completion Notes List
 
 - (create round) Ultimate context engine analysis completed - comprehensive developer guide created. AC2 witness set pinned to mechanisms (D3); AC3 = R1 with a green create-round pre-check (D4); AC4 discharged by citation — "no deal/physics touch — sweep unchanged" + the 7.5 record (D5); AC5 drafted verbatim with the PRD reconciled to the existing P1/P2 rows (D6). One authorized re-contract (R1), zero questions, zero product code expected (D1).
+- (dev round) AC4 disposition RECORDED: **"no deal/physics touch — sweep unchanged"** — the band-gate rider (epics.md:1158) UNTRIGGERED by the P1 cosmetic-only answer (prd.md :137), citing the 7.5 record (`7-5-the-gate-sees-the-peel-meta-aware-balance-prove.md` D3 :29-33: bare-shape aggregate 0.14167 — bare 0.150 / ropeHeavy 0.150 / chargeHeavy 0.125, in band (0.05, 0.20], dev-round re-run identical to the create round, ×2 cmp-identical processes). The mod-applied half is OBSERVED, not argued: leg (g) boots the mirror composition both ways — the mint manifest recolors the three materials (colorSets 3, the mods §d donor) while the same-seed deal streams + rng-draw counts are identical between the bare and skin-carrying compositions (seeds 0..9, the locks counting wrapper), structurally grounded by §e (zero `skin` tokens in game.js, the one createScene consumer, modManifest shell-only).
+- (dev round) PRD RECONCILE, zero-diff fact CONFIRMED: prd.md is NOT in this story's diff — the P2-EQUIP (:136) and P1-MANIFEST (:137) rows already carry the Player Fuel open-items outcomes (added at the 8.2/8.3 dev commits, ANSWERED with dates and links); AC5's PRD half discharges by this record (D6c). The docs pass landed verbatim in the SAME commit: the GDD §Asset Requirements paragraph (D6a) and the two architecture.md Invariants bullets (D6b, after the factory-convention bullet — now :157-158).
+- (dev round) Count note for the record: the gate is **701/701**, not the 700 of D8/the Testing-guidance header — the guidance's own enumeration (§a(1)…§g(1)) is NINE legs; 692 baseline + 9 new is the measurement, the story's "+8" was an authoring count slip (Debug Log dev row). Nothing else moved.
 
 ### File List
 
 - _bmad-output/implementation-artifacts/8-5-nothing-installed-nothing-changed-player-fuel-prove.md (this file)
-- _bmad-output/implementation-artifacts/sprint-status.yaml (8-5 backlog → ready-for-dev)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (8-5 backlog → ready-for-dev at create; ready-for-dev → review at dev)
 - tests/ceilingbreak.test.js (census allow-append only — C1, create)
 - tests/summitapproach.test.js (census allow-append only — C1, create)
-- (dev round: + tests/playerfuel.test.js NEW, tests/skins.test.js §g R1 only, gdd.md, architecture.md, twins playerfuel-append, this file again)
+- tests/playerfuel.test.js (NEW — the prove suite, 9 legs §a-§g)
+- tests/skins.test.js (§g R1 ONLY — the three-tier loop extended to five, law unchanged; everything else byte-identical)
+- _bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/gdd.md (§Asset Requirements paragraph, D6a verbatim)
+- _bmad-output/planning-artifacts/architecture.md (two Invariants bullets, D6b verbatim)
+- tests/ceilingbreak.test.js (census allow-append only — C1, dev)
+- tests/summitapproach.test.js (census allow-append only — C1, dev)
 
 ## Change Log
 
 - 2026-11-12 (create round): story created from epics.md:1270-1294 + FR37 :91 + NFR14 :110 + UX-DR3 :157 + Epic 8 riders :1153-1160 + the P1/P2 records (prd.md :136-:137) + the 7.5 prove pattern (file D3/D5-D7) + 8.4 §Verdict/§Contract (quote-derive for the docs pass). ZERO kickoff decisions to answer — all pre-decided and CITED (D5/D6c, the 7.5-D1 discipline). AC2 pinned to five mechanisms (D3); AC3 = the ONE authorized re-contract R1 (skins §g → five tiers, epics.md:1186 verbatim authorization; create-round pre-check 30/30 green, margins 0x42/0x45/0x4c/0x53/0x41 — D4); AC4 records "no deal/physics touch — sweep unchanged" + the 7.5 D3 :29-33 citation (band-gate rider UNTRIGGERED, P1 cosmetic-only); AC5 docs lines drafted verbatim (D6), PRD reconciled — no new row. A2 pre-scan re-affirmed 18 rows, EXACTLY ONE re-contract (R1), everything else untouched-green. Twins create-append ×2 (story artifact, list-only — this commit); gate re-measured 692/692 @ 8.518 s; sprint-status 8-5 → ready-for-dev.
+- 2026-11-12 (dev round): prove implemented — tests/playerfuel.test.js NEW 9 legs §a-§g (AC2 witnesses (a)-(e) pinned to the D3 mechanisms + the D5 zero-sim-adjacency census + the §f R1 pairing fence + the §g mod-applied twin: mint renderer arm live, deal-stream + rng-draw twin identical at seeds 0..9); R1 applied EXACTLY (skins §g → five tiers, epics.md:1186; banner/comment/loop/title + the re-contract comment, +9/−7, law byte-identical; all five grounds green live — D4 pre-check re-verified); ZERO product code (the AC1 diff fact EMPTY vs 5f1637d); AC4 recorded "no deal/physics touch — sweep unchanged" + the 7.5 D3 :29-33 citation, NO sweep re-run; AC5 docs landed verbatim in the SAME commit (GDD §Asset Requirements paragraph; architecture.md two Invariants bullets; prd.md reconciled — zero diff, D6c); twins C1 dev-append playerfuel list-only ×2; gate 701/701 @ 8.5 s (measured +9 vs the D8 "+8" expectation — authoring count slip, Debug Log); status review.

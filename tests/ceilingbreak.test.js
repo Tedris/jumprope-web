@@ -797,6 +797,10 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // c38070e (6.1) create-round append used; list-only, authorized by the
     // story doc, tripwire stays armed, authorizes nothing else.
     '_bmad-output/implementation-artifacts/8-5-nothing-installed-nothing-changed-player-fuel-prove.md',
+    // Story 8.5 dev round (2026-11-12): the prove suite joins the census
+    // (C1) — same list-only bookkeeping rule, authorized by the story doc,
+    // tripwire stays armed, authorizes nothing else.
+    'tests/playerfuel.test.js',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

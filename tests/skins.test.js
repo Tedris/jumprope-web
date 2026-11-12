@@ -344,15 +344,17 @@ test('§f render3d keeps its shipped material pipeline shape (rider (d) census)'
 });
 
 // ---------------------------------------------------------------------------
-// §g AC6 — the legibility witness: 3 of 5 palettes (D4; 8.5 extends to five)
+// §g AC6 — the legibility witness: all 5 palettes (the D4 law; extended by 8.5 to five)
 // ---------------------------------------------------------------------------
 
-test('§g the sample skin pops on the three camouflage-prone grounds: per-channel >= 0x40 vs slab AND background (AC6, D4)', async () => {
-  // The D4 sample: alley (tier 1, the shipped five-color stage), stratosphere
-  // (tier 4, thin pale cloud shelves), moon-approach (tier 5, the light moon
-  // floor). Numbers live in the story doc; colors are READ from the booted
-  // scene — never inlined here.
-  for (const tier of [1, 4, 5]) {
+// Story 8.5 re-contract (R1): tiers [1,4,5] -> [1,2,3,4,5], law unchanged (epics.md:1186)
+test('§g the sample skin pops on all five grounds: per-channel >= 0x40 vs slab AND background (AC6, D4 law; 8.5 extends to five)', async () => {
+  // The D4 sample: alley (tier 1, the shipped five-color stage), rooftops
+  // (tier 2, the denser skyline), blimp (tier 3, the wide hangars),
+  // stratosphere (tier 4, thin pale cloud shelves), moon-approach (tier 5,
+  // the light moon floor). Numbers live in the story doc; colors are READ
+  // from the booted scene — never inlined here.
+  for (const tier of [1, 2, 3, 4, 5]) {
     const env = await bootSkin(MINT);
     env.scene.render(skinView({ area: tier }));
     const grounds = [

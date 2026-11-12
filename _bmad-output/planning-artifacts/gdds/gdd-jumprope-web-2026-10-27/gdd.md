@@ -461,6 +461,8 @@ LUTs; audio voices procedural + one committed music loop (`audio/track.ogg`,
 Story 5.6). Character rig stays a few hundred triangles (the jiggle shipped as
 two prop boxes).
 
+Player Fuel (Epic 8): mods and palette skins are DATA, not code — JSON manifests under `mods/` and three-material color records recolor the skipper with no geometry change and no new asset class (Stories 8.1–8.3, FR36/FR37); with nothing equipped the render is byte-identical to the Epic 7 state (FR37 regression pin, Story 8.5). `.glb` model skins: contract PROVEN, NOT wired — Story 8.4's spike verdict ACCEPTED (17 joint names, pose identity, probe 32 tris vs the shipped rig's 192, browser FPS median 16.7 ms) puts the feature on the shelf with NFR10's zero-bitmap rule NOT amended; any wiring ships only under its own authorized story (FR38).
+
 ---
 
 ## Development Epics
