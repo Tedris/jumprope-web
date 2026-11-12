@@ -358,3 +358,42 @@ No unowned deferred items survive the boundary. Next-epic entry probe may procee
 
 - **A1 (:332/:335) RUN — sandbox lanes COMPLETE, hardware lanes CARRIED with the checklist** `docs/uat-v2-deploy-2026-11-12.md`: cut = `master` @ `029ca8c`, gate 701/701, static-files-as-is deploy, integrity hashes for the three committed data assets recorded in the doc. Sandbox floors (headless chromium SwiftShader, shipped index.html driven): FPS median 16.4 / p95 17.2 / max 17.7–18.0 / **over20 0** ×2 runs, `?skin=mint` FPS-identical; the Player Fuel request law OBSERVED in a real browser (zero `.json` requests default/`?skin=`, exactly one for `?mods=`, `?skin=nope` inert); mint hexes written exactly on the two skin-carrying boots; NFR3 cold-nav floor 676–916 ms (incl. CDN three). Scratch lane `/tmp/uatv2/` (playwright donor `/tmp/glb-fps-lane`), zero repo deps.
 - **CARRIED to the hardware lane (Ed, owner stands, due next hardware session — not an epic gate):** L1 NFR1 60 FPS human check on 2020-era integrated GPU + L2 NFR3 residential broadband (`:263`'s hardware legs — third slip dispositioned-out at the entry check, this time with the checklist written); L3 Player Fuel GPU re-confirm (`:355` sibling); L4 probe.glb GPU re-confirm OPTIONAL (feature shelved per FR38 — the shipped boot never loads the probe). Sign-off stamps to apply per the checklist's §Sign-off.
+
+## Epic 8 retrospective — action items (2026-11-12, retro run, epic-8-retro-2026-11-12.md)
+
+- **A1 hardware lanes L1–L3 — THE ONE CARRIED ITEM, critical path** (user decision at the retro):
+  run `docs/uat-v2-deploy-2026-11-12.md` §Hardware lanes on a 2020-era integrated GPU + cold-cache
+  broadband, then stamp `:332`/`:263`/`:355` **PAID** with machine class and date. The deploy half is
+  DONE — v2 is live on the public host (Ed confirms at the retro), cut `master` @ `029ca8c`; what
+  NFR1/NFR3 lack is a hardware verdict rather than a SwiftShader floor. Owner: Ed + browser UAT
+  lane; due next hardware session. L4 (`probe.glb`) stays OPTIONAL while the `.glb` shelf holds.
+- **A2 census-family checklist — ADOPTED as the A2 extension** (Epic 8's one process miss): the
+  pre-scan enumerated behavioral censuses well and SOURCE-SHAPE ones badly. Add to every future A2
+  authorization: (i) import-specifier-set censuses — `summitapproach.test.js:831-832` (EXACTLY four
+  `'./'` from `shell.js`, the family that killed `js/skins.js`) and `ceilingbreak` §6 (two from
+  `render3d.js`); (ii) HARNESS STUB SHAPES a new call may touch (the bare-`Color`-no-`.set` boots at
+  `render3d.test.js:55`/`juice.test.js:300` — 13 reds at 8.1's first iteration); (iii) token censuses
+  read COMMENT-STRIPPED, so prose carries no censused token (8.2's comment red; the BH-3 fix);
+  (iv) stage new directories before the §6 porcelain arm reads them (`git status --porcelain`
+  collapses untracked dirs — fired twice: 8.3 `mods/`, 8.4 `tests/fixtures/`).
+  — **OWNER: create-story rounds**; effective first story creation of the next epic; carried into the
+  next planning pass's epic riders.
+- **A3 shell-internal-by-census — RECORDED as `w3`** in `architecture.md` §Known Debt at this retro
+  (doc write PAID): the census discipline is why `js/shell.js` is the repo's largest file and is
+  tested by cross-source extraction. The concurrent-development park (:291) is RE-AFFIRMED; w3 is its
+  named cost, and the tripwire — a story wanting a new `js/` module resolves the specifier census in
+  story text BEFORE dev — belongs in every future boot-path story's authorization.
+- **A4 shelved `.glb` feature — DECISION OWED at the v3 planning pass** (owner Ed): 30 legs, the
+  committed `probe.glb`, and the 17-name joint contract ride the gate for a feature that ships
+  nothing. Keep-or-retire explicitly rather than by drift; the published contract binds rig edits
+  either way.
+- **A5 playtest pass — v3's second un-park condition** (PRD :68–70; owner Ed, before any v3
+  planning): deployed is not played. `gds-playtest-plan` is the natural vehicle; needs the
+  who/where decision.
+- **A6 mutation-probe/pairing-fence expectation — WRITTEN** into `architecture.md` §Invariants at
+  this retro (doc write PAID): the practice that caught every dead leg this epic becomes a rule.
+- **Follow-through verdict (Epic 7 → Epic 8):** A1 ⏳ (unblocked at last — code half done, human half
+  owed), A2 ✅ (two pre-authorized re-contracts epic-wide, zero mid-round surprises; one enumeration
+  miss, now folded into A2 above), A3 ⏳ (park stands, cost quantified as w3), riders ✅ (fourth
+  `jumprope-*` key tripwire ARMED and UNSPENT in all five stories; band gate UNTRIGGERED by citation).
+  First retro-to-retro pass with no ❌.

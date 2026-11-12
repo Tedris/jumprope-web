@@ -154,6 +154,13 @@ persisted** (permadeath, FR23).
 - Every factory return contract gets a Node-side contract test in the same
   change that introduces it; gesture/audio guards get red-green test legs when
   written, not at verification. (v1.0 retrospective lessons.)
+- Mutation-probe expectation (Epic 8 retro): a new leg that certifies inertness,
+  identity, or "nothing happened" ships with the probe that proves it is
+  non-vacuous — the mutation named in the story record, dying in exactly N legs.
+  A leg whose assertion compares two computed values needs a source/pairing
+  fence so deleting either side reddens it. (Epic 8's dead-leg class: a
+  computed-and-discarded boot-site mutant survived 632 legs; 8.5 §g's stream
+  half stayed green with the boots deleted.)
 - **Player Fuel loader seam (Epic 8):** the mods/skins loader is SHELL-INTERNAL — `js/shell.js` owns the ONE guarded `location.search` read (:202), the ONE `fetch` site, and the ONE top-level-await pre-resolution (:203) with `startGame` still synchronous; the default boot makes ZERO requests (NFR14). Skin/manifest values enter the product ONLY as the `createScene(canvas, skin)` argument (`js/render3d.js:154`) — `js/game.js` contains zero `skin` tokens; fetch/parse/eval NEVER enters the sim graph (boundary fence).
 - **Joint-name contract (FR38):** the 17 bindable joint names published in `8-4-the-joint-name-contract-the-glb-spike.md` §Contract are the public contract; renaming, reparenting, or inserting/reordering children inside the rig block is a BREAKING CONTRACT CHANGE that belongs in story text with the table re-published — never a drive-by refactor. The spike's verdict is ACCEPTED (NFR10 NOT amended); `.glb` wiring requires its own authorized story.
 
@@ -193,3 +200,17 @@ persisted** (permadeath, FR23).
   the bot for meta state was rejected pre-Epic-7; if meta unlocks ever shift
   bare-build deal odds, this note reopens (FR32's zero-locks bit-identity is
   the tripwire).
+- (w3) **Shell-internal-by-census** (Epic 8, recorded by the Epic 8 retro
+  2026-11-12) — every Epic 8 mods/skins factory landed INSIDE `js/shell.js`
+  because a new module would add a fifth `'./'` from-specifier and redden the
+  ARCH-01/ARCH-02 census at `tests/summitapproach.test.js:831-832` (8.1 forced
+  by that leg; 8.2/8.3 chose the same landing deliberately). Upside: zero new
+  import-graph surface, `tests/boundary.test.js` untouched. Cost: `js/shell.js`
+  is now the repo's largest file (~1,040 lines), is un-importable under Node,
+  and is tested by cross-source extraction (`new Function` over the extracted
+  function text) plus pairing fences — the most indirect test path in the repo.
+  **Tripwire:** any future story that wants a new `js/` module resolves that
+  census in its OWN story text BEFORE dev (written re-contract, or a deliberate
+  shell-internal landing) — never a mid-round discovery. This is also the
+  named cost behind the parked concurrent-development item (ledger :291): the
+  census discipline and the shell split pull against each other.
