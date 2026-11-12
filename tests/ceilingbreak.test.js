@@ -748,6 +748,9 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // the census (C1) — same list-only bookkeeping rule, authorized by the
     // story doc, tripwire stays armed, authorizes nothing else.
     'tests/metagate.test.js',
+    // Epic 7 retro bookkeeping (epic-7-retro-2026-11-11.md, Artifact
+    // bookkeeping section): list-only, authorizes nothing else.
+    '_bmad-output/implementation-artifacts/epic-7-retro-2026-11-11.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');

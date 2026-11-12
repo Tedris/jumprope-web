@@ -326,3 +326,16 @@
   serialization costs accepted meanwhile (this epic ran 5 stories serially at ~2 h each).
 
 No unowned deferred items survive the boundary. Next-epic entry probe may proceed.
+
+## Epic 7 retrospective — action items (2026-11-11, retro run, epic-7-retro-2026-11-11.md)
+
+- **A1 v2 deploy cut + UAT bundle — PROMOTED to critical path** (user decision at the retro):
+  rides ledger :263's standing owner (browser UAT lane / v2-deploy milestone); after slipping
+  through the whole of Epic 7, complete it BEFORE the next epic's planning pass.
+- **A2 re-contract pre-scan convention — ADOPTED** (user decision at the retro): story creation
+  touching shared shapes (census key-sets, prompt/copy prefix legs, harness call sites, deal
+  twins, run-record key lists) MUST statically enumerate the affected frozen legs in the
+  authorization BEFORE dev — 7.4's six unplanned reds is the named failure mode.
+  — **OWNER: create-story rounds**; effective first story creation of the next epic.
+- **A3 concurrent-development enabling (:291) — PARK RE-AFFIRMED** (user decision at the retro):
+  no enabling scheduled; owner stands as written at :291.
