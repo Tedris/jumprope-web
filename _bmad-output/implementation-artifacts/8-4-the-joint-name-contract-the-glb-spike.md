@@ -3,7 +3,7 @@ baseline_commit: d3014ad7df9282938df3a8f284f79b8f6059b286
 ---
 # Story 8.4: The joint-name contract — the `.glb` spike
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -109,17 +109,17 @@ Pre-scan re-affirmed at create time against HEAD d3014ad (gate 662/662 @ 8.5 s),
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — `tests/fixtures/make-probe-glb.js` + generated `tests/fixtures/probe.glb` (AC: 2, 3, 5; D3)
-  - [ ] The generator: pure module exporting `makeProbeGlb(): Uint8Array` — 17 contract-name nodes per the §Contract table (translations VERBATIM from the table — they must `===` the shipped literals: Float32 storage means the leg compares `Math.fround(shippedValue)` — DERIVE shipped values via the boot world, not literals), 16 two-triangle POSITION accessors, JSON chunk key order fixed (stringify-deterministic), space-padded JSON chunk, BIN chunk. Zero `Date`/`Math.random`/map-iteration-order dependence.
-  - [ ] Generate ONCE, commit the bytes; compute sha256 + byte size for the deferred-work ledger row (dev commit).
-- [ ] Task 2 — `tests/glbspike.test.js` (AC: 1, 2, 3, 4, 5; D1-D7) — the spike suite; legs §a-§f below.
-- [ ] Task 3 — bookkeeping (AC: all; D8/D9/D10)
-  - [ ] §Verdict section filled with the dev-round measurements (triangles + leg results) and the contract/budget verdict; FPS slot = measured (if the browser lane ran) or DEFERRED stamp with owner.
-  - [ ] `deferred-work.md`: committed-data-asset ledger row for `tests/fixtures/probe.glb` (TRACK-1 style: size + sha256 + provenance = the committed generator) + the browser-lane FPS item IF unrun (owner: 8.5 kickoff / close UAT lane).
-  - [ ] C1 dev round: append `'tests/glbspike.test.js'`, `'tests/fixtures/make-probe-glb.js'`, `'tests/fixtures/probe.glb'` to BOTH §6 twins, list-only comments (after the 8.4 create-round entry in each twin).
-  - [ ] `./run_tests.sh` green (baseline **662/662 @ d3014ad**, ~8.5 s; expect 662 + the spike legs — NFR4 < 10 s).
-  - [ ] Diff-fact audit in the Debug Log: `git diff --stat` = the two twins + sprint-status + deferred-work + story file ONLY at this commit; `git diff --name-only e77ca7e HEAD -- js/ index.html css/ tests/support/` EMPTY (8.4 adds zero product code on top of Epic 8's shipped state; cite the result).
-  - [ ] Dev round stamps `review`; final gate re-run; sprint-status per house style.
+- [x] Task 1 — `tests/fixtures/make-probe-glb.js` + generated `tests/fixtures/probe.glb` (AC: 2, 3, 5; D3)
+  - [x] The generator: pure module exporting `makeProbeGlb(): Uint8Array` — 17 contract-name nodes per the §Contract table (translations VERBATIM from the table — they must `===` the shipped literals: Float32 storage means the leg compares `Math.fround(shippedValue)` — DERIVE shipped values via the boot world, not literals), 16 two-triangle POSITION accessors, JSON chunk key order fixed (stringify-deterministic), space-padded JSON chunk, BIN chunk. Zero `Date`/`Math.random`/map-iteration-order dependence.
+  - [x] Generate ONCE, commit the bytes; compute sha256 + byte size for the deferred-work ledger row (dev commit).
+- [x] Task 2 — `tests/glbspike.test.js` (AC: 1, 2, 3, 4, 5; D1-D7) — the spike suite; legs §a-§f below.
+- [x] Task 3 — bookkeeping (AC: all; D8/D9/D10)
+  - [x] §Verdict section filled with the dev-round measurements (triangles + leg results) and the contract/budget verdict; FPS slot = measured (if the browser lane ran) or DEFERRED stamp with owner.
+  - [x] `deferred-work.md`: committed-data-asset ledger row for `tests/fixtures/probe.glb` (TRACK-1 style: size + sha256 + provenance = the committed generator) + the browser-lane FPS item IF unrun (owner: 8.5 kickoff / close UAT lane).
+  - [x] C1 dev round: append `'tests/glbspike.test.js'`, `'tests/fixtures/make-probe-glb.js'`, `'tests/fixtures/probe.glb'` to BOTH §6 twins, list-only comments (after the 8.4 create-round entry in each twin).
+  - [x] `./run_tests.sh` green (baseline **662/662 @ d3014ad**, ~8.5 s; expect 662 + the spike legs — NFR4 < 10 s). — 692/692 @ 8.5 s
+  - [x] Diff-fact audit in the Debug Log: `git diff --stat` = the two twins + sprint-status + deferred-work + story file ONLY at this commit; the product-path claim holds as `git diff --name-only d3014ad -- js/ index.html css/ tests/support/` EMPTY (see Debug Log — the `e77ca7e HEAD` wording names a base that predates 8.3's own authorized `js/shell.js` delta; the 8.4-exact baseline is cited).
+  - [x] Dev round stamps `review`; final gate re-run; sprint-status per house style.
 
 ## Testing guidance — tests/glbspike.test.js
 
@@ -174,13 +174,13 @@ Donors: the data-URL boot + THREE stub block (`tests/render3d.test.js:9-94` — 
 
 ## §Verdict — the spike decision record (dev round fills; create round ships the template)
 
-- CONTRACT legs (§b, §c bijection): PASS / FAIL — <dev: one line + the gate stamp>
-- POSE TRACKING (§d, N samples): PASS / FAIL — <dev: samples identity-matched at zero tolerance; coverage: phase span, airborne/grounded counts>
-- GRACEFUL FALL-OFF (§e): PASS / FAIL — scarf exact-chain bind + missing/extras drop; jiggle-off chest drop — both branches green
-- TRIANGLE BUDGET (§f): probe **<N tris — expected 32, measured>** vs shipped rig **<N — expected 192, derived (168 character + 24 handles)>** — within budget: PASS / FAIL
-- FPS READ (browser lane, D8): **<DEFERRED — owner: 8.5 kickoff / close UAT lane; procedure D8, parent-runnable, no new test>** or `median <n> fps · p95 <n> ms · max <n> · over20 <n> · frames <n>`
+- CONTRACT legs (§b, §c bijection): PASS — the 17 names identity-resolve through the boot world to pairwise-distinct rig objects; the probe mirrors every parent edge + root order, every translation `===` the `Math.fround`-ed shipped rest, the bijection closes with `unbound` EMPTY (gate 692/692 @ 8.5 s, dev round 2026-11-12).
+- POSE TRACKING (§d, 64 samples): PASS — every sampled channel `===` its value recomputed from the sample's own `prevPhase/phase/alpha` through `lerpPhase` (zero tolerance, asserted targets are the bound objects, identity-equal to the shipped rig); coverage: phase span 0.0095–0.9967 (wraps), 37 airborne / 27 grounded samples, status `running` for every tick of the run.
+- GRACEFUL FALL-OFF (§e): PASS — scarf exact-chain binds (§d three lag channels green); a synthetic `scarf4` lands in `unbound` with zero throw and a short chain binds its present names silently; the CHEST_JIGGLE-off boot reports `chestL`/`chestR` UNBOUND, binds the other 15, and the whole §d law subset re-runs green with the dead spring holding `chest.position.y === CHEST_BASE_Y` — both branches green.
+- TRIANGLE BUDGET (§f): probe **32 tris (measured, accessor census on the committed bytes)** vs shipped rig **192 tris (derived: 14 boot-walked character meshes x 12 = 168 + 2 handle meshes x 12 = 24; the marker-slice source census agrees with the boot walk)** — within budget: PASS
+- FPS READ (browser lane, D8): **MEASURED — median 16.7 ms (~60 fps, rAF-vsync-capped) · p95 16.7 ms · max 16.8 ms · over20 0 · frames 600** — Epic-5-close lane (scratch playwright + cached chromium + `python3 -m http.server 8123`; CDN pin derived from index.html:11; probe bound by contract, 16 accessor-built BufferGeometry parents, status `running` at frame 700). Software raster (SwiftShader) sandbox read: renders inside the frame budget with zero >20 ms frames; hardware re-confirm rides the close UAT pass (6.4 software-raster precedent).
 - NFR10 ZERO-BITMAP AMENDMENT: **NOT AMENDED** (probe geometry-only; §f proves zero images/textures/magic-bytes)
-- **VERDICT: <ACCEPTED (feature moves to the shelf, wiring story needs its own authorization; if FPS DEFERRED it must land before any wiring story ships) | ACCEPTED (FPS measured, holds) | DECLINED — reasons: …>** — recorded by the dev round per D9; signature line + date.
+- **VERDICT: ACCEPTED (FPS measured, holds)** — the contract stands; the feature moves to the shelf; any wiring story needs its OWN authorization (FR38/D9). Recorded by the dev round, 2026-11-12.
 
 ## Deferred items (dev round records into deferred-work.md if unrun)
 
@@ -191,8 +191,40 @@ Donors: the data-URL boot + THREE stub block (`tests/render3d.test.js:9-94` — 
 
 ### Agent Model Used
 
+lane-qwen38-ultra/qwen — gds-dev-story worker round 2026-11-12.
+
 ### Debug Log References
+
+Gate: `./run_tests.sh` **692/692 @ 8.5 s** (baseline 662/662 @ d3014ad + 30 spike legs; NFR4 headroom holds).
+
+Diff facts: `git diff --name-only d3014ad -- js/ index.html css/ tests/support/` EMPTY — 8.4 ships zero product code (the epic's only product delta, `js/shell.js`, shipped at Story 8.3 before this baseline). The task-3 audit line's `e77ca7e HEAD` wording names a base predating that 8.3 delta — the 8.4-exact baseline is cited above; against HEAD (this story's create commit) the product-path diff is empty by construction.
+
+D5-AMEND (schedule defect found and fixed INSIDE the story's own cited donor — orchestrator-approved 2026-11-12): D5's rationale says "area-1 period 0.9 s"; shipped ROPE_PERIOD is 1.3 (`js/game.js:15`, AREAS[0].periodMul 1.00) and `press` arms the forgiveness buffer only, never a jump (`js/game.js:141-144`) — measured: a press-only run trips `over` at **tick 174**, before the 240-tick warm-up ends, so "running throughout" + airborne coverage are impossible as literally written. The suite therefore runs the `tests/headless-sim.test.js:55-65` loop shape IN FULL — its grounded-jump policy line included (`jump(player, 0.5)` when grounded && phase in [0.2, 0.35]) — and D5's canonical numbers (240 warm / 64 samples / stride 2 / press 96, constant rng) are unchanged. Measured: 64/64 samples, `running` throughout, phase span 0.0095–0.9967, 37 airborne / 27 grounded, zero trips.
+
+Porcelain-arm note: `git status --porcelain` collapses an untracked NEW DIRECTORY to `tests/fixtures/`, reddening both §6 twins despite the three authorized paths being appended; staging the three files makes the arm enumerate them individually — both censuses green, precedent for future new-directory fixtures.
+
+FPS lane (D8, one attempt, executed at dev): `/tmp/glb-fps-lane` scratch (bun + playwright + cached chromium-1248, zero repo deps), static server 8123 at the repo root, `/tmp/glb-fps.html` with the derived CDN pin; report `{"bound":16,"status":"running","frames":600,"median":16.7,"p95":16.7,"max":16.8,"over20":0}`.
 
 ### Completion Notes List
 
+- Spike ships as PROOF only: zero product delta (D10 by diff fact); the §Contract table is the publication surface, `tests/glbspike.test.js` §b owns its test-side twin (D1 option (a) — `js/render3d.js` byte-zero, zero `.name` writes).
+- Probe bytes ARE generator output: committed 2,648 B, sha256 `54109450131517889476b176605c4a6fb695ee6b17307b2e31926731b2ff8f13`; the §c determinism leg regenerates in memory and asserts byte-equality forever (drift reddens the gate).
+- AC2's "within tolerance" superseded upward by IDENTITY: channel-for-channel `===` at zero tolerance against the recomputed law (§d), targets proven the shipped objects by reference.
+- Fall-off decided both ways on record (D7): missing/extra probe names unbind silently; CHEST_JIGGLE-off drops the chest pair, every other law holds with the dead spring at endpoint.
+- FPS MEASURED at the dev round — no DEFERRED stamp remains; the sandbox lane is software-raster/vsync-capped, so the close UAT pass re-confirms on hardware (6.4 precedent) — ACCEPTED per D9 with the measured read holding.
+- The reader is a test-side asset-integrity fence and THROWS by design (§a test names say so); the NEVER-throws law belongs to a future shipped loader (D4b, follow-on authorization required).
+- `tests/fixtures/` is the new fixture home — invisible to the boundary entry walk, the audio census, and every hygiene fence (A2 rows (i)/(k)/(n) untouched-green).
+
 ### File List
+
+- `tests/glbspike.test.js` (NEW) — the spike suite, 30 legs (§a 9, §b 5, §c 4, §d 5, §e 3, §f 4)
+- `tests/fixtures/make-probe-glb.js` (NEW) — the deterministic probe generator (pure, zero IO)
+- `tests/fixtures/probe.glb` (NEW) — the committed probe, 2,648 B (second committed binary after the music asset)
+- `tests/ceilingbreak.test.js` / `tests/summitapproach.test.js` — §6 C1 dev-round allow-append, list-only
+- `_bmad-output/implementation-artifacts/deferred-work.md` — probe-asset ledger row + browser-lane FPS record
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — 8-4 → review
+- `_bmad-output/implementation-artifacts/8-4-the-joint-name-contract-the-glb-spike.md` — this record
+
+## Change Log
+
+- 2026-11-12 (dev round): implemented D1-D10 — generator run ONCE, bytes committed (`probe.glb` 2,648 B, sha256 54109450…); NEW `tests/glbspike.test.js` 30 legs §a-§f (reader red-green, contract inventory + mirror + bind-pose + bijection + determinism + placement, pose-through-the-pipeline identity on the canonical schedule, fall-off both branches, both-sides budget + zero-bitmap); D5-AMEND grounded-jump policy from the cited donor (press-only trips at tick 174 — Debug Log; canonical numbers unchanged, orchestrator-approved); §6 twins C1 dev-append x2; ledger rows (asset + FPS); browser-lane FPS RUN at dev (measured, holds); gate 692/692 @ 8.5 s; ZERO re-contracts, every existing leg untouched-green; status review.
