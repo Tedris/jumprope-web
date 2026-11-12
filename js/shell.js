@@ -43,6 +43,22 @@ function windowSize() {
 const ASPECT_MIN = 3 / 4;
 const ASPECT_MAX = 2 / 1;
 
+// Story 8.1 (FR36 seam, NFR16): the skin-record normalizer — a PURE factory,
+// invalid states are data: a non-object record or a non-integer color
+// collapses to an ABSENT key, and the renderer's ONE application site falls
+// back to the shipped defaults. Shape-sanitize only, zero browser IO (the
+// boundary walk stays green). D3 landing note: shell-internal — a fifth
+// static specifier would break the shipped-four shell census (summitapproach
+// §4.2), so the factory lives here and tests extract it by source text.
+function normalizeSkin(raw) {
+  const colorsIn = typeof raw?.colors === 'object' && raw.colors !== null ? raw.colors : null;
+  const colors = {};
+  for (const key of ['rose', 'prop', 'limb']) {
+    if (colorsIn && Number.isInteger(colorsIn[key])) colors[key] = colorsIn[key];
+  }
+  return { name: String(raw?.name ?? ''), colors };
+}
+
 export function startGame(canvas) {
   // UI-03 (D-07/D-10): one contain-fit band computation sizes BOTH the CSS box
   // and the backing buffer — render3d's passive poll re-derives RT, snap grid
@@ -59,7 +75,10 @@ export function startGame(canvas) {
     [canvas.width, canvas.height] = [Math.max(2, dw), Math.max(2, dh)];
   }
   applyWindowSize();
-  const scene = createScene(canvas);
+  // Story 8.1 (FR36/FR39): the ONE skin boot site. The source expression is
+  // the INERT placeholder (undefined -> shipped defaults); Story 8.2's P2
+  // equip mechanism replaces the source expression only, at this one site.
+  const scene = createScene(canvas, normalizeSkin(undefined));
   const rng = Math.random;
   // D-N07: js/shell.js is audio.js's sole consumer. The import is dynamic so
   // the frozen data:-URL Node harnesses (which cannot resolve new relative

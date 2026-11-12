@@ -1,9 +1,9 @@
 ---
-baseline_commit:  # dev round: record the dev-start baseline sha here (full sha of HEAD when dev begins — the 7.5 house pattern)
+baseline_commit: ff1d97b88739c407cb53cc8fef496ad7037dd281
 ---
 # Story 8.1: Skins as data — the palette-skin seam
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -62,21 +62,21 @@ Pre-scan re-affirmed at create time against HEAD bddbd7f (full table: local://pr
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — render3d.js: the seam on the renderer side (AC: 1, 2, 3, 4; D1/D2/D6)
-  - [ ] `export function createScene(canvas, skin)` — trailing optional param, record-as-DATA, no import added (two-specifier law).
-  - [ ] Entry binds after :189: `const skinColors = skin?.colors ?? {};` + `roseBase`/`limbBase` (D2); application loop (D1) directly after the three `worldMaterial(...)` lines — nothing before/around :187-189 changes.
-  - [ ] Dim-block restore arms :547-548 → `roseBase`/`limbBase`; ON arms + `ghostMat.opacity` + the `lastIBlank` edge gate byte-identical.
-  - [ ] Diff facts: constants :14-18/:42 untouched; `worldMaterial` :175-178 untouched; floor :191, horizon :203-213, ghosts, rope untouched; no `new THREE.*Material` anywhere new; comment lines naming FR37/FR39-seam + the one-seam law.
-- [ ] Task 2 — js/skins.js + shell.js: the seam on the shell side (AC: 2, 3, 5; D3)
-  - [ ] NEW `js/skins.js`: `export function normalizeSkin(raw)` — pure, D3's sanitization law exactly, one comment naming NFR16 + "invalid states are data"; zero DOM/`localStorage`/`fetch`/`import` tokens.
-  - [ ] `js/shell.js:62`: `const scene = createScene(canvas, normalizeSkin(undefined));` — the ONE boot consumption site, comment naming the INERT source + "Story 8.2's P2 mechanism replaces the source expression at this site"; extend the import line :1 pattern. NO storage read added (boot-fence placement rule).
-  - [ ] `tests/boundary.test.js` untouched-green (proof obligation, not an edit).
-- [ ] Task 3 — new suite `tests/skins.test.js` (AC: all; see Testing guidance) — legs (a)-(g).
-- [ ] Task 4 — bookkeeping + gate (AC: 5, 6)
-  - [ ] C1 (dev round): append `'tests/skins.test.js'` (and `'js/skins.js'` if it lands) to BOTH §6 allow-sets, list-only comment (ceilingbreak after the 8.1 create-round entry, summitapproach likewise).
-  - [ ] `./run_tests.sh` green (baseline **606/606 @ bddbd7f**, ~8.6 s; expect 606 + the skins legs, NFR4 < 10 s).
-  - [ ] Diff-fact audit in the Debug Log (the 7.3 pattern): `git diff --stat` shows exactly the D5 file set.
-  - [ ] Dev round stamps `review`; final gate re-run; sprint-status per house style.
+- [x] Task 1 — render3d.js: the seam on the renderer side (AC: 1, 2, 3, 4; D1/D2/D6)
+  - [x] `export function createScene(canvas, skin)` — trailing optional param, record-as-DATA, no import added (two-specifier law).
+  - [x] Entry binds after :189: `const skinColors = skin?.colors ?? {};` + `roseBase`/`limbBase` (D2); application loop (D1) directly after the three `worldMaterial(...)` lines — nothing before/around :187-189 changes. NOTE (dev): the loop is wrapped in `if (skin?.colors)` — the unconditional form crashes the frozen bare-`Color`-stub boots (render3d.test.js:55, juice.test.js:300 — their Color carries no `.set`); the guard keeps the loop form, the ONE site, and the single-writer census, and makes the no-skin boot fully write-free (the 7.3 inert pattern). See Debug Log.
+  - [x] Dim-block restore arms :547-548 → `roseBase`/`limbBase`; ON arms + `ghostMat.opacity` + the `lastIBlank` edge gate byte-identical.
+  - [x] Diff facts: constants :14-18/:42 untouched; `worldMaterial` :175-178 untouched; floor :191, horizon :203-213, ghosts, rope untouched; no `new THREE.*Material` anywhere new; comment lines naming FR37/FR39-seam + the one-seam law.
+- [x] Task 2 — js/skins.js + shell.js: the seam on the shell side (AC: 2, 3, 5; D3)
+  - [x] NEW `js/skins.js`: `export function normalizeSkin(raw)` — pure, D3's sanitization law exactly, one comment naming NFR16 + "invalid states are data"; zero DOM/`localStorage`/`fetch`/`import` tokens. LANDED AT THE D3 ALTERNATIVE instead: the factory is shell-internal (js/shell.js) — the recommended landing's fifth static specifier reddens the frozen shell-specifier census tests/summitapproach.test.js:831-832 (zero re-contracts authorized); see Debug Log. The purity law holds verbatim (leg §f).
+  - [x] `js/shell.js:62`: `const scene = createScene(canvas, normalizeSkin(undefined));` — the ONE boot consumption site, comment naming the INERT source + "Story 8.2's P2 mechanism replaces the source expression at this site"; extend the import line :1 pattern (moot at the shell-internal landing — no import added). NO storage read added (boot-fence placement rule).
+  - [x] `tests/boundary.test.js` untouched-green (proof obligation, not an edit).
+- [x] Task 3 — new suite `tests/skins.test.js` (AC: all; see Testing guidance) — legs (a)-(g). (13 legs, §a-§g.)
+- [x] Task 4 — bookkeeping + gate (AC: 5, 6)
+  - [x] C1 (dev round): append `'tests/skins.test.js'` (and `'js/skins.js'` if it lands — it did not) to BOTH §6 allow-sets, list-only comment (ceilingbreak after the 8.1 create-round entry, summitapproach likewise).
+  - [x] `./run_tests.sh` green (baseline **606/606 @ bddbd7f**, ~8.6 s; expect 606 + the skins legs, NFR4 < 10 s). → **619/619 @ 8.5 s**.
+  - [x] Diff-fact audit in the Debug Log (the 7.3 pattern): `git diff --stat` shows exactly the D5 file set.
+  - [x] Dev round stamps `review`; final gate re-run; sprint-status per house style.
 
 ## Testing guidance — tests/skins.test.js
 
@@ -149,12 +149,37 @@ Donor: the recording-stub three-world boot in `tests/areavistas.test.js:29-121` 
 
 ### Agent Model Used
 
+lane-qwen38-ultra/qwen (omp worker Dev81)
+
 ### Debug Log References
+
+- Baseline: `ff1d97b` (gate 606/606, tree clean); dev start recorded in frontmatter `baseline_commit`.
+- **Red iteration #1 (13 reds, fixed in-code, zero test edits):** the D1 loop as literally written runs `m.color.set(...)` unconditionally at createScene time — the frozen bare-`Color`-stub boots (render3d.test.js:55, juice.test.js:300: `export class Color { constructor() {} }`, no `.set` method) died with `Cannot read properties of undefined (reading 'set')` (9 render3d.test.js + 4 juice.test.js legs). Fix: the loop is wrapped in `if (skin?.colors)` — still the D1 loop form, still ONE application site, the iframesjuice:554-557 single-writer census untouched (`roseMat.color.set(`/`limbMat.color.set(` = 1 each), and a no-skin boot now takes ZERO color writes (strictly more inert than the story's same-value-write assumption; the 7.3 byte-inert pattern). Post-fix: **606/606 untouched-green** with the product seam in place, @ 8.5 s.
+- **Landing decision (D3 alternative, forced by a frozen leg the A2 pre-scan did not name):** tests/summitapproach.test.js:831-832 pins js/shell.js at EXACTLY four `'./'` from-specifiers; `import { normalizeSkin } from './skins.js';` makes five and reddens that leg — and this story authorizes ZERO re-contracts. D3's written alternative ("the function inside js/shell.js") lands every frozen leg green, so the factory is shell-internal and **js/skins.js does NOT ship**. The factory-contract legs extract the shipped function text from shell.js cross-source (the markerHeal pairing-fence idiom, areavistas.test.js:179-184); purity, the boot-fence, and the ONE-consumption-site censuses all run against shell.js source (legs §f).
+- Census interactions: the new suite joins BOTH §6 diff-census allow-sets (dev-round list-only appends: ceilingbreak.test.js after the 8.1 create-round entry, summitapproach.test.js likewise). No other test file touched.
+- `worldMaterial(` shipped source count taken from HEAD: **7** (definition + 5 constructor calls + 1 comment mention) — pinned in leg §f.
+- New suite: 13 legs (§a factory x4, §b x2, §c x1, §d x1, §e x1, §f x3, §g x1); final gate **619/619 @ 8.5 s** (606 baseline + 13; NFR4 < 10 s holds).
+- Diff-fact audit (`git diff --stat` before commit): js/render3d.js +24/−3, js/shell.js +20/−1, the two §6 allow-sets +4/+4, new tests/skins.test.js — exactly the D5 file set minus js/skins.js (D3 alternative landing, above).
 
 ### Completion Notes List
 
+- Ships the SEAM, inert: `createScene(canvas, skin?)` applies a normalized `{ name, colors: { rose, prop, limb } }` record at ONE loop site over the EXISTING rose/limb/prop materials (Color#set, no construction); D2 binds `roseBase`/`limbBase` once at entry and the i-frame OFF-edge restores them — the dim legs stay byte-inert on default boots and the falsifier (leg §e) proves restore-under-skin reads the skin, not the constants.
+- shell.js:62 consumes `normalizeSkin(undefined)` — the INERT placeholder; Story 8.2's P2 mechanism replaces only that source expression, at that one site.
+- AC1/AC5 proof: the 606 frozen legs passed UNTOUCHED (zero test edits beyond the two authorized list-only allow-set appends); leg §d is the story-shape tripwire (default boot: shipped hexes, zero application writes).
+- AC6: factory contract ships in the same change (leg §a, Node-side, architecture.md:154-156) and the 3-tier legibility witness (§g: alley/stratosphere/moon per D4, mint sample, >= 0x40 per channel vs slab AND background, colors READ from the booted scene) seeds UX-DR3; 8.5 extends to all five tiers.
+- Deviations: (1) D3 landing = shell-internal alternative (census-forced, Debug Log); (2) D1's loop gained the `if (skin?.colors)` inert guard (bare-Color-stub crash fix, Debug Log). Shape laws of both decisions hold verbatim; ZERO re-contracts spent.
+
 ### File List
+
+- js/render3d.js (modified — signature, skinColors/bases binds, guarded application loop, D2 restore arms)
+- js/shell.js (modified — shell-internal normalizeSkin factory + the :62 boot-seam arg)
+- tests/skins.test.js (new — 13 legs)
+- tests/ceilingbreak.test.js (modified — §6 allow-set dev-round append, list-only)
+- tests/summitapproach.test.js (modified — §4.3 allow-set dev-round append, list-only)
+- _bmad-output/implementation-artifacts/8-1-skins-as-data-the-palette-skin-seam.md (this file)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (8-1 → review)
 
 ## Change Log
 
 - 2026-11-12 (create round): story created from epics.md:1162-1186 + FR37 :91 / NFR16 :112 / UX-DR3 :157 + Epic 8 riders :1155-1160; the A2 re-contract pre-scan re-affirmed with exact legs — **zero authorized re-contracts, zero questions**; the application-site fork pinned by written authorization (D1 loop form — the iframesjuice:554-557 single-writer census stays armed-and-green, no re-contract); seam/normalizer/dim/inert decisions D2-D6. Ships INERT by design; seam-only (surface = 8.2). 0/0 tests delta (create only): **C1 census allow-append x2 SPENT IN THIS CREATE COMMIT** (story artifact into both §6 twins — mechanical list-only rule, precedent 6845157; the porcelain arms :569-571/:859-861 catch the new file at create time) + sprint-status (`8-1` ready-for-dev, `epic-8` in-progress). Gate stays 606/606.
+- 2026-11-12 (dev round): implemented per D1-D6 — renderer seam (`createScene(canvas, skin?)` + ONE guarded application loop + D2 restore arms), shell-side `normalizeSkin` at the D3 ALTERNATIVE landing (shell-internal; the recommended js/skins.js import reddens the un-flagged frozen shell-specifier census summitapproach:831-832 — zero re-contracts authorized, so the story's own alternative was taken), new tests/skins.test.js 13 legs (§a-§g incl. the D2 falsifier and the 3-tier D4 legibility witness); the bare-Color-stub crash fixed by making the no-colors boot fully write-free. C1 dev-round allow-append x2 (tests/skins.test.js, list-only). Gate 606 → **619/619 @ 8.5 s**, every frozen leg untouched-green; status review.

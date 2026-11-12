@@ -147,7 +147,11 @@ function applyVertexSnap(material, snapUniform) {
   material.customProgramCacheKey = () => 'ps1-snap';   // keeps snapped/unsnapped variants apart in the program cache (Pitfall 4)
 }
 
-export function createScene(canvas) {
+// Story 8.1 (FR37, FR39 seam): `skin` is the optional trailing skin record
+// `{ name, colors: { rose, prop, limb } }` — plain DATA, shell-normalized
+// (js/shell.js normalizeSkin); absent/incomplete colors are DATA and fall
+// back to the shipped defaults below (NFR16). One-arg boots are byte-inert.
+export function createScene(canvas, skin) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
   renderer.setPixelRatio(1);                        // Pitfall 2: never scale targets by devicePixelRatio
   renderer.setSize(canvas.width, canvas.height, false);
@@ -187,6 +191,23 @@ export function createScene(canvas) {
   const roseMat = worldMaterial(ROSE);
   const limbMat = worldMaterial(FLOOR);
   const propMat = worldMaterial(PROP);
+
+  // Story 8.1 (FR37 + the one-seam law; FR36/FR39 ride this record): the ONE
+  // skin application site — Color#set on the EXISTING shared materials, the
+  // loop form is mandated so the iframesjuice body-material single-writer
+  // census stays armed. The shipped constants above ARE the fallbacks. A
+  // record WITHOUT colors writes nothing — a no-skin boot stays byte-inert
+  // (the 7.3 pattern: the frozen bare-Color stub boots never see a .set).
+  const skinColors = skin?.colors ?? {};
+  if (skin?.colors) {
+    for (const [m, key, dflt] of [[roseMat, 'rose', ROSE], [limbMat, 'limb', FLOOR], [propMat, 'prop', PROP]]) {
+      m.color.set(skinColors[key] ?? dflt);
+    }
+  }
+  // D2 pairing: the i-frame OFF-edge restore arms read these skin-bound bases
+  // (bound once at entry — an inert boot keeps roseBase === ROSE, limbBase === FLOOR).
+  const roseBase = skinColors.rose ?? ROSE;
+  const limbBase = skinColors.limb ?? FLOOR;
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), worldMaterial(FLOOR));
   floor.rotation.x = -Math.PI / 2;                     // one sparse quad keeps the snap calm (Pitfall 7)
@@ -544,8 +565,8 @@ export function createScene(canvas) {
     if (iBlank !== lastIBlank) {
       lastIBlank = iBlank;
       ghostMat.opacity = iBlank ? GHOST_OPACITY_BLANK : GHOST_OPACITY;   // one write on the shared pool material
-      roseMat.color.set(iBlank ? GHOST_DIM : ROSE);               // COLOR, never opacity — the blob shadow keeps
-      limbMat.color.set(iBlank ? GHOST_DIM : FLOOR);              // render()'s only animated opacity (probe law)
+      roseMat.color.set(iBlank ? GHOST_DIM : roseBase);               // COLOR, never opacity — the blob shadow keeps
+      limbMat.color.set(iBlank ? GHOST_DIM : limbBase);              // render()'s only animated opacity (probe law)
     }
 
     // Single clock entry: canonical rope phase, interpolated prev -> curr.
