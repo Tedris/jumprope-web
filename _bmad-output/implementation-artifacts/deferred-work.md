@@ -342,3 +342,7 @@ No unowned deferred items survive the boundary. Next-epic entry probe may procee
   — **OWNER: create-story rounds**; effective first story creation of the next epic.
 - **A3 concurrent-development enabling (:291) — PARK RE-AFFIRMED** (user decision at the retro):
   no enabling scheduled; owner stands as written at :291.
+
+## Deferred from: code review of story 8-1-skins-as-data-the-palette-skin-seam (2026-11-12)
+
+- **`normalizeSkin` accepts integers outside the 24-bit color range** (`js/shell.js` factory — `Number.isInteger` keeps `0x1FFFFFF`/`-5`; `Color#set` clips silently, no fallback) — shape-sanitize is the shipped D3 law (tests/skins.test.js §a pins it); the RANGE law is P1 manifest validation territory. **OWNER: Story 8.3** (its P1 decision names "out-of-range colors" in the fallback AC — decide there whether the factory gains a range guard or the manifest validator owns ranges; 8.1's factory stays shape-only until then).

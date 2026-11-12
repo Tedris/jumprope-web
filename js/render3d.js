@@ -199,7 +199,7 @@ export function createScene(canvas, skin) {
   // record WITHOUT colors writes nothing — a no-skin boot stays byte-inert
   // (the 7.3 pattern: the frozen bare-Color stub boots never see a .set).
   const skinColors = skin?.colors ?? {};
-  if (skin?.colors) {
+  if (Object.keys(skinColors).length > 0) {
     for (const [m, key, dflt] of [[roseMat, 'rose', ROSE], [limbMat, 'limb', FLOOR], [propMat, 'prop', PROP]]) {
       m.color.set(skinColors[key] ?? dflt);
     }

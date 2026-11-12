@@ -149,7 +149,7 @@ function skinView(runExtras = {}, extras = {}) {
 // — the derive-literals rule: never re-type a signed-off hex in a test).
 async function shippedConst(name) {
   const src = await readFile(render3dPath, 'utf8');
-  const m = src.match(new RegExp(`const ${name} = (0x[0-9a-fA-F]+)`));
+  const m = src.match(new RegExp(`const ${name} = (0x[0-9a-fA-F]+|0\\.\\d+)`));
   assert.ok(m, `the shipped look constant ${name} is present in js/render3d.js`);
   return Number(m[1]);
 }
@@ -205,10 +205,11 @@ test('§a hostile records are data: shape-sanitize to { name, colors: {} }, noth
 
 test('§a name coerces to string through the ?? arm (D3 law verbatim)', async () => {
   const normalizeSkin = await normalizeSkinFromShell();
-  assert.equal(normalizeSkin({ name: 42 }).name, '42');
-  assert.equal(normalizeSkin({ name: null }).name, '');
-  assert.equal(normalizeSkin('x').name, '');
-  assert.equal(normalizeSkin(undefined).name, '', 'the INERT boot placeholder normalizes to the empty record');
+  assert.strictEqual(normalizeSkin({ name: 42 }).name, '42',
+    'strictEqual: the String() coercion is the law — a mutant that drops it reddens here');
+  assert.strictEqual(normalizeSkin({ name: null }).name, '');
+  assert.strictEqual(normalizeSkin('x').name, '');
+  assert.strictEqual(normalizeSkin(undefined).name, '', 'the INERT boot placeholder normalizes to the empty record');
 });
 
 // ---------------------------------------------------------------------------
@@ -230,8 +231,9 @@ test('§b a full skin recolors the three identity-addressed materials at ONE sit
 
 test('§b a skinned boot constructs no new material and keeps the snap uniform on every world material (AC2, rider (d))', async () => {
   const plain = await bootSkin(undefined);
+  const plainCount = plain.reg.materials.length; // snapshot BEFORE the next boot resets reg
   const skinned = await bootSkin(MINT);
-  assert.equal(skinned.reg.materials.length, plain.reg.materials.length,
+  assert.equal(skinned.reg.materials.length, plainCount,
     'no new material construction — the seam writes colors, never builds materials');
   // The snap-uniform probe (render3d.test.js:156-165 donor form) on the SKINNED scene.
   const mat = skinned.world.children.find(c => c.material?.onBeforeCompile)?.material;
@@ -268,6 +270,17 @@ test('§d a default boot carries the three shipped constants and takes ZERO skin
   assert.equal(env.reg.colorSets, 0, 'the application loop writes NOTHING without a colors record — byte-inert boot (the 7.3 pattern)');
 });
 
+test('§d the SHIPPED boot composition takes ZERO color writes: bootSkin(normalizeSkin(undefined)) (AC1, review BH-1/EH-1/A81-4)', async () => {
+  const normalizeSkin = await normalizeSkinFromShell();
+  const env = await bootSkin(normalizeSkin(undefined)); // the EXACT record shell.js:81 sends
+  const ROSE = await shippedConst('ROSE');
+  const FLOOR = await shippedConst('FLOOR');
+  const PROP = await shippedConst('PROP');
+  assert.equal(env.reg.colorSets, 0,
+    "the placeholder record { name: '', colors: {} } enters no loop — key-count guard, byte-inert shipped boot");
+  assert.deepEqual(env.mats.map(m => m.color.hex), [ROSE, FLOOR, PROP], 'the shipped defaults ride untouched');
+});
+
 // ---------------------------------------------------------------------------
 // §e AC4 — the i-frame dim under a skin (the D2 falsifier)
 // ---------------------------------------------------------------------------
@@ -279,12 +292,14 @@ test('§e under a skin the ON edge dims to GHOST_DIM and the OFF edge restores t
   const DIM = await shippedConst('GHOST_DIM');
   const ROSE = await shippedConst('ROSE');
   const FLOOR = await shippedConst('FLOOR');
+  const GO = await shippedConst('GHOST_OPACITY');
+  const GOB = await shippedConst('GHOST_OPACITY_BLANK');
   env.scene.render(skinView({ iFrames: 0 }, { now: 100 }));           // baseline: no edge, no writes
   let before = env.reg.colorSets;
   env.scene.render(skinView({ iFrames: 2 }, { now: 104 }));           // ON edge
   assert.equal(roseMat.color.hex, DIM, 'the ON arm is GHOST_DIM verbatim on roseMat');
   assert.equal(limbMat.color.hex, DIM, 'the ON arm is GHOST_DIM verbatim on limbMat');
-  assert.equal(ghostMat.opacity, 0.85, 'the ghosts lift to 0.85 on the ON edge');
+  assert.equal(ghostMat.opacity, GOB, 'the ghosts lift to GHOST_OPACITY_BLANK on the ON edge (derived, not inlined)');
   assert.equal(env.reg.colorSets - before, 2, 'EXACTLY two color writes on the ON edge (the donor census shape)');
   before = env.reg.colorSets;
   env.scene.render(skinView({ iFrames: 0 }, { now: 108 }));           // OFF edge
@@ -292,7 +307,7 @@ test('§e under a skin the ON edge dims to GHOST_DIM and the OFF edge restores t
   assert.equal(limbMat.color.hex, MINT.colors.limb, 'the OFF edge restores the SKIN limb, NOT FLOOR');
   assert.notEqual(roseMat.color.hex, ROSE, 'the shipped ROSE must NOT bleed back under a skin');
   assert.notEqual(limbMat.color.hex, FLOOR, 'the shipped FLOOR must NOT bleed back under a skin');
-  assert.equal(ghostMat.opacity, 0.35, 'the ghost opacity pair is unchanged by the skin');
+  assert.equal(ghostMat.opacity, GO, 'the ghost opacity pair is unchanged by the skin (derived GHOST_OPACITY)');
   assert.equal(env.reg.colorSets - before, 2, 'EXACTLY two color writes on the OFF edge');
 });
 
@@ -342,7 +357,8 @@ test('§g the sample skin pops on the three camouflage-prone grounds: per-channe
     env.scene.render(skinView({ area: tier }));
     const grounds = [
       ...new Set(env.horizon.children.filter(s => s.visible).map(s => s.material.color.hex)),
-      env.world.background.hex
+      env.world.background.hex,
+      env.floor.material.color.hex // the tier floor — D4's named moon ground (EH-2)
     ];
     for (const [part, hex] of [['rose', env.mats[0].color.hex], ['limb', env.mats[1].color.hex]]) {
       for (const ground of grounds) {

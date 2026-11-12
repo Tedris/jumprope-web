@@ -3,7 +3,7 @@ baseline_commit: ff1d97b88739c407cb53cc8fef496ad7037dd281
 ---
 # Story 8.1: Skins as data — the palette-skin seam
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -130,7 +130,7 @@ Donor: the recording-stub three-world boot in `tests/areavistas.test.js:29-121` 
 
 ### Project Structure Notes
 
-- New files (dev round): `js/skins.js`, `tests/skins.test.js`. Modified (dev round): `js/render3d.js`, `js/shell.js`, the two §6 allow-sets. Create commit: this file, `sprint-status.yaml`, `tests/ceilingbreak.test.js` + `tests/summitapproach.test.js` (list-only appends). No path convention conflicts.
+- New files (dev round): `tests/skins.test.js` — `js/skins.js` did NOT ship (D3 alternative landing, Debug Log; corrected by review A81-3, the Task-2 row already carried it). Modified (dev round): `js/render3d.js`, `js/shell.js`, the two §6 allow-sets. Create commit: this file, `sprint-status.yaml`, `tests/ceilingbreak.test.js` + `tests/summitapproach.test.js` (list-only appends). No path convention conflicts.
 
 ### References
 
@@ -160,6 +160,7 @@ lane-qwen38-ultra/qwen (omp worker Dev81)
 - `worldMaterial(` shipped source count taken from HEAD: **7** (definition + 5 constructor calls + 1 comment mention) — pinned in leg §f.
 - New suite: 13 legs (§a factory x4, §b x2, §c x1, §d x1, §e x1, §f x3, §g x1); final gate **619/619 @ 8.5 s** (606 baseline + 13; NFR4 < 10 s holds).
 - Diff-fact audit (`git diff --stat` before commit): js/render3d.js +24/−3, js/shell.js +20/−1, the two §6 allow-sets +4/+4, new tests/skins.test.js — exactly the D5 file set minus js/skins.js (D3 alternative landing, above).
+- **Review round (3 layers: Blind/Edge/Auditor @ ff1d97b..5ab8e9f, gate 619 re-run green by the Auditor):** 6 patches applied — (P1/BH-1+EH-1/A81-4) the D1 guard was NOT inert for the shipped placeholder: `normalizeSkin(undefined)` → `{ name:'', colors:{} }`, `{}` is truthy, so the real boot took 3 same-value writes while §d certified only the input the shell never sends — guard tightened to `if (Object.keys(skinColors).length > 0)` (loop form unchanged, single-writer census unchanged) + NEW §d leg booting the EXACT shipped composition `bootSkin(normalizeSkin(undefined))` → zero writes (the pre-fix code reddens it); (P2/BH-2) §b material-count census was `L===L` via the shared `reg` object — snapshot before re-boot; (P3/BH-3) §e opacity literals → `shippedConst('GHOST_OPACITY'/'GHOST_OPACITY_BLANK')` (helper widened to decimal constants, hex branch first — derive-literals law); (P4/EH-2) §g grounds += the tier floor hex (D4's named moon ground; the `env.floor` handle was dead); (P5/EH-3) name-coercion leg `==` → `strictEqual` (kills the drop-`String()` mutant); (P6/A81-3) Project Structure doc-drift corrected. Dismissals (with reasons in Change Log): EH-4 (loop-as-second-writer — D1 mandates the loop form; frozen census stays armed by design), A81-1/A81-2 (deviations adjudicated SOUND by the Auditor), BH-4 → DEFERRED to Story 8.3 (out-of-range integer colors — the range law is P1 manifest validation; ledger line added). 13 red iterations: zero — every patch green on first re-run; new gate 620/620 @ 8.5 s.
 
 ### Completion Notes List
 
@@ -173,13 +174,14 @@ lane-qwen38-ultra/qwen (omp worker Dev81)
 
 - js/render3d.js (modified — signature, skinColors/bases binds, guarded application loop, D2 restore arms)
 - js/shell.js (modified — shell-internal normalizeSkin factory + the :62 boot-seam arg)
-- tests/skins.test.js (new — 13 legs)
+- tests/skins.test.js (new — 14 legs)
 - tests/ceilingbreak.test.js (modified — §6 allow-set dev-round append, list-only)
 - tests/summitapproach.test.js (modified — §4.3 allow-set dev-round append, list-only)
 - _bmad-output/implementation-artifacts/8-1-skins-as-data-the-palette-skin-seam.md (this file)
-- _bmad-output/implementation-artifacts/sprint-status.yaml (8-1 → review)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (8-1 → done)
 
 ## Change Log
 
 - 2026-11-12 (create round): story created from epics.md:1162-1186 + FR37 :91 / NFR16 :112 / UX-DR3 :157 + Epic 8 riders :1155-1160; the A2 re-contract pre-scan re-affirmed with exact legs — **zero authorized re-contracts, zero questions**; the application-site fork pinned by written authorization (D1 loop form — the iframesjuice:554-557 single-writer census stays armed-and-green, no re-contract); seam/normalizer/dim/inert decisions D2-D6. Ships INERT by design; seam-only (surface = 8.2). 0/0 tests delta (create only): **C1 census allow-append x2 SPENT IN THIS CREATE COMMIT** (story artifact into both §6 twins — mechanical list-only rule, precedent 6845157; the porcelain arms :569-571/:859-861 catch the new file at create time) + sprint-status (`8-1` ready-for-dev, `epic-8` in-progress). Gate stays 606/606.
 - 2026-11-12 (dev round): implemented per D1-D6 — renderer seam (`createScene(canvas, skin?)` + ONE guarded application loop + D2 restore arms), shell-side `normalizeSkin` at the D3 ALTERNATIVE landing (shell-internal; the recommended js/skins.js import reddens the un-flagged frozen shell-specifier census summitapproach:831-832 — zero re-contracts authorized, so the story's own alternative was taken), new tests/skins.test.js 13 legs (§a-§g incl. the D2 falsifier and the 3-tier D4 legibility witness); the bare-Color-stub crash fixed by making the no-colors boot fully write-free. C1 dev-round allow-append x2 (tests/skins.test.js, list-only). Gate 606 → **619/619 @ 8.5 s**, every frozen leg untouched-green; status review.
+- 2026-11-12 (review round): 3 layers, 6 patches (guard key-count inertness fix + shipped-composition leg, §b snapshot, derived opacities, §g floor ground, strictEqual coercion, doc-drift) + 1 deferral (BH-4 range law → Story 8.3) + 3 dismissals (EH-4, A81-1, A81-2 — recorded in Debug Log); zero product-behavior changes beyond the guard's stronger inertness; gate 619 → **620/620 @ 8.5 s**; status done.
