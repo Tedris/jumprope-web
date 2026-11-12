@@ -332,6 +332,9 @@ No unowned deferred items survive the boundary. Next-epic entry probe may procee
 - **A1 v2 deploy cut + UAT bundle — PROMOTED to critical path** (user decision at the retro):
   rides ledger :263's standing owner (browser UAT lane / v2-deploy milestone); after slipping
   through the whole of Epic 7, complete it BEFORE the next epic's planning pass.
+  - **Epic 8 entry check (2026-11-11, user batch answer)**: planning passed without the cut;
+    disposition = PROCEED with Epic 8, A1 rides its standing owner (Ed + browser UAT lane),
+    HARD-DUE before the Epic 8 close-out — a third silent slip is dispositioned-out.
 - **A2 re-contract pre-scan convention — ADOPTED** (user decision at the retro): story creation
   touching shared shapes (census key-sets, prompt/copy prefix legs, harness call sites, deal
   twins, run-record key lists) MUST statically enumerate the affected frozen legs in the
