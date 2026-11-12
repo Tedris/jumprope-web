@@ -45,18 +45,23 @@ overrun world; see "v3 Direction" below, input to Epic 7.
 - Faithful reproduction of Scarlet Skips' cards, story, or characters — spirit,
   not letter.
 
-## Current State — v2 complete (2026-11-10, Story 6.4 closes it)
+## Current State — v2 complete; Epics 7–8 shipped (2026-11-12)
 
 v1.0 shipped 2026-10-22 (details below, kept for provenance). v2 delta ran on
-BMAD epics: **Epics 1–5 done** — every story shipped, gate-proven, frozen-test
-discipline held throughout. **Epic 6: 6.1** the policy-bot summit gate landed —
-summit rate **0.142 in band** aggregate (0.150/0.150/0.125 per shape); **6.2** real tunables
-retired the placeholders (ALT 2.5, ceilings 250/600/900/1,350/2,100, periods
-1.00/.95/.88/.82/.76 — every-shape medSum 290.8/279.9/297.2 s); **6.3** the
-**CARD-09 CLOSED** verdict with two-arm sweep evidence; **6.4** is the
-docs & provenance pass + success-metrics execution (evidence: that story file).
-Gate: 566/566 Node tests @ ~8.5 s. Next milestone: **v2 deploy/UAT + Epic 7,
-The Peel (META-01)** — pinned.
+BMAD epics: **Epics 1–6 done** — every story shipped, gate-proven, frozen-test
+discipline held throughout (6.1 summit gate **0.142 in band**; 6.2 real
+tunables; 6.3 **CARD-09 CLOSED**; 6.4 docs & success-metrics pass).
+**Epic 7 (The Peel, META-01) done 2026-11-11** — meta ledger, outcome
+counters, catalogue locks, unlock cards + PS1-voice announce, meta-aware
+balance prove (gate 566→606). **Epic 8 (Player Fuel) done 2026-11-12** —
+skins-as-data seam, no-chrome equip surface (`?skin=`), JSON-manifest mods
+(`?mods=`, cosmetic-only v1 schema), the `.glb` joint-name spike **ACCEPTED**
+(contract published; feature shelved per FR38), and the zero-product-code
+prove (gate 606→701). The **v2 deploy/UAT pass ran 2026-11-12**
+(`docs/uat-v2-deploy-2026-11-12.md`): cut `master` @ `029ca8c`, sandbox lanes
+green, hardware lanes L1–L3 carried with owner (Ed). Gate: **701/701 Node
+tests @ ~8.5 s**. Next milestone: none scheduled — v3 remains ON HOLD pending
+the hardware UAT + playtesting proof above.
 
 ## v3 Direction (Epic 7 input) — The Peel Takes Shape (brainstormed 2026-11-10)
 
