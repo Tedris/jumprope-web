@@ -100,6 +100,13 @@ function resolveSkinParam(search, table) {
 // budget idiom (tests/track1.test.js:44) — a larger manifest is a violation.
 const MOD_MANIFEST_MAX_BYTES = 65536;
 
+// The read deadline (D3, review-round amendment EH-1/BH-1): the module's ONE
+// top-level await must ALWAYS settle — an accepted-but-unanswered connection
+// aborts at this cap and lands at the same null silence as every other
+// failure mode (AC3 universality). 3 s: generous for a same-origin static
+// file, short enough that a wedged host cannot hold first paint hostage.
+const MOD_MANIFEST_TIMEOUT_MS = 3000;
+
 // The validator (D1): JSON text in, validated manifest object or null out —
 // pure, all-or-nothing, never throws, never logs, zero IO tokens. A
 // __proto__ arriving from the decoder is an OWN key: the subset gate rejects
@@ -168,7 +175,12 @@ function resolveModsParam(search) {
 async function loadModManifest(url) {
   if (!url || typeof fetch !== 'function') return null;
   try {
-    const res = await fetch(url);
+    // The signal is the AC3 deadline: a stalled response aborts (an
+    // AbortError rejection) into the catch below — never an unsettled boot.
+    const res = await fetch(url, {
+      signal: typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+        ? AbortSignal.timeout(MOD_MANIFEST_TIMEOUT_MS) : undefined,
+    });
     if (!res.ok) return null;
     const bytes = new Uint8Array(await res.arrayBuffer());
     if (bytes.byteLength > MOD_MANIFEST_MAX_BYTES) return null;

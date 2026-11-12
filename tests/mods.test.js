@@ -146,6 +146,8 @@ async function modsFactories() {
   const src = await readFile(shellPath, 'utf8');
   const cap = src.match(/^const MOD_MANIFEST_MAX_BYTES = \d+;$/m);
   assert.ok(cap, 'the shipped MOD_MANIFEST_MAX_BYTES literal is present in js/shell.js at module scope (pairing fence)');
+  const deadline = src.match(/^const MOD_MANIFEST_TIMEOUT_MS = \d+;$/m);
+  assert.ok(deadline, 'the shipped MOD_MANIFEST_TIMEOUT_MS literal is present in js/shell.js at module scope (pairing fence)');
   const parse = src.match(/function parseModManifest\(text\) \{[\s\S]*?\n\}/);
   assert.ok(parse, 'the shipped parseModManifest factory is present in js/shell.js (pairing fence)');
   const mods = src.match(/function resolveModsParam\(search\) \{[\s\S]*?\n\}/);
@@ -153,8 +155,8 @@ async function modsFactories() {
   const load = src.match(/async function loadModManifest\(url\) \{[\s\S]*?\n\}/);
   assert.ok(load, 'the shipped loadModManifest factory is present in js/shell.js (pairing fence)');
   return new Function(
-    `${cap[0]}\n${parse[0]}\n${mods[0]}\n${load[0]};`
-    + ' return { MOD_MANIFEST_MAX_BYTES, parseModManifest, resolveModsParam, loadModManifest };'
+    `${cap[0]}\n${deadline[0]}\n${parse[0]}\n${mods[0]}\n${load[0]};`
+    + ' return { MOD_MANIFEST_MAX_BYTES, MOD_MANIFEST_TIMEOUT_MS, parseModManifest, resolveModsParam, loadModManifest };'
   )();
 }
 
@@ -291,6 +293,8 @@ test('§a the skin-record law + the BH-4 falsifier: the VALIDATOR owns the 24-bi
     ['prop negative', `{"v":1,"name":"m","skin":{"name":"m","colors":{"rose":-5,"prop":2,"limb":3}}}`],
     ['rose fractional', `{"v":1,"name":"m","skin":{"name":"m","colors":{"rose":1.5,"prop":2,"limb":3}}}`],
     ['rose a string', `{"v":1,"name":"m","skin":{"name":"m","colors":{"rose":"0x7ce38b","prop":2,"limb":3}}}`],
+    ['top-level violation WITH a skin present', `{"v":1,"name":"m","gameplay":{"gravity":9},"skin":{"name":"m","colors":{${colors}}}}`],
+    ['skin record missing name', `{"v":1,"name":"m","skin":{"colors":{${colors}}}}`],
   ];
   for (const [label, text] of bad) {
     let out;
@@ -436,6 +440,23 @@ test('§c a rejected read and an absent channel both land at null — nothing th
   assert.equal(rejected, null, 'a REJECTED read is the SAME null — the catch is the silence that keeps the boot-fork error spies green');
   const absent = await withFetch(undefined, () => loadModManifest('mods/mint.json'));
   assert.equal(absent, null, 'no channel at all -> null (the guarded typeof read, the 8.2 shape)');
+});
+
+test('§c the loader wires the read deadline: fetch receives an AbortSignal and its abort lands at the null silence (AC3, review round EH-1/BH-1)', async () => {
+  const { loadModManifest, MOD_MANIFEST_TIMEOUT_MS } = await modsFactories();
+  const seen = [];
+  const out = await withFetch((url, opts) => {
+    seen.push(opts?.signal);
+    const err = new Error('Request aborted due to timeout');
+    err.name = 'AbortError';
+    return Promise.reject(err);
+  }, () => loadModManifest('mods/stall.json'));
+  assert.equal(seen.length, 1, 'EXACTLY ONE request attempted — the deadline adds no retries');
+  assert.ok(seen[0] instanceof AbortSignal,
+    'the shipped fetch receives an AbortSignal — an accepted-but-unanswered connection can NEVER leave the ONE top-level await unsettled (the boot-blocking mutant dies here)');
+  assert.equal(out, null, 'an AbortError rejection is the SAME silent null as every other AC3 failure mode');
+  assert.ok(Number.isInteger(MOD_MANIFEST_TIMEOUT_MS) && MOD_MANIFEST_TIMEOUT_MS > 0 && MOD_MANIFEST_TIMEOUT_MS <= 10000,
+    'the deadline is a finite sane cap — generous for a static file, short enough to never hold first paint hostage');
 });
 
 test('§c the default-boot law: NO param means the channel is NEVER TOUCHED (AC2/NFR14)', async () => {
