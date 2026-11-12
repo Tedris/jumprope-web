@@ -3,7 +3,7 @@ baseline_commit: e77ca7e5a35b0b1ed2f0f658a72c4c5206cf525e
 ---
 # Story 8.3: Mods are data — the JSON-manifest surface
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -115,19 +115,19 @@ Pre-scan re-affirmed at create time against HEAD e77ca7e (gate 632/632 @ 8.5 s),
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — js/shell.js: the manifest surface (AC: 1, 2, 3, 4, 6; D1-D4, D7)
-  - [ ] Module scope, below `resolveSkinParam` (:84): `MOD_MANIFEST_MAX_BYTES = 65536` + `function parseModManifest(text)` (D1 order) + `function resolveModsParam(search)` (D3 path law) + `async function loadModManifest(url)` (D3 verbatim shape). Comments cite FR36 data-only law, P1 outcome, UX-DR2 silence, the track1 cap idiom — WITHOUT the literal tokens `eval`/`new Function`/`import(`/`fetch(` in prose where a token census reads raw source (prefer comment-stripped reading, but keep prose clean of `audio.js` too — feelcap AUD-02 lesson).
-  - [ ] Module-scope boot lines (D4): the guard line MOVED verbatim from startGame :110 (delete the in-function copy — no second site!) + `const modManifest = await loadModManifest(resolveModsParam(equipSearch));`. startGame's declaration stays synchronous.
-  - [ ] Boot site: `const scene = createScene(canvas, normalizeSkin(resolveSkinParam(equipSearch, SKINS) ?? modManifest?.skin));` — update the :102-109 comment block (8.3/P1/?mods ride); NOTHING between :200 and :206 (metalegger window).
-  - [ ] Diff fact: zero new imports, zero new js/ files, no `setItem`/`jumprope-`/keydown/DOM/copy tokens.
-- [ ] Task 2 — mods/mint.json (AC: 6; D5): byte-exact content (2-space indent, trailing newline); dev round records sha256 + byte size in the deferred-work.md ledger (TRACK-1 style) and stamps ledger :348 (BH-4) RESOLVED — validator owns ranges, factory stays shape-only.
-- [ ] Task 3 — new suite tests/mods.test.js (AC: all; see Testing guidance) — legs (a)-(f).
-- [ ] Task 4 — R1: the equip.test.js §e fence re-pin (exact text above; ONE assert + comment line).
-- [ ] Task 5 — bookkeeping + gate (AC: 2, 4, 6)
-  - [ ] C1 dev round: append `'tests/mods.test.js'` AND `'mods/mint.json'` to BOTH §6 allow-sets, list-only comments (after the 8.3 create-round entry in each twin).
-  - [ ] `./run_tests.sh` green (baseline **632/632 @ e77ca7e**, ~8.5 s; expect 632 + the mods legs + zero from R1 — NFR4 < 10 s).
-  - [ ] Diff-fact audit in the Debug Log (the 8.2 pattern): `git diff --stat` = js/shell.js + mods/mint.json + tests/mods.test.js + tests/equip.test.js (R1) + the two twins + ledger/story/sprint-status only.
-  - [ ] Dev round stamps `review`; final gate re-run; sprint-status per house style.
+- [x] Task 1 — js/shell.js: the manifest surface (AC: 1, 2, 3, 4, 6; D1-D4, D7)
+  - [x] Module scope, below `resolveSkinParam` (:84): `MOD_MANIFEST_MAX_BYTES = 65536` + `function parseModManifest(text)` (D1 order) + `function resolveModsParam(search)` (D3 path law) + `async function loadModManifest(url)` (D3 verbatim shape). Comments cite FR36 data-only law, P1 outcome, UX-DR2 silence, the track1 cap idiom — WITHOUT the literal tokens `eval`/`new Function`/`import(`/`fetch(` in prose where a token census reads raw source (prefer comment-stripped reading, but keep prose clean of `audio.js` too — feelcap AUD-02 lesson).
+  - [x] Module-scope boot lines (D4): the guard line MOVED verbatim from startGame :110 (delete the in-function copy — no second site!) + `const modManifest = await loadModManifest(resolveModsParam(equipSearch));`. startGame's declaration stays synchronous.
+  - [x] Boot site: `const scene = createScene(canvas, normalizeSkin(resolveSkinParam(equipSearch, SKINS) ?? modManifest?.skin));` — update the :102-109 comment block (8.3/P1/?mods ride); NOTHING between :200 and :206 (metalegger window).
+  - [x] Diff fact: zero new imports, zero new js/ files, no `setItem`/`jumprope-`/keydown/DOM/copy tokens.
+- [x] Task 2 — mods/mint.json (AC: 6; D5): byte-exact content (2-space indent, trailing newline); dev round records sha256 + byte size in the deferred-work.md ledger (TRACK-1 style) and stamps ledger :348 (BH-4) RESOLVED — validator owns ranges, factory stays shape-only.
+- [x] Task 3 — new suite tests/mods.test.js (AC: all; see Testing guidance) — legs (a)-(f).
+- [x] Task 4 — R1: the equip.test.js §e fence re-pin (exact text above; ONE assert + comment line).
+- [x] Task 5 — bookkeeping + gate (AC: 2, 4, 6)
+  - [x] C1 dev round: append `'tests/mods.test.js'` AND `'mods/mint.json'` to BOTH §6 allow-sets, list-only comments (after the 8.3 create-round entry in each twin).
+  - [x] `./run_tests.sh` green (baseline **632/632 @ e77ca7e**, ~8.5 s; expect 632 + the mods legs + zero from R1 — NFR4 < 10 s).
+  - [x] Diff-fact audit in the Debug Log (the 8.2 pattern): `git diff --stat` = js/shell.js + mods/mint.json + tests/mods.test.js + tests/equip.test.js (R1) + the two twins + ledger/story/sprint-status only.
+  - [x] Dev round stamps `review`; final gate re-run; sprint-status per house style.
 
 ## Testing guidance — tests/mods.test.js
 
@@ -209,14 +209,39 @@ Donors: the cross-source extraction family (equip.test.js :143-162 — shell.js 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+lane-qwen38-ultra/qwen (worker agent, dev-story round 2026-11-12)
 
 ### Debug Log References
 
+- Token censuses (measured, comment-stripped where noted): `fetch(` 1 raw / 1 stripped in js/shell.js (the loader; `:124`/the loader's `typeof` probes are guard tokens, not call tokens); `JSON.parse(` 1; `typeof location !== 'undefined'` 1 raw; `location.search` 2 stripped on 1 line; `eval(`/`new Function(` 0; `import(` 1 — the literal `'./audio.js'` dynamic site, 0 non-literal; static `'./'` specifiers EXACTLY the shipped four (summitapproach §4.2).
+- Fetch tripwires: no-param boot (`resolveModsParam('')` → null) — recording stub flag FALSE, channel NEVER touched (NFR14); param boot — EXACTLY 1 call, path verbatim; §e tripwires armed over 6 parse+composition windows (3 script-string-valid + 3 dead-payload twins) — ZERO eval/Function hits, `__PWNED` undefined throughout, mints applied / drops inert.
+- rng streams: the factories carry ZERO rng/`Math.random` tokens (grep census + §a purity leg); manifest values reach the game ONLY as the `createScene` skin argument — draw counts structurally unchanged (no counting-wrapper delta needed; the 6.x seed-honesty pattern discharges via purity + the identity-addressed boots' colorSets censuses: 3 writes mint, 0 writes default/skinless/garbage).
+- Gate: baseline `632/632 @ 8.57 s` (pristine HEAD 40a0f02); final `661/661 @ 8.65 s` (node --test duration; wall 8.7 s) — +29 legs, zero reds outside R1. The two §6/§4.3 diff-census reds seen mid-round were the porcelain arm folding the untracked NEW top-level `mods/` dir into `mods/`; resolved by staging (same state the census sees post-commit; precedent 5.6 `audio/track.ogg`).
+- Diff-fact audit (`git diff --cached HEAD --numstat`): ONLY the eight File-List files; js/render3d.js, js/audio.js, tests/support/, index.html, css/ all 0-byte diffs.
+- mods/mint.json: 141 B, sha256 `b74c59308ad5c4d1bba75757625708be199dbf065dbffe8e7c8b2d7fb72c64ba`; parses VALID through the shipped validator; skin EQUALS the derived mint witnesses 8184715/1053983/10134706.
+
 ### Completion Notes List
 
+- D1-D7 implemented AS PINNED; no design fork re-opened. startGame stays synchronous; the module's single top-level await is absorbed by `bootModule`'s import promise — all seven boot forks landed bit-identically (zero `tests/support/` delta, zero reds in the 632 outside R1).
+- The ONE authorized re-contract (R1) landed verbatim — the regex gains the ` \?\? modManifest\?\.skin` tail, test name kept, `Story 8.3 re-contract (D4)` comment added; equip.test.js is otherwise byte-identical (diff-fact: one 4/2 hunk).
+- Purity by construction + mechanized: the factories carry zero IO/rng/exec tokens (§a leg); `fetch(` EXACTLY 1 (shell) / 0 (every sim & render file, §f); `JSON.parse(` EXACTLY 1; zero eval/Function/non-literal-import tokens (§e census); the `?mods=` param takes LOOK defaults (no knob collision, §d).
+- Deviation note (spelling, not design): the story's Testing guidance names `upgradeS.js`; the repo file is `js/upgrades.js` — the §f fetch census scans the REAL filename (an ENOENT leg is a dead leg).
+- Ledger BH-4 PAID (validator owns ranges; falsifier leg §a names both sides); asset recorded TRACK-1 style (141 B, sha256 b74c59308ad5c4d1bba75757625708be199dbf065dbffe8e7c8b2d7fb72c64ba).
+- Deferred-work carries both dev-round stamps; nothing deferred that this story owed.
+
 ### File List
+
+- js/shell.js (modified — factories + cap + module-scope seam + composition tail + comments)
+- mods/mint.json (new — committed example manifest, D5)
+- tests/mods.test.js (new — the 29-leg contract suite)
+- tests/equip.test.js (modified — R1 ONLY: §e composition fence re-pin + comment line)
+- tests/ceilingbreak.test.js + tests/summitapproach.test.js (modified — C1 dev-round appends, list-only ×2 each)
+- _bmad-output/implementation-artifacts/deferred-work.md (modified — BH-4 disposition stamp + asset sha/size row)
+- _bmad-output/implementation-artifacts/8-3-mods-are-data-the-json-manifest-surface.md (this file — record + checkboxes + Status)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modified — 8-3 → review)
 
 ## Change Log
 
 - 2026-11-12 (create round): story created from epics.md:1218-1244 + FR36 :90 / FR39 :93 / NFR14 :110 / NFR16 :112 / UX-DR1-3 :155-157 + Epic 8 riders :1155-1160; **P1 ANSWERED by the user 2026-11-12 — cosmetic-only field-set (schema v1 `{v, name, skin?}`) + WHOLE-MANIFEST fallback — recorded in AC1 + prd.md Open Items (D-006 pattern)**; the ledger BH-4 range-law item DISPOSITIONED in AC1 (the manifest validator owns ranges; `normalizeSkin` stays shape-only); the A2 re-contract pre-scan re-affirmed with exact legs — **23 rows, exactly ONE authorized re-contract (R1: the equip.test.js §e composition fence for the manifest-skin weave), zero questions**; design pinned D1-D7 (validator + path law + 64 KiB cap shell-internal; the module-scope pre-resolution seam with top-level await — the seven-fork timing analysis rejected `async startGame`; `?skin=`-over-manifest precedence at the ONE `normalizeSkin` seam; `mods/mint.json` byte-pinned with decimal witnesses). **C1 census allow-append x2 SPENT IN THIS CREATE COMMIT** (story artifact into both §6 twins — mechanical list-only, precedent 6845157/ff1d97b/d55175b; prd.md + sprint-status.yaml + deferred-work.md verified ALREADY members of both sets — no appends). sprint-status 8-3 → ready-for-dev. Baseline gate 632/632 @ e77ca7e.
+
+- 2026-11-12 (dev round): implemented D1-D7 verbatim — three shell-internal factories (`parseModManifest` / `resolveModsParam` / `loadModManifest` + `MOD_MANIFEST_MAX_BYTES = 65536`) below `resolveSkinParam`; the guard line MOVED to module scope (one guarded read site, one line — equip §e untouched) + the ONE top-level await `const modManifest = await loadModManifest(resolveModsParam(equipSearch));`; the boot-site composition gained the authorized `?? modManifest?.skin` tail (precedence law); `mods/mint.json` committed (141 B, sha256 b74c5930…); NEW `tests/mods.test.js` — 29 legs (a)-(f) incl. the BH-4 falsifier, the zero-request tripwire, the script-string red-green with eval/Function tripwires (zero hits), and the asset pairing leg; R1 applied EXACTLY as authorized (equip §e one assert + comment); BH-4 ledger stamp + TRACK-1 asset row landed — **661/661 green @ ~8.6 s** (632 baseline + 29, zero reds outside R1); Status review.

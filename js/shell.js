@@ -83,6 +83,113 @@ function resolveSkinParam(search, table) {
   return Object.hasOwn(table, k) ? table[k] : undefined;
 }
 
+// Story 8.3 (FR36, P1 = cosmetic-only schema v1): mods are DATA. A manifest is
+// one read, one parse, one strict validator — and a valid record's optional
+// skin composes into the equip expression at the ONE boot site below. NOTHING
+// a manifest carries is ever executed (the data-only law). Schema v1 declares
+// EXACTLY {v, name, skin?}: v the integer 1; name a 1..64-char display string
+// (inert — zero copy ships, UX-DR2 silence); skin the optional record
+// { name, colors } with all three of rose/prop/limb integers 0..0xFFFFFF.
+// The RANGE law lives in this validator (P1a disposition, the BH-4 ledger
+// item): normalizeSkin above stays shape-only. Every violation drops the
+// WHOLE manifest (the P1 fallback law) and every null lands at the same
+// shipped-default silence (NFR16). Shell-internal per the 8.1/8.2 D3 scar: a
+// fifth static specifier would break the frozen shipped-four shell census.
+
+// The payload cap (D3): one source-pinned literal, the track1 static-host-
+// budget idiom (tests/track1.test.js:44) — a larger manifest is a violation.
+const MOD_MANIFEST_MAX_BYTES = 65536;
+
+// The validator (D1): JSON text in, validated manifest object or null out —
+// pure, all-or-nothing, never throws, never logs, zero IO tokens. A
+// __proto__ arriving from the decoder is an OWN key: the subset gate rejects
+// it and Object.prototype stays clean. Duplicate keys are resolved by the
+// decoder (last wins) BEFORE the gate reads them — duplicate v lands on v:2
+// and dies at the strict version check.
+function parseModManifest(text) {
+  let raw;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
+  for (const key of Object.keys(raw)) {
+    if (key !== 'v' && key !== 'name' && key !== 'skin') return null;
+  }
+  if (raw.v !== 1) return null;
+  if (typeof raw.name !== 'string' || raw.name.length < 1 || raw.name.length > 64) return null;
+  if ('skin' in raw) {
+    const rec = raw.skin;
+    if (typeof rec !== 'object' || rec === null || Array.isArray(rec)) return null;
+    for (const key of Object.keys(rec)) {
+      if (key !== 'name' && key !== 'colors') return null;
+    }
+    if (typeof rec.name !== 'string' || rec.name.length < 1 || rec.name.length > 64) return null;
+    const colors = rec.colors;
+    if (typeof colors !== 'object' || colors === null || Array.isArray(colors)) return null;
+    for (const key of Object.keys(colors)) {
+      if (key !== 'rose' && key !== 'prop' && key !== 'limb') return null;
+    }
+    // All three present AND in range (the gate above already killed any
+    // surplus key): a missing key fails Number.isInteger(undefined), so a
+    // half-record is unrepresentable — the whole manifest drops (D1).
+    for (const key of ['rose', 'prop', 'limb']) {
+      if (!Number.isInteger(colors[key]) || colors[key] < 0 || colors[key] > 0xffffff) return null;
+    }
+  }
+  return raw;
+}
+
+// The mods param resolver (D3): the resolveSkinParam twin — a PATH LAW, not a
+// table hit. The value must be lowercase, <= 128 chars, rooted under mods/,
+// end .json, carry no scheme/drive/query/fragment/percent characters, and
+// hold no empty or '..' segment. Returns the value VERBATIM — it is a PATH
+// under mods/, never a URL — or null. Pure: the read belongs to the seam.
+function resolveModsParam(search) {
+  const v = new URLSearchParams(search).get('mods');
+  if (typeof v !== 'string') return null;
+  if (v !== v.toLowerCase() || v.length > 128) return null;
+  if (!v.startsWith('mods/') || !v.endsWith('.json')) return null;
+  if (/[:\\?#%]/.test(v)) return null;
+  for (const segment of v.split('/')) {
+    if (segment === '' || segment === '..') return null;
+  }
+  return v;
+}
+
+// The loader (D3): the shell's ONE read channel — the only fetch CALL token
+// in js/ outside the audio module's own injected lane (byte-zero, cited via
+// the diff-fact census). The short-circuit order IS the AC2 law: a null url
+// (no param) returns BEFORE the channel is ever touched — parameterless
+// boots are zero-request (NFR14). One fetch, one buffer, then the validator
+// owns the decoded text. NEVER rejects, NEVER logs: the catch is the silence
+// that keeps the boot-fork error spies green (UX-DR2).
+async function loadModManifest(url) {
+  if (!url || typeof fetch !== 'function') return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.byteLength > MOD_MANIFEST_MAX_BYTES) return null;
+    return parseModManifest(new TextDecoder().decode(bytes));
+  } catch {
+    return null;
+  }
+}
+
+// Story 8.3 (D4): the boot seam MOVES to module scope — the 8.2 guard line
+// lands here VERBATIM (still exactly one guarded read site on one line; the
+// scope is census-irrelevant, and resolveModsParam parses the mods param from
+// this SAME string — there is no second read site). The manifest pre-resolves
+// during module evaluation: a data-URL module's promise settles only AFTER
+// its top-level awaits complete, so bootModule's import absorbs this one
+// await and all seven boot forks land exactly as before (the timing law —
+// startGame stays synchronous; this is the module's ONLY top-level await).
+// A manifest skin is a boot INPUT, never a runtime retint (purity rider).
+const equipSearch = typeof location !== 'undefined' && location.search ? location.search : '';
+const modManifest = await loadModManifest(resolveModsParam(equipSearch));
+
 export function startGame(canvas) {
   // UI-03 (D-07/D-10): one contain-fit band computation sizes BOTH the CSS box
   // and the backing buffer — render3d's passive poll re-derives RT, snap grid
@@ -100,15 +207,18 @@ export function startGame(canvas) {
   }
   applyWindowSize();
   // Story 8.1 (FR36/FR39): the ONE skin boot site; Story 8.2's P2 mechanism
-  // (FR39, URL query param — the user decision 2026-11-12) replaces ONLY the
-  // source expression, at this one site: the guarded shell-side URL-search
-  // read — the LOOK_KNOBS idiom (render3d.js:53), shell-only per the Epic 8
-  // purity rider — resolved against the shipped SKINS table. A miss is inert
-  // default + silence (UX-DR2/NFR16); nothing is fetched (zero-request law),
-  // nothing persisted (AC6), nothing shown. Node boots take '' -> undefined ->
-  // the byte-inert 8.1 composition: every frozen boot is bit-identical.
-  const equipSearch = typeof location !== 'undefined' && location.search ? location.search : '';
-  const scene = createScene(canvas, normalizeSkin(resolveSkinParam(equipSearch, SKINS)));
+  // (URL query param — the user decision 2026-11-12) and Story 8.3's manifest
+  // skin (P1: the mods param, pre-resolved at module scope above) compose at
+  // this ONE consumption site. The ?? tail spells the PRECEDENCE law (D4): an
+  // explicit table hit BEATS the manifest record; a table miss auto-equips a
+  // valid manifest's skin; both flow through the SAME normalizeSkin into the
+  // ONE createScene application site (the one-seam law — the renderer stays
+  // byte-zero). Absent or invalid resolves to undefined -> the placeholder
+  // record -> zero color writes: the byte-inert 8.1/8.2 composition, inert
+  // default + total silence (UX-DR2, NFR16), nothing persisted (D6), and a
+  // paramless boot makes zero requests (NFR14). Node boots take '' -> the
+  // byte-inert composition: every frozen boot is bit-identical.
+  const scene = createScene(canvas, normalizeSkin(resolveSkinParam(equipSearch, SKINS) ?? modManifest?.skin));
   const rng = Math.random;
   // D-N07: js/shell.js is audio.js's sole consumer. The import is dynamic so
   // the frozen data:-URL Node harnesses (which cannot resolve new relative

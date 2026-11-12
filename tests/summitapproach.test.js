@@ -1064,6 +1064,12 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     // c38070e (6.1) create-round append used; list-only, authorized by the
     // story doc, tripwire stays armed, authorizes nothing else.
     '_bmad-output/implementation-artifacts/8-3-mods-are-data-the-json-manifest-surface.md',
+    // Story 8.3 dev round (2026-11-12): the new mods contract suite AND the
+    // committed example manifest join the census (C1) — same list-only
+    // bookkeeping rule, authorized by the story doc, tripwire stays armed,
+    // authorizes nothing else.
+    'tests/mods.test.js',
+    'mods/mint.json',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');

@@ -344,8 +344,10 @@ test('§e the URL read is shell-side ONLY: one guarded read site in shell.js, re
     'the shell gains ZERO setItem sites — the URL is a per-load choice, nothing persists (AC6; the pausemenu L5 sibling fence)');
   assert.equal((shell.match(/createScene\(/g) ?? []).length, 1,
     'shell.js still calls createScene exactly once — the swap landed INSIDE the one consumption site');
-  assert.equal((shell.match(/normalizeSkin\(resolveSkinParam\(equipSearch, SKINS\)\)/g) ?? []).length, 1,
-    'the boot site composes the resolver INTO the seam (D4 verbatim) — the URL read is CONSUMED, never computed-and-discarded (review A82-1/BH-1: the discard mutant dies here)');
+  // Story 8.3 re-contract (D4): the manifest skin weaves into the SAME
+  // composition — the fence now pins the ?? modManifest tail verbatim.
+  assert.equal((shell.match(/normalizeSkin\(resolveSkinParam\(equipSearch, SKINS\) \?\? modManifest\?\.skin\)/g) ?? []).length, 1,
+    'the boot site composes the resolver AND the manifest skin INTO the seam (D4 verbatim, Story 8.3) — the URL read is CONSUMED, never computed-and-discarded (review A82-1/BH-1: the discard mutant dies here)');
 });
 
 test('§e zero new jumprope-* storage key literals: the fourth-key tripwire stays armed, unspent (AC6)', async () => {
