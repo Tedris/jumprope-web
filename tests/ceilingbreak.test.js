@@ -801,6 +801,11 @@ test('§6 diff census: only the story-authorized files differ from the story bas
     // (C1) — same list-only bookkeeping rule, authorized by the story doc,
     // tripwire stays armed, authorizes nothing else.
     'tests/playerfuel.test.js',
+    // A1 v2 deploy/UAT pass (2026-11-12, Epic 8 close-out chore): the UAT
+    // checklist doc joins the census (C1) — same list-only bookkeeping rule,
+    // the A1 ledger disposition authorizes the pass, tripwire stays armed,
+    // authorizes nothing else.
+    'docs/uat-v2-deploy-2026-11-12.md',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.4 frozen list');
