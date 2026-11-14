@@ -1099,6 +1099,24 @@ test('§4.3 diff census: only the story-authorized files differ from base 2c3e69
     // Epic 8 retro bookkeeping (epic-8-retro-2026-11-12.md, Artifact
     // bookkeeping section): list-only, authorizes nothing else.
     '_bmad-output/implementation-artifacts/epic-8-retro-2026-11-12.md',
+    // v3 planning wave + UX Session 2 (2026-11-13, C1 list-only chore): the
+    // GDD v3-retarget docs, the narrative design doc, the readiness report and
+    // the UX spine pair — with its rubric review and key-screen mockups — join
+    // the census. Same list-only bookkeeping rule; Ed's authorization at the
+    // 2026-11-13 gate check authorizes the append, tripwire stays armed,
+    // authorizes nothing else.
+    '_bmad-output/game-architecture.md',
+    '_bmad-output/narrative-design.md',
+    '_bmad-output/planning-artifacts/gdds/gdd-jumprope-web-2026-10-27/decision-log.md',
+    '_bmad-output/planning-artifacts/implementation-readiness-report-2026-11-12.md',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/.decision-log.md',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/EXPERIENCE.md',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/review-rubric.md',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/mockups/gym-poster.html',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/mockups/corkboard.html',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/mockups/diary-page.html',
+    '_bmad-output/planning-artifacts/ux-designs/ux-jumprope-web-2026-10-28/mockups/mobile-portrait.html',
   ]);
   assert.deepEqual(changed.filter(f => !allowed.has(f)), [],
     'anything else touching this tree violates the Story 4.5 frozen list');
