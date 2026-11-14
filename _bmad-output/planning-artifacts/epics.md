@@ -13,6 +13,8 @@ inputDocuments:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-11-05.md
   - _bmad-output/brainstorming/brainstorm-mods-skins-engine-2026-11-05/.memlog.md
   - _bmad-output/brainstorming-session-2026-11-10.md
+  - _bmad-output/game-architecture.md
+  - _bmad-output/narrative-design.md
 ---
 
 # jumprope-web - Epic Breakdown
@@ -22,6 +24,8 @@ inputDocuments:
 This document provides the complete epic and story breakdown for jumprope-web, decomposing the requirements from the GDD, UX Design if it exists, and Architecture requirements into implementable stories.
 
 Scope note: v1.0 shipped 2026-10-22 (one-button jump, 8-card catalogue, PS1 renderer, procedural audio, pure sim core). This breakdown covers the **v2 design-intent delta** documented in the GDD — ropes-as-HP, altitude & ascent, rule-changing cards, the area ladder, and the feel/balance epics.
+
+Scope note (v3-saga pass, 2026-11-12): epics 1–8 are shipped and closed; the **v3 Training Saga delta** (day-is-the-run, stations, stats/supercompensation, world/gates, dungeons, shadows, completion-as-state) is specified below as FR40–61 / NFR17–22 with epics 9–16. v1–v2 text in this file is the as-built ledger and stays frozen.
 
 ## Requirements Inventory
 
@@ -192,7 +196,7 @@ FR31: Epic 7 - meta state persists across runs via the storage seam (session-onl
 FR32: Epic 7 - lock-aware deal filter (zero-locks deal = v2 deal, regression pin)
 FR33: Epic 7 - run-outcome unlock rules (set/thresholds = open decisions S2/S3 at story creation)
 FR34: Epic 7 - unlocks present as PS1-voiced in-game fiction on letterboxed surfaces
-FR35: Epic 7 - prestige clause: decision-gated, conditional story only; default = no permanent climb power
+FR35: Epic 7 - prestige clause: decision-gated, conditional story only; default = no permanent climb power — clause RETIRED for v3 (GDD §Permadeath and Progression: ceiling growth replaces prestige); Epic 7 shipped with no permanent climb power
 FR36: Epic 8 - data-only JSON-manifest mods, parsed as data, schema = open decision; gameplay-param fields band-gate-riders
 FR37: Epic 8 - palette skins via the three shared character materials; no-skin = byte-identical default (regression pin)
 FR38: Epic 8 - .glb model skins via rig joint-name contract — spike-gated, ships only on proven contract
@@ -211,6 +215,125 @@ NFR13: Epic 7 - corrupt/missing meta keys degrade to fresh session-only state (d
 NFR14: Epic 8 - mod/skin boot cost inside the NFR3 load budget; default path unchanged when nothing is installed
 NFR15: Epic 8 - model-skin FPS/geometry budgets held or amended by spike evidence
 NFR16: Epic 8 - malformed mods/skins degrade to shipped defaults (data, not errors)
+
+FR40: Epic 9 - rope activity verbatim inside the day; outcome feeds AGI
+FR41: Epic 10 - universal tap at every station; corner switching; no second verb
+FR42: Epic 10 - failure textures cap the day's stat income
+FR43: Epic 9 - day = stamina budget; voluntary sleep; no in-day recovery
+FR44: Epic 9 - day state persists; nightfall sole reset; VIT only grows
+FR45: Epic 10 - feeds 1:1 + fixed-neighbor bleed; SHADOWS = automation stat
+FR46: Epic 10 - per-day ceilings; failure-only ceiling raises at 125% realized
+FR47: Epic 10 - zero-UI teaching: dotted prophecy, sore-walk, flat-day no-stiffness; INT neglect blanks board rows (rendering in Epic 12)
+FR48: Epic 10 - day-cards every 20 total beats; compost at nightfall
+FR49: Epic 11 - life-cards on earned events; permanent pick-two; rule-changers only
+FR50: Epic 11 - lossless law over cards; ledger fence with Epic 10
+FR51: Epic 9 - compost settles the day exactly once (feed wiring lands with Epic 10)
+FR52: Epic 12 - corkboard gates; INT-priced rows; LEVEL + shadow-post arming (post itself in Epic 14)
+FR53: Epic 12 - hunter tick ~1/day slept; frozen while closed; one world state
+FR54: Epic 12 - TV ladder; day ~15–20 news interrupt with push-in
+FR55: Epic 12 - derived RANK; in-world debuts before panels
+FR56: Epic 13 - dungeon day type; eject + same-day lock; reskin stage
+FR57: Epic 14 - shadows: record/cast/re-cast/retire; frozen outputs; battle-shadows (arming from Epic 12/13)
+FR58: Epic 11/14 - auto-pick life-card: row minted on the S rankDebut offer (11.2); automates the last verb once owned (14.6)
+FR59: Epic 14 - completion = census chyron; diary→chyron loop; endless
+FR60: Epic 9 - v2→v3 total migration; two-step corrupt degrade
+FR61: Epic 15 - model skins on the 17-joint contract; palette skins unchanged
+
+NFR17: Epic 14 (+all sim epics) - determinism contract; replay sweeps
+NFR18: Epic 14 - recording budget ≤ 4/8 KB per day
+NFR19: Epic 9/10 - lossless persistence; ledger-only stat writes
+NFR20: Epic 12 - world time = slept days; Date banned sim-side
+NFR21: Epic 14 - ghost frame budget; render-only LOD
+NFR22: Epic 15 - mod texture caps at load; author-loud/player-silent
+
+
+### Functional Requirements (v3 — The Training Saga)
+
+Derived from the v3-retargeted GDD, the v3 architecture pass (2026-11-12), and the narrative design. v1/v2 FRs stay as-shipped; FR40 formalizes the containment (the rope machine runs verbatim inside the day).
+
+**Day & stamina**
+
+- FR40: The rope activity is a v2 run, verbatim, nested inside a day; its outcome (skips, summit, trips) feeds the AGI line at nightfall; nothing in the rope grammar changes.
+- FR41: One tap = the current station's beat (rope: jump, run: stride, lift: rep, read: page, fight: dodge); station switching = tapping a room corner, the character walks over; a second verb NEVER ships (pillar).
+- FR42: Activity failure carries a station-specific texture (trip / stumble / failed rep / falling asleep) and caps that stat's income for the day at its realized value.
+- FR43: The day is a stamina budget, never a clock: one pool = VIT (first-pass 100 SU, gate-bound), hot activities drain 2 SU/beat, cool 1 SU/beat, no in-day recovery; voluntary sleep ends the day at any time.
+- FR44: Day state (pool, caps, recordings) persists across sessions; nightfall is the only in-design reset; VIT only ever grows — days never shorten.
+
+**Stats, ceilings, teaching**
+
+- FR45: Permanent stats STR/VIT/AGI/INT feed 1:1 from their activity's beats with ~15% bleed (gate-bound) to one fixed neighbour (rope→AGI→INT, running→VIT→STR, lifting→STR→VIT, reading→INT→AGI); SHADOWS (post-awakening) prices automation throughput (corners, split speed, clone strength).
+- FR46: Every stat has a per-day income ceiling; beats past it play at zero income; a stat's long-term ceiling rises ONLY on its failure day, moving to 125% (gate-bound) of the failing day's realized growth.
+- FR47: The ceiling mechanic is taught with zero UI: dotted diary prophecy (tomorrow's line raised one notch iff today failed), sore-walk animation on growth, flat days producing no stiffness; INT neglect renders visibly as blanker board rows.
+
+**Cards**
+
+- FR48: Day-card offers fire every 20 total activity beats (lifetime 400 → pick-of-3), rarity 70/25/5, capped/dead-pick filtered, composting at nightfall; the catalogue's 12-card physics vocabulary survives verbatim as day-card vocabulary.
+- FR49: Life-cards fire on earned events (first failure per stat, first dungeon clear, the awakening, each RANK debut): permanent pick-two from milestone-filtered pools; they change growth rules, never grant stat points.
+- FR50: Lossless law: no day-card or life-card may reduce a permanent stat or its ceiling (catalogue rule restated); risk pays only in stamina timing, gate shelf life, cap exposure.
+
+**Nightfall**
+
+- FR51: Nightfall compost settles the day exactly once: day-cards dissolve, value converts through feed+caps into the ledger, shadow outputs bank, the diary gains one first-person line, the room wears — implemented as one pure all-or-nothing settlement (`compost`).
+
+**World**
+
+- FR52: A corkboard in the room renders alive gates (tier, comp, reward, shelf life); INT gates how many rows render; a gate's first hand-clear pays LEVEL and arms its shadow-post (manual-first, per gate).
+- FR53: The off-screen hunter economy clears ~1 random gate per game day (gate-bound); the world advances exactly one tick per *slept* day and is frozen while the game is closed; news and board are reads of one world state.
+- FR54: The TV ladder (infomercials → weather/sports → news) runs on a content channel; the Interrupt fires at day ~15–20 (deterministic, balance-bound): a news-slip during a weather bulletin with the in-world push-in — the game's only automatic camera move, control never lost.
+- FR55: RANK is a hidden weighted sum of visible stats + LEVEL (weights gate-bound), derived from the ledger and never stored; RANK and LEVEL debut *in the world* before any panel (E-rank chyron, "LV 1" stepping through a gate).
+
+**Dungeons**
+
+- FR56: A dungeon is a day type: entering the room's impossible door commits the rest of the day to tap-fighting (HP, flinch, danger bed) on the palette-flipped stage; losing ejects the player and locks that gate for the day — present-tense danger, meta-level time cost, nothing else lost.
+
+**Shadows**
+
+- FR57: After the awakening, recorded days cast as shadows: deterministic replays (seed + input events) running station transitions in gym corners; corners support cast / re-cast / retire; shadow output is frozen at the casting day's ceilings; battle-shadows replay fight-days at posted gates.
+- FR58: The auto-pick life-card automates the last verb (bought, optional, one card).
+
+**Completion & persistence**
+
+- FR59: Completion is a state: when the derived census rankOf(life) enters S, the chyron names the player (the saved name), later quoting the player's own diary lines; designed endless continues after.
+- FR60: Save migration v2→v3 is total and pure: Epic 7 outcome counters become milestone sub-cases of the stat ledger, best-altitude carries, corrupt saves degrade two-step (checksum → prev-key → fresh-with-flag), never silently rolling anything back.
+
+**Expression**
+
+- FR61: Model skins: an external `.glb` full-body replacement posed by the phase-clock pipeline through the 17-name joint contract (zero sim-core delta); Blender template ships; palette skins stay as shipped.
+
+### NonFunctional Requirements (v3)
+
+- NFR17: Determinism contract (product requirement): every recorded day replays bit-exact from seed + inputs; shadows are replays, never AI; no player-visible nondeterminism may enter day/world sim.
+- NFR18: Recording budget: ≤ 4 KB per recorded day soft, 8 KB hard; overflow coalesces same-step events (architecture-set, 2026-11-12); a 100-day save stays ≤ 800 KB.
+- NFR19: Lossless persistence: no write path reduces a permanent stat or ceiling; nothing rolls back a save, ever; stats write only through the ledger API.
+- NFR20: World time = slept days: `Date` is banned in the sim import graph; the world advances only inside nightfall compost.
+- NFR21: Ghost frame budget: 60 FPS @ 240-line holds with design-uncapped shadow counts; far shadows render cheaper (render-only LOD), never a gameplay cap; replay playback fits the fixed-step sim budget.
+- NFR22: Mod texture caps (NFR10 restated): shipped product stays zero-bitmap; mod `.glb` textures allowed under dimension/size/count caps enforced at load; verdicts loud for authors (NFR16 lane), silent for players.
+
+### Additional Requirements (v3, from architecture)
+
+- `deriveStream(seed, domain, ordinal)` sub-stream registry — every rng consumer (cards, board, hunterTick, gateSpawn, content) owns a named stream; a stray `Math.random`/`Date.now` must fail the boundary fence.
+- `compost(day, life, world)` is the ONLY settlement and world-tick site; persistence wraps its result (sleep + throttled mid-day autosave; single `persist(gameState)` writer).
+- Save envelope `{v:3, state, sum}` on key `jumprope-life` + `.prev`; migration is one pure tested function; the shipped `jumprope-best` folds at migration and stays read-only after (the versioned `jumprope-best-altitude` never shipped)
+- Prose ships only as `js/content.js` state-keyed tables + selectors (sim-side); the renderer mounts strings; same state must always produce the same string.
+- Boundary fence extends to `day/life/world/station/content`; `content.js` imports nothing.
+- New named test files per the architecture epic map: `day/compost/life/world/station/content/replay-sweep/migrate/dungeon` — new legs only; existing files byte-frozen.
+
+### UX Design Requirements (v3 — spec now exists: ux-designs 2026-10-28, Session 2 pass 2026-11-13)
+
+- The v3 visual/interaction spec landed:
+  [`ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md`](ux-designs/ux-jumprope-web-2026-10-28/DESIGN.md)
+  and
+  [`ux-designs/ux-jumprope-web-2026-10-28/EXPERIENCE.md`](ux-designs/ux-jumprope-web-2026-10-28/EXPERIENCE.md)
+  (day-loop IA, corner routing, diegetic surfaces, state coverage, key-screen
+  mocks under `mockups/`). UX-DR4–7 below were minted as derived placeholders
+  and are **confirmed** by that spec — UX-DR4's keyboard question is closed:
+  corner taps only, no corner-cycle key (decision 2026-11-13). Re-validate this
+  section against the spines when v3 screens are built.
+
+- UX-DR4 (derived): Corner-target navigation — tapping a room corner routes the character to that station; pointer targets are generous (walk-up, no precision), keyboard parity stays one-button.
+- UX-DR5 (derived): Diegetic surfaces only — board (slips list), diary reader (day lines, scroll), chyron (single-line broadcast), door (one mesh, one prompt); built in the DESIGN.md vocabulary, zero new panel classes.
+- UX-DR6 (derived): Day-1 name prompt — one keystroke via the existing card-pick input lane, inside the diary's handwriting treatment.
+- UX-DR7 (derived): Shadow readability — posted shadows stay desaturated and clearly non-player; curation verbs (cast/re-cast/retire) surface through corner prompts, no menus.
 
 ## Epic List
 
@@ -277,6 +400,61 @@ P2 **Equip mechanism** = how a player loads a mod or equips a skin. No source ex
 **Single-epic rationale (step-02 Step C):** one value theme (community depth for the disguise); every story targets the same core files — the `render3d.js` material/recolor path and the shell's load path — so the material consolidates into one epic with ordered stories, not file-churn siblings. The one real risk boundary (the `.glb` joint-name contract) is a spike-gated story *inside* the epic: a declined spike kills one story, not a milestone.
 
 **Disposition — v3 direction (2026-11-10 capture):** stays ON HOLD, not cut by this pass; its fun-proven condition (v2 deploy/UAT + playtesting) is unmet. Checked 2026-11-11: zero mods/skins overlap with the v3 material. The retro's "un-parked only by that pass" is honored as: fuel recorded (FR36–FR39), v3 stories not spawned.
+
+### Epic 9: The Day Skeleton
+
+A day begins, lasts, and ends: rope-only days under a stamina pool, voluntary sleep, the compost transaction converting each day into a diary line and room wear, and the v3 save — with the v2 migration riding along. Act one's mask becomes playable end to end: the shipped v2 run enters the day unchanged, which is the first acceptance fact of the saga.
+(Sequence per GDD epics 9–16, brainstorming-session-2026-11-10, narrative-design acts, game-architecture v3 validation 2026-11-12.)
+
+**FRs covered:** FR40, FR43, FR44, FR51, FR60 · **NFRs:** NFR19 (persistence half)
+
+End-state note (readiness Q-2): `compost` settles zero feed through Epic 9 — the `settleFeeds` stub is replaced by the ledger in Story 10.3, where the stats conversion completes; day, diary, wear, and persistence are fully testable in 9.
+
+### Epic 10: Activities & Stats
+
+The room grows corners: running, lifting, reading join the rope on the universal tap; feeds and bleed, per-day caps and failure-only ceilings make supercompensation the growth engine; day-cards ride total beats; sore-walk and the dotted prophecy teach without a line of UI copy. "What kind of day was that?" becomes a one-sentence question with a real answer.
+
+**FRs covered:** FR41, FR42, FR45, FR46, FR47 (FR47's INT-board rendering lands in Epic 12), FR48 · **NFRs:** NFR19 (ledger core)
+
+### Epic 11: Life Cards & Milestones
+
+Earned events fire permanent pick-twos — first failure per stat, first of everything — and the life starts reading back as a build: habits chain two stations, emphases steer the ledger, milestones arrive with capability-threshold vignettes. The lossless law binds every card.
+
+**FRs covered:** FR49, FR50, FR58 (auto-pick row minted in 11.2; owned behavior ships in 14.6)
+
+**Decision (designer lane; OPEN — the FR33/Epic 7 pattern):** C1 **Choreographies vocabulary** — gdd.md §Life-cards names three life-card vocabularies (choreographies, habits, emphases); Story 11.2 carries habits + emphases and the auto-pick row; "choreographies" currently has no story home. Disposition — ship the third vocabulary in 11.2 or retire it with a named decision — is set at Story 11.2 creation. *(Sources: gdd.md §Life-cards; gdd-epic-overview 11.2; implementation-readiness-report-2026-11-12 GAP-2.)*
+
+### Epic 12: The World Layer
+
+The TV ladder runs (infomercials → weather/sports → news), the corkboard pins alive gates with shelf lives, the hunter economy clears a gate a day the player sleeps, RANK and LEVEL debut *in the world* before any panel — and at day ~15–20 the weather bulletin slips: portals. Act two opens mid-sentence.
+
+**FRs covered:** FR52, FR53, FR54, FR55 (FR47's neglect-blanked rows land here) · **NFRs:** NFR20
+
+### Epic 13: Dungeons & Tap-Fighting
+
+The room grows an impossible door. Entering commits the rest of the day to tap-fighting in the palette-flipped gym — HP, flinch, danger bed: the first real hurt after hours of safety, on purpose. Losing ejects you, locks the gate for the day, and costs nothing else. First hand-clears pay LEVEL and arm shadow-posts.
+
+**FRs covered:** FR56 (+ arming hooks for FR52/FR57)
+
+### Epic 14: Shadows & Automation
+
+The awakening: a past day is standing in the corner. Days record as input-event segments and replay bit-exactly as shadows — cast, re-cast, retire; outputs bank at nightfall, battle-shadows fight posted gates, the auto-pick card automates the last verb. Completion arrives as a state — the chyron says your name — and the curated room keeps playing. The poster shot, running live.
+
+**FRs covered:** FR57, FR58, FR59 · **NFRs:** NFR17, NFR18, NFR21
+
+### Epic 15: Model Skins
+
+Authors dress the skipper: full-body `.glb` replacement posed through the 17-joint contract the 8.4 spike proved, texture caps enforced at load, the Blender template as an importable contract, console verdicts for authors and total silence for players. Independent of the saga timeline — lands alongside any epic.
+
+**FRs covered:** FR61 · **NFRs:** NFR22
+
+### Epic 16: Balance & Prove
+
+Nothing v3 claims stays unmeasured: the day-economy balance gate (day-length envelope, ceiling curves, hunter tick rate, bleed, offer cadence — the gate-bound numbers this design carries as first-pass), the replay-sweep determinism gate at scale, the success-metrics pass, and the docs cutover. Could not be skipped per project history.
+
+**FRs covered:** verification legs across FR40–61 · **NFRs:** NFR17–NFR22 verification
+
+**Epic-dependency note:** 9→10→11 sequential (day, then stats, then their milestones); 12 opens act two on 11's ledger; 13 needs 12's gates; 14 needs 10's recordings and 13's fight-days; 15 is independent; 16 verifies all. Stories inside each epic are ordered so none waits on a later one (step-02 dependency rule).
 
 ## Epic 1: Ropes as Health
 
@@ -1292,3 +1470,927 @@ So that Player Fuel can never quietly regress the shipped feel.
 **Then** bare summit rates are bit-identical to the 7.5 record, and IF P1 kept the schema cosmetic-only, the story records "no deal/physics touch — sweep unchanged" WITH the 7.5 citation instead of re-running it (band-gate rider, S4, seed-honesty: numerics live only in story text)
 
 **And** this story's docs pass lands in the SAME commit (A5 doc-drift rule): GDD §Asset Requirements gains the mods-as-data sentence + the `.glb`/NFR10 disposition from 8.4, the PRD gains the Player Fuel open-items row with P1/P2 outcomes, and `architecture.md` records the loader seam and the joint-name contract in one place
+
+## Epic 9: The Day Skeleton
+
+A day begins, lasts, and ends: rope-only days under a stamina pool, voluntary sleep, the compost transaction converting each day into a diary line and room wear, and the v3 save — with the v2 migration riding along. Act one's mask becomes playable end to end: the shipped v2 run enters the day unchanged, which is the first acceptance fact of the saga.
+
+**FRs covered:** FR40, FR43, FR44, FR51, FR60 · **NFRs:** NFR19 (persistence half)
+
+### Story 9.1: Four tiers, one root — the day wraps the run
+
+As a player who has lived inside this game for hours,
+I want my rope run to keep working exactly as it did, now nested one level deeper inside a day,
+So that the game I learned is revealed as the engine it always was — not patched.
+
+**Acceptance Criteria:**
+
+**Given** a fresh game created via `createGame`
+**When** the state is inspected
+**Then** it is one POJO `gameState = { meta, life, day, world }` per the architecture State Tree — `meta {v, bestAltitude, settings, counters}`, `life {stats, ceilings, diary, milestones, name}`, `day {number, seed, stamina, beats, caps, station, recordings[], dayCards[], dayType, gateLocks, result}`, `world` inert data (`gates: []`, `news: []`) until its epic fills it (FR40)
+**And** during a rope session the run record nests verbatim as `day.station` — the v2 run schema is untouched, no fields move (FR40)
+
+**Given** the new root `tickGame(gameState, input, STEP, rng)` replacing direct `tickRun` calls in the shell
+**When** a rope day advances
+**Then** it returns `[state', events]` exactly like `tickRun`, layering `tickDay` → the unchanged run loop; `rope.js` and the trip waterfall run byte-identical under the wrapper (FR40, NFR8)
+
+**Given** a day tier absent or `null` (a v2-era shape)
+**When** `tickGame` runs
+**Then** it reduces bit-identically to the v2 `tickRun` — the day tier is idle-transparent when absent, and the phase clock nests inside the beat/day clocks, never re-clocking them (FR40, NFR8)
+
+**And** new red-green legs in the NEW `day.test.js` pin the tree shape, the root's return contract, and run-parity-under-wrapper; `createGame`/`createDay`/`tickDay` factory contracts get their Node-side contract test in the same change; existing test files stay byte-identical (NFR5); `tests/boundary.test.js` extends to `day.js` and stays green (NFR4)
+
+### Story 9.2: The v3 save — envelope, prev-key, total migration
+
+As a player returning tomorrow,
+I want my whole life to load from one key and my v2 past to map onto it in full,
+So that nothing ever rolls back a save — the lossless law's persistence half (NFR19).
+
+**Acceptance Criteria:**
+
+**Given** persistence writes anywhere in the game
+**When** a write happens
+**Then** it goes through the single `persist(gameState)` writer as envelope `{v: 3, state, sum}` under key `jumprope-life`, the prior copy rolled to `jumprope-life.prev` before each write — no second storage lane appears (FR60, NFR12)
+
+**Given** a v2-era save (meta outcome counters + best-altitude keys)
+**When** the shell loads it
+**Then** one pure migration function maps it totally: Epic 7 outcome counters (furthest area, summit count, lifetime skips) become milestone sub-cases in `life.milestones` of the stat ledger, Epic 7's unlock predicates read through the sub-cases so every v2 unlock leg stays green, and `meta.bestAltitude` carries from the shipped `jumprope-best` key — the migration reads the three shipped v2 keys (`jumprope-best`, `jumprope-meta`, `jumprope-audio`); the versioned `jumprope-best-altitude` never shipped and appears in no leg (FR60)
+
+**Given** an envelope failing its checksum test (`checksum(env) !== env.sum`)
+**When** the shell loads
+**Then** it tries `jumprope-life.prev`; if both fail, a fresh v3 life with `{ meta: { corrupt: true } }` — the diary says so once, nothing else mentions it, nothing throws; invalid states are data (FR60, NFR13)
+
+**And** the NEW `migrate.test.js` ships in the same change with red-green legs: total map (every v2 key has a v3 landing), migration purity/determinism, and the two-step degrade; the seam stays in `shell.js`, the sim import graph unchanged and `tests/boundary.test.js` green (NFR4, NFR5)
+
+### Story 9.3: Stamina — the day is a budget, never a clock
+
+As a player planning a day,
+I want every beat to spend from one visible pool,
+So that the day's question is how I use today, never when today ends (FR43).
+
+**Acceptance Criteria:**
+
+**Given** `createDay(number, world)`
+**When** the day state is inspected
+**Then** `day.stamina.pool` is seeded from the `STAMINA` data-table row — VIT base, first-pass 100 SU, balance-owned by Epic 16 — and no code path recovers stamina inside a day (FR43)
+
+**Given** a rope beat (a skip) advances the day
+**When** the beat lands
+**Then** the pool drains by the `CADENCE` table's intensity-class row — hot 2 SU/beat, cool 1 SU/beat (first-pass, Epic 16-owned); the rope day is hot, and the drain is arithmetic on the table, never a literal in logic (FR43)
+
+**Given** voluntary sleep — a pointer tap on the room's bed corner (generous target; the tap routes the character, it never acts — no second verb)
+**When** the character arrives
+**Then** `endDay` runs and the day ends at that instant at any pool level, any point (FR43, UX-DR4 lineage)
+
+**Given** the pool empties mid-beat
+**When** the day ends forced
+**Then** it takes the identical nightfall path as voluntary sleep — the two differ only in who clicked, and events return `'sleep'` (FR43)
+
+**And** new `day.test.js` legs cover drain arithmetic, zero in-day recovery, and voluntary/forced path equality; boundary fence green, existing test files byte-identical (NFR4, NFR5)
+
+### Story 9.4: Nightfall compost — five subsystems, one transaction
+
+As a player who slept,
+I want yesterday to settle into stats, a diary line, and a worn room all at once,
+So that a half-composted day is impossible, not unlikely (FR51).
+
+**Acceptance Criteria:**
+
+**Given** sleep ends a day
+**When** `compost(day, life, world)` runs — exactly once
+**Then** it is one pure all-or-nothing settlement returning `[{...life', world', day': freshDay(number + 1)}, ['sleep', 'compost']]`, with the feed step behind a stub hook (`settleFeeds` — no ledger numbers move until the ledger lands) and the world step an identity call to `world.advance` while gates are absent (FR51, NFR20)
+**And** an empty-beats voluntary sleep composts to zero feed and zero ceiling moves — resting is legal, laziness is neutral (FR51)
+
+**Given** settlement succeeded
+**When** the diary is written
+**Then** one first-person line is composed by `content.js` state-keyed selectors from the settled numbers — one sentence, under three, same state same string forever — and appended to `life.diary` (FR51; State-Keyed Prose)
+
+**Given** a settled day's activity shape
+**When** the room renders next
+**Then** wear accumulates as monotone data records (`life.wear[]`: floor groove, diary tower, scuffed wall — geometry inputs, zero bitmaps) with a `'wear'` event, the renderer mounting data only, and the Identifier ↔ Design-Term mapping table gains the `wear` row in the same change (FR51, NFR10)
+
+**Given** nightfall settles a day
+**When** the shell fans the `'sleep'`/`'compost'` events out to `audio.js`
+**Then** the page-turn stinger voice plays on the master bus — gesture-gated AudioContext, persisted mute/volume honored, nothing beat-locked (GDD §Audio, v3 additions; FR27 lineage)
+
+**And** the NEW `compost.test.js` ships with the settlement matrix legs (purity: double-compost impossible; all-or-nothing: a refused settlement writes nothing; empty-day leg), `content.test.js` starts with the diary-line determinism leg, the page-turn voice ships with its red-green audio-guard leg, and the fed×cap×ceiling cells wait as named legs for the ledger's epic; boundary fence green, existing files byte-identical (NFR4, NFR5)
+
+### Story 9.5: The day across sessions — resume, growing days, the diary reader
+
+As a player closing the tab mid-day,
+I want today waiting exactly where I left it while the world waited too,
+So that the stamina budget survives my week without aging anything behind me (FR44).
+
+**Acceptance Criteria:**
+
+**Given** play at any point
+**When** persistence fires — on sleep and by throttled mid-day autosave, both through `persist(gameState)`
+**Then** a reload restores `day.stamina.pool`, `day.beats`, `day.caps`, and the active station's state exactly — nightfall stays the only in-design reset (FR44, NFR19)
+
+**Given** load, idle, or tab-hide for any wall-clock duration
+**When** the game resumes
+**Then** the world tier is untouched — nothing but `compost` ticks it, and the day number proves it; `Date` appears nowhere in the sim graph to make otherwise (FR44, NFR20)
+
+**Given** any legal sequence of days in this epic's codebase
+**When** a seeded fuzz leg enumerates them
+**Then** the day-pool seed never decreases — the `STAMINA` row plus `life.stats.VIT`, which nothing writable here can lower: VIT only ever grows, days never shorten (FR44, NFR19)
+
+**Given** the diary affordance — a diegetic reader over `life.diary`, strings via `content.js` selectors, scroll only
+**When** the player opens it any time, any window size
+**Then** past day lines read back identical to how they were written — zero new panel classes, inside the letterbox resize path (UX-DR5, NFR7)
+
+**Given** a fresh v3 life with `life.name` unset
+**When** the diary's first page offers "name yourself" in its handwriting treatment
+**Then** one keystroke through the existing card-pick input lane records the name once into `life.name` — set once, never rewritten, persisted only through `persist(gameState)`; staying unnamed is legal (the prompt re-offers, nothing else changes) (UX-DR6)
+
+**And** new `day.test.js` legs: write→load→identical-state resume, world-frozen-across-reload, the name-prompt once-only leg (set once, re-offers while unset), and a synthetic 100-day save round-tripping under the 800 KB envelope budget; boundary fence green, existing test files byte-identical (NFR4, NFR5, NFR18)
+
+## Epic 10: Activities & Stats
+
+The room grows corners: running, lifting, reading join the rope on the universal tap; feeds and bleed, per-day caps and failure-only ceilings make supercompensation the growth engine; day-cards ride total beats; sore-walk and the dotted prophecy teach without a line of UI copy. "What kind of day was that?" becomes a one-sentence question with a real answer.
+
+**FRs covered:** FR41, FR42, FR45, FR46, FR47 (FR47's INT-board rendering lands in Epic 12), FR48 · **NFRs:** NFR19 (ledger core)
+
+### Story 10.1: The station kernel and the running corner
+
+As a player's thumb,
+I want the same tap to mean stride, press, page, or jump wherever I stand in the room,
+So that one verb runs four genres and switching costs a walk, never a menu (FR41).
+
+**Acceptance Criteria:**
+
+**Given** `station.js` exports the beat kernel — cadence phase, fail window, and cap arithmetic read from the `STATIONS` cadence table rows
+**When** any station runs
+**Then** beats fire the `'beat'` event on sim-step-aligned cadence and the 9.3 drain tables hook per intensity-class row (running: hot) (FR41, FR43)
+
+**Given** the universal tap — Space / Enter / pointer-down anywhere, unchanged input lanes
+**When** the current station is running
+**Then** the tap is a stride on the run cadence row — the station is a config on the kernel, not a new code path — and a second verb NEVER ships (FR41)
+
+**Given** a pointer tap on a room corner — generous hit area, keyboard parity preserved one-button (corner cycling steps the same target)
+**When** the character walks over and arrives
+**Then** `day.station` swaps at arrival, the beat clock keeps counting through the walk, and the bed-corner routing of 9.3 is one row in the same corner table — the walk-up primitive generalizes, nothing duplicates (FR41, UX-DR4)
+
+**And** the NEW `station.test.js` ships with red-green legs: kernel-wrapped rope-day beats bit-identical to the unwrapped stream, cadence-row contract tests, and corner-swap-as-data; new terms get their Identifier ↔ Design-Term mapping rows in the same change; boundary fence green, existing files byte-identical (NFR4, NFR5)
+
+### Story 10.2: Lifting, reading, and the textures of failure
+
+As a player testing a new corner,
+I want failing a rep or dozing over a page to feel different — and to price exactly one thing,
+So that failure reads as information: that stat's day is over (FR42).
+
+**Acceptance Criteria:**
+
+**Given** the lifting station (press-rep cadence row) and the reading station (page-turn cadence row)
+**When** either runs on the kernel
+**Then** each is table config — lifting hot, reading cool per the `CADENCE` class rows — no new verbs, no new timing systems (FR41, FR43)
+
+**Given** a beat lands outside the fail window
+**When** failure resolves
+**Then** the texture is station-specific data — trip (rope), stumble (run), failed rep (lift), falling asleep (read) — returned as events, never a thrown error (FR42)
+
+**Given** any station failure
+**When** the failure settles in day state
+**Then** `day.caps[stat]` freezes at that stat's realized day value — deeper attempts before the failure raise the frozen position — and beats at that station afterward produce zero income (the income zeroing itself settles through the ledger's feed path once it exists; the day-side cap write is this story's contract) (FR42, FR46)
+
+**And** `station.test.js` gains per-station failure-texture legs and a cap-at-realized leg (realized value rises pre-failure, cannot move post-failure); boundary fence green, existing files byte-identical (NFR4, NFR5)
+
+### Story 10.3: The ledger — feed, bleed, and monotone writes
+
+As the life I am building,
+I want every beat to pay permanently and nothing to ever write me down,
+So that the lossless law is arithmetic, not a promise (NFR19).
+
+**Acceptance Criteria:**
+
+**Given** `life.js` exports `gain(life, stat, amount, cap)` and `raiseCeiling(stat, realized)` as the only stat mutators in the game
+**When** either is called
+**Then** both clamp monotone — no legal call decreases `life.stats[stat]` or `life.ceilings[stat]` — and every other module writes stats by returning reasons to compost, never by writing (NFR19, FR45)
+
+**Given** the 9.4 feed stub replaced inside `compost`
+**When** nightfall settles
+**Then** each activity's beats feed 1:1 to their primary stat plus a bleed at the `BLEED` table row — first-pass ~15%, gate-bound, Epic 16-owned — to the one fixed neighbour: rope→AGI→INT, running→VIT→STR, lifting→STR→VIT, reading→INT→AGI — applied once, at compost, through `gain` only (FR45, FR51)
+
+**Given** any legal sequence of gains, composts, and card effects
+**When** the seeded fuzz leg in the NEW `life.test.js` enumerates it
+**Then** no transition ever lowers a stat or a ceiling — the monotonicity fence leg is the executable law (NFR19)
+
+**And** the stat namespace stays STR/VIT/AGI/INT — `SHADOWS` gains no key or producer until the awakening's data rows land, per its own epic's contract; ledger contract legs ship in the same change; boundary fence green, existing files byte-identical (FR45, NFR4, NFR5)
+
+### Story 10.4: Caps, supercompensation, and teaching with zero UI
+
+As a player pushing a day,
+I want the income line to flatten under my hands and tomorrow's ceiling to rise only because I failed today,
+So that growth-requires-failure is felt, never read (FR46, FR47).
+
+**Acceptance Criteria:**
+
+**Given** every stat carries a per-day income ceiling
+**When** a day's realized feed reaches it
+**Then** further beats play at zero income — animation and joy, no ledger write — with the `'cap'` event firing once per stat per day, ceiling positions from the per-day cap rows Epic 16 owns (FR46)
+
+**Given** a failure day settles in compost
+**When** `raiseCeiling` moves that stat's long-term ceiling
+**Then** it moves to the `CEILING_RULE` row's 125% (first-pass, gate-bound) of the failing day's realized growth, from the failure site only, from `compost` only — a safe day moves no ceiling, ever, pinned by leg (FR46)
+
+**Given** zero UI copy anywhere in this story
+**When** the day ends
+**Then** the teaching is diegetic: tomorrow's diary line renders one dotted notch higher iff today failed (a `content.js` state-keyed selector over `day.caps` outcomes), growth days certify themselves with the sore-walk animation and footfalls, and flat days produce no stiffness — the player learns supercompensation from the room, not a tooltip (FR47; State-Keyed Prose)
+
+**And** `compost.test.js`/`life.test.js` gain the fed×cap×ceiling matrix cells now that all three exist (plateau legs, failure-only raise, cross-day monotonicity) and `content.test.js` gains the prophecy-equivalence leg (failed day → notch-up string, flat day → identical string); FR47's INT-neglect blanked-board rendering is explicitly Epic 12's leg, not this story's; boundary fence green, existing files byte-identical (NFR4, NFR5)
+
+### Story 10.5: Day-cards on the beat clock
+
+As a player mid-day,
+I want rule-changing picks to keep arriving — now priced by everything I did, not just skips —
+So that the whole day's shape drives the build, and none of it survives the night (FR48).
+
+**Acceptance Criteria:**
+
+**Given** activity beats accrue across all stations
+**When** the total crosses the `OFFER_CADENCE` row's every-20-beats position (first-pass, balance-owned by Epic 16)
+**Then** a day-card offer fires with the `'offer'` event, and v2's every-10th-skip rule is subsumed — the skip clock survives only as the rope grammar's internal pacing measure (FR48)
+
+**Given** an offer draws
+**When** candidates resolve
+**Then** it is pick-of-2, or pick-of-3 past the lifetime-beat threshold row (first-pass 400, gate-bound), rarity weights 70/25/5 carried from v2, capped and dead-pick cards filtered, draws consuming the `cards` sub-stream via `deriveStream(seed, 'cards', ordinal)` — same seed, same offers, bit-exact (FR48, NFR17)
+
+**Given** a picked card
+**When** `applyCard` patches the day-scoped effect record
+**Then** the 12-card physics vocabulary survives verbatim as the day-card vocabulary, day-cards dissolve at nightfall (`compost` clears `day.dayCards[]` in the same transaction that settles the ledger), and no card touches a permanent stat or its ceiling — the lossless law binds every catalogue row (FR48, FR51)
+
+**And** `catalogue.test.js` gains appended-only legs (existing legs byte-identical): 20-beat cadence across a multi-station day, the pick-of-3 threshold flip, ephemerality-at-compost, and a rope-only-day offer-pacing parity leg against v2 behavior; docs for the subsumed skip rule age out in the same commit (A5); boundary fence green (NFR4, NFR5)
+
+## Epic 11: Life Cards & Milestones
+
+Earned events fire permanent pick-twos — first failure per stat, first of everything — and the life starts reading back as a build: habits chain two stations, emphases steer the ledger, milestones arrive with capability-threshold vignettes. The lossless law binds every card.
+
+**FRs covered:** FR49, FR50, FR58 (auto-pick row minted in 11.2; owned behavior ships in 14.6)
+
+### Story 11.1: The milestone engine — earned events fire permanent pick-twos
+
+As a player whose failures and firsts start counting for good,
+I want earned moments to present a permanent pick-two of life-cards,
+So that my life reads back as a build of choices, not just accumulated numbers.
+
+**Acceptance Criteria:**
+
+**Given** a `compost(day, life, world)` settlement in which an activity fails for the first time on a stat
+**When** settlement completes
+**Then** `life.milestones.fail[stat]` flips false→true exactly once — milestone flags are monotone like the ledger, never re-set, never cleared (FR49)
+
+**Given** a flipped milestone flag
+**When** the offer step runs
+**Then** a permanent pick-two draws from the milestone-filtered life-card pool in `upgrades.js` — never-repeating (owned `life.lifeCards[]` filter the draw like capped cards; rarity-less per the pool rule) — and presents on the existing card-pick lane, `Digit1`/`Digit2` on the shipped number-key picker (FR49, FR13)
+
+**Given** a picked life-card
+**When** it applies via whole-record patch `applyLifeCard(life, card) → life'` (the ADR-2 convention)
+**Then** it joins `life.lifeCards[]` permanently — never removed, never re-offered — and persists only through the shell's `persist(gameState)` in the envelope `{v:3,state,sum}` on key `jumprope-life` + `.prev`, no new storage key (FR49)
+
+**Given** milestone families whose triggers belong to later epics
+**When** the engine is inspected
+**Then** `firstClear`, `awakening`, and `rankDebut[band]` exist behind the same monotone setter with no Epic 11 trigger site — the engine ships their rails, not their causes
+
+**Given** the sim graph after this change
+**When** `tests/boundary.test.js` runs
+**Then** the fence still passes — milestone draws consume `deriveStream(seed,'cards',ordinal)`; no `Date`/`Math.random`/DOM joins `life.js` or `upgrades.js` (NFR4)
+
+**And** new red-green test legs in `life.test.js` (flag monotonicity, one-time fire, persistence round-trip) and `catalogue.test.js` (milestone-filtered draw, never-repeat filtering) ship in the same change (NFR5)
+
+### Story 11.2: The life-card vocabulary — habits and emphases
+
+As a builder of a kind of life,
+I want permanent cards that chain activities and steer growth rules,
+So that "what kind of life was that?" reads off the permanent picks as legibly as a day reads off its cards.
+
+**Acceptance Criteria:**
+
+**Given** a habit life-card chaining two activities ("jump rope while reading")
+**When** its beat plays at the lead station
+**Then** one tap counts as a beat for both chained activities: both feed streams accrue under their own caps and both activities' intensity-class rows drain `day.stamina.pool` at once (FR49; FR43's hot/cool rows are referenced, no new numbers), and the beat advances the day-card cadence table row once, never twice (FR48's 20-beat row stays the one clock)
+
+**Given** an emphasis life-card
+**When** nightfall settles feeds
+**Then** it steers the ledger at read time (bleed target / feed weight rows) inside `compost`, spent through `gain` — a card is a rule settlement reads, never a writer (FR49)
+
+**Given** every life-card row in the catalogue
+**When** its contract test applies it to any state
+**Then** no `life.stats` or `life.ceilings` value changes on application — the never-grant-stat-points rule is a fence, not a convention; the ledger API stays the only stat writer (FR49, FR50)
+
+**Given** the auto-pick life-card row in the catalogue (`upgrades.js`, late-gated)
+**When** the `rankDebut` milestone for the S band fires through the 11.1 rails
+**Then** the card is offered exactly once in that milestone pick-two — optional, rule-only, no stat lines — and owning it arms the behavior Story 14.6 consumes (FR58; offered at the completion beat per decision-log Session 5; "defined late-gated" per gdd-epic-overview 11.2)
+
+**And** new red-green test legs ship in the same change: one contract line per life-card row in `catalogue.test.js`, habit dual-drain legs in `day.test.js`, emphasis-feed legs in `compost.test.js` (NFR5); `tests/boundary.test.js` green (NFR4)
+
+### Story 11.3: Station arrivals — "okay, I can also do this"
+
+As a player crossing a capability threshold,
+I want the new capability to introduce itself in the room's own voice,
+So that growth lands as a beat I feel, not a notification I read.
+
+**Acceptance Criteria:**
+
+**Given** a `life.stats` value crossing a station's arrival threshold (table row, Epic 16-owned; first-pass values seed the table)
+**When** the day settles
+**Then** the 11.1 engine flips `life.milestones.arrive[station]` once and the vignette line mounts on the existing surfaces — composed by the `content.js` System/diary selectors from the ledger's numbers, tone "okay, I can also do this", the renderer mounting strings only (FR49, FR47's zero-UI teaching)
+
+**Given** the same `gameState` at any future time
+**When** the vignette selector runs again
+**Then** it returns the same string, forever — the vignette is a state read, never a stored line; the `content.test.js` leg proves it (NFR17 hygiene)
+
+**Given** any vignette state
+**When** it renders
+**Then** zero new panels or surfaces exist — the vignette rides the chyron/diary treatments inside the letterbox resize path (UX-DR5, NFR7)
+
+**And** new red-green test legs in `content.test.js` and `life.test.js` ship in the same change (NFR5); `tests/boundary.test.js` green
+
+### Story 11.4: The lossless law — the card fence
+
+As the designer (and every future balance change),
+I want the no-card-can-hurt-the-ledger property proven mechanically,
+So that "you can never lose anything" stays an invariant, not a promise.
+
+**Acceptance Criteria:**
+
+**Given** seeded fuzz runs drawing legal day-cards and life-cards through the real offer pipelines over N simulated days
+**When** any prefix of the resulting state sequence is diffed
+**Then** no `life.stats` or `life.ceilings` value ever decreased — no legal day-card or life-card sequence can reduce a stat or its ceiling (FR50, NFR19)
+
+**Given** a fuzz-discovered card whose effect is risky
+**When** its state diff is inspected
+**Then** it touched only the legal risk channels — stamina timing, cap exposure, gate shelf life — never the ledger (FR50)
+
+**And** the fuzz ships as a seeded leg in `life.test.js` beside Epic 10's ledger fuzz, red-green in the same change (NFR5); `tests/boundary.test.js` green (NFR4)
+
+## Epic 12: The World Layer
+
+The TV ladder runs (infomercials → weather/sports → news), the corkboard pins alive gates with shelf lives, the hunter economy clears a gate a day the player sleeps, RANK and LEVEL debut *in the world* before any panel — and at day ~15–20 the weather bulletin slips: portals. Act two opens mid-sentence.
+
+**FRs covered:** FR52, FR53, FR54, FR55 (FR47's neglect-blanked rows land here) · **NFRs:** NFR20
+
+### Story 12.1: The TV ladder — the world as broadcast
+
+As a player living in one room,
+I want the world to arrive as TV murmur and a one-line caption,
+So that everything beyond my window stays epic radio — a place I don't live in yet.
+
+**Acceptance Criteria:**
+
+**Given** ladder state read from `gameState` (day number vs the ladder table rows, Epic 16-owned; first-pass values seed the table)
+**When** the TV-register content selector runs
+**Then** it returns a line from the current pool — infomercial early, weather/sports later — keyed through `deriveStream(seed,'content',ordinal)` and composed from state; same state → same line, forever (`content.test.js` determinism leg) (FR54)
+
+**Given** the mounted channel
+**When** frames run
+**Then** `audio.js` plays the audible murmur as a leaf reacting to a channel read — nothing beat-locked, the rope's phase untouched (FR54, NFR8) — and the TV surface mounts the selector's string as a single caption line inside the letterbox resize path (FR54, UX-DR5, NFR7)
+
+**Given** the ladder selector after this change
+**When** asked at any day number
+**Then** it tops out at the weather/sports tier — no news-tier row exists in the ladder table yet, so no bulletin can air (FR54)
+
+**And** new red-green test legs in `content.test.js` (pool determinism, ladder derivation) ship in the same change (NFR5); `content.js` imports nothing and joins the `tests/boundary.test.js` sim-graph fence green (NFR4)
+
+### Story 12.2: The corkboard — alive gates, INT-priced rows
+
+As a player deciding what to farm,
+I want the gate board to be the world's map and clock made of cork,
+So that every opportunity carries a visible shelf life.
+
+**Acceptance Criteria:**
+
+**Given** alive `world.gates[]`
+**When** the board renders
+**Then** rows come straight from state fields — tier/comp/reward/shelf — the renderer indexes `world.gates[]` and infers nothing; an empty `world` renders bare cork (FR52, FR53)
+
+**Given** `life.stats.INT`
+**When** slip-template rows render
+**Then** the visible row count is the INT table row (curve as data, Epic 16-owned; first-pass seeds the row) — rows beyond the player's INT render as blanked cells, never hidden panels (FR52)
+
+**Given** a life that stopped reading (INT ceiling flat)
+**When** the board renders
+**Then** its rows go visibly blanker — neglect visible, never punished: FR47's board half lands here (FR47)
+
+**And** new red-green test legs in `world.test.js` (row visibility is a sim-side pure function of (INT, gates); blanked-vs-hidden leg) ship in the same change (NFR5); board prose ships only as `content.js` slip templates, `tests/boundary.test.js` green (NFR4)
+
+### Story 12.3: One tick per slept day — world.advance inside compost
+
+As a player who closes the tab overnight,
+I want the world to wait for me,
+So that the hunters' day passes only when I sleep, and absence never mutates the board.
+
+**Acceptance Criteria:**
+
+**Given** a `compost(day, life, world)` settlement
+**When** the world line of compost runs
+**Then** `world.advance(world, dayNumber)` — called ONLY from `compost` — rolls the hunter-tick table row (~1 random gate cleared per game day slept, first-pass value, Epic 16-owned) via `deriveStream(world.seed, 'hunterTick', dayNumber)`, spawns per its `gateSpawn` roll, and decays `world.gates[].shelf`; the batch returns `gateClear`/`gateSpawn` events with at most one `news` per day, coalesced (FR53)
+
+**Given** the same saved state re-opened any number of times
+**When** the game loads, idles, and hides the tab
+**Then** the board and news are byte-identical to close — frozen while closed: no world writer exists outside compost, and the leg proves two loads of one save produce identical `world` JSON (FR53, NFR20)
+
+**Given** board and news rendered from one snapshot
+**When** either is read
+**Then** they agree by construction — news entries and gate rows are two reads of the same `world` state, never two ledgers (FR53)
+
+**Given** the sim import graph
+**When** `tests/boundary.test.js` runs
+**Then** `Date` appears nowhere in the sim graph — world time is slept days only, one `Date.now` lights the Date-ban leg red (NFR20)
+
+**And** new red-green test legs in `world.test.js` (tick determinism from equal seeds, exactly-one-tick-per-settled-day, frozen-while-closed) ship in the same change (NFR5)
+
+### Story 12.4: RANK derived — in-world debuts, zero new panels
+
+As a player the news is starting to mention,
+I want RANK and LEVEL introduced inside the world before any panel exists,
+So that the first hidden numbers arrive as fiction, not menus.
+
+**Acceptance Criteria:**
+
+**Given** any `gameState`
+**When** anything asks for rank
+**Then** `rankOf(life)` computes it — weighted sum of `life.stats` + `life.LEVEL` through the `RANK_WEIGHTS` table row (Epic 16-owned; first-pass weights seed the table) — never stored: no state-tree slot, no save key for it, the `life.test.js` rankOf-contract leg proves the census cannot desync or stale (FR55)
+
+**Given** a band change in derived rank
+**When** settlement observes it
+**Then** the 11.1 setter flips `life.milestones.rankDebut[band]` once, firing the RANK-debut pick-two through the existing milestone-offer rails (FR49, FR55)
+
+**Given** `life.LEVEL`
+**When** the state tree is read
+**Then** the field exists, stored, defaulting to 0 — dungeon-earned only; no Epic 12 code path writes it (FR55)
+
+**Given** the debut selectors
+**When** the moment fits
+**Then** the "E-rank" chyron line keys off the derived `rankOf` band and the "LV 1" stepping text keys off `life.LEVEL` — both ship as `content.js` tables mounted on the chyron/board reads, both silent pre-debut, zero new panel classes (FR55, UX-DR5)
+
+**And** new red-green test legs in `life.test.js` (rankOf contract, LEVEL default) and `content.test.js` (debut-selector determinism) ship in the same change (NFR5); `tests/boundary.test.js` green (NFR4)
+
+### Story 12.5: The Interrupt — the only camera move, the only reveal
+
+As a player mid-weather-report,
+I want the impossible news to break in on schedule and the panel to admit what it always was,
+So that Act two opens inside the world without taking the button from me.
+
+**Acceptance Criteria:**
+
+**Given** day number reaching the ladder's news tier — the INTERRUPT_DAY table row, first-pass day ~15–20, balance-bound, Epic 16-owned
+**When** that day's compost settles
+**Then** the batch returns `news` and `interrupt` exactly once per save — the ladder step is a derived read of monotonic day count, so the date cannot re-fire and cannot wall-clock — and the same advance opens the world: `gateSpawn` starts, gates appear the interrupt day itself, `world.news[]` gains the bulletin entry (FR54, NFR20)
+
+**Given** the bulletin
+**When** the TV airs it
+**Then** the weather pool yields to the news-slip — a weather report interrupted by the portal bulletin, gates stated as fact — composed only from the `content.js` bulletin template plus state numbers; same state → same slip (`content.test.js` leg) (FR54)
+
+**Given** the shell observing the `interrupt` event
+**When** the moment plays
+**Then** the camera drifts toward the TV — the game's only automatic camera move, triggered by a state read — with control never lost and the rope never beat-locked, firing once per save, non-skippable on first play, diary replay of the moment skippable; `prefers-reduced-motion` damps the drift, never the news (FR54, NFR8, FR23)
+
+**Given** the first sleep after the interrupt day
+**When** that compost batch runs
+**Then** it returns `rename` once: the diary-tally labels morph in place, diary-handwriting into System sans — the System label rows derived word-for-word from the diary tally rows, the same-handwriting lineage — adding zero mechanics and zero panels: the only UI reveal the game ships (FR55, UX-DR5)
+
+**And** new red-green test legs in `world.test.js` (ladder crossing, once-per-save derivation, spawn-gate opening) and `content.test.js` (bulletin and rename vocabulary determinism) ship in the same change (NFR5); `tests/boundary.test.js` green — the push-in trigger lives in the shell, the sim never commands the camera (NFR4)
+
+## Epic 13: Dungeons & Tap-Fighting
+
+The room grows an impossible door. Entering commits the rest of the day to tap-fighting in the palette-flipped gym — HP, flinch, danger bed: the first real hurt after hours of safety, on purpose. Losing ejects you, locks the gate for the day, and costs nothing else. First hand-clears pay LEVEL and arm shadow-posts.
+
+**FRs covered:** FR56 (+ arming hooks for FR52/FR57)
+
+### Story 13.1: The impossible door — a day type, not a mode
+
+As a player whose room has outgrown itself,
+I want one door I can walk through,
+So that the act-two turn happens to an object in my room instead of a screen I open.
+
+**Acceptance Criteria:**
+
+**Given** a room after the Interrupt with alive gates in `world.gates[]`
+**When** the shell renders
+**Then** the door is ONE mesh carrying ONE prompt line (a `content.js` selector, locked/alive wording from state) inside the diegetic door surface — zero new panel classes, letterbox resize path untouched (FR56, UX-DR5, NFR7)
+
+**Given** a day in progress with `day.stamina.pool` above zero
+**When** the player taps the door (pointer target or one-button corner parity)
+**Then** `enterGate(day, gateId)` returns `{...day, dayType: 'dungeon', gate: gateId, station: fightStation(...)}` — a field write plus a station swap, no mode object, no second verb (FR41, FR56)
+
+**Given** a day that entered a gate
+**When** `tickDay` advances the remaining beats
+**Then** the rest of the day is committed: corner switching stops routing, drains follow the fighting cadence row, no in-day recovery exists, and voluntary `endDay` still settles the dungeon day through the one `compost` path (FR43, FR51, FR56)
+
+**Given** a locked gate (`lockedUntilDay` still in force)
+**When** the door is tapped or rendered
+**Then** entry is refused as data — the prompt reads locked and no state changes (FR52, FR56)
+
+**And** `tests/dungeon.test.js` ships as a NEW file with red-green legs for the entry transition and the committed-day rule; existing `tests/*.test.js` stay byte-identical and `tests/boundary.test.js` stays green — no `Date`/`Math.random`/DOM/three enters the sim graph (NFR17, NFR4)
+
+### Story 13.2: The fighting station — HP, flinch, and a danger bed
+
+As a player stepping through the door,
+I want the same one button to mean dodge,
+So that the first real hurt in the game speaks the verb I already own.
+
+**Acceptance Criteria:**
+
+**Given** `day.dayType === 'dungeon'`
+**When** the beat kernel advances
+**Then** fighting is a code station in `js/station.js` honoring the same beat/fail/cap grammar with its own cadence-table row (dodge-timing window, HP, flinch) — the numbers are the Epic 16 data-table row, and this story seeds first-pass values only, never a new literal (FR41, FR56)
+
+**Given** a dodge landed inside the window, and one missed
+**When** the beat resolves
+**Then** both flow through the single tap lane (Space/Enter/pointer-down) and the miss produces the fight failure texture — flinch — capping that day's fight income at realized value exactly as the other stations' failure textures do (FR41, FR42)
+
+**Given** fight HP and flinch state
+**When** any transition writes state
+**Then** they live dungeon-local inside `day.station` and are NEVER written to `life.stats` or `life.ceilings` — `gain`/`raiseCeiling` stay the only stat mutators and HP is not a stat (FR56, NFR19)
+
+**Given** a fight beat, a flinch, or HP hitting zero
+**When** the events fan out
+**Then** the danger-bed voice rides the existing `audio.react(events)` bus, gesture-gated AudioContext, persisted mute/volume honored, and nothing beat-locks the sim (FR27 lineage, FR56)
+
+**And** the fighting station runs on the same beat kernel and its segment keys to `day.gate` — this story ships the SHAPE only (a kernel row + the gate keying); the recording mechanism is Story 14.1's leg, which wraps this kernel with no new machinery, so battle-shadows become possible without Epic 13 shipping a recorder (FR57 arming hook; ordering: 13.2 shapes, 14.1 records)
+
+**And** red-green legs in `tests/dungeon.test.js` (new file) plus new legs in `tests/station.test.js` cover cadence-row lookup, flinch-income capping, and HP-never-reaches-the-ledger; `tests/boundary.test.js` green (NFR17)
+
+### Story 13.3: Ejection — the day is the whole price
+
+As a player who loses a dungeon,
+I want to be thrown out with nothing taken but the rest of the day,
+So that losing is a scheduling problem, not a punishment.
+
+**Acceptance Criteria:**
+
+**Given** fight HP reaches zero
+**When** the fight resolves
+**Then** the sim returns the `eject` event and eject is DATA — `{ejectedGate, lockedUntilDay}` folded at compost — never a thrown error and never a stat write (FR56, NFR19)
+
+**Given** an eject pending
+**When** `compost(day, life, world)` settles that day exactly once
+**Then** the lock is applied through `world.advance` inside the transaction so `world.gates[]` reads locked until `lockedUntilDay`, while `life.stats` and `life.ceilings` move only by what the day honestly earned through the feed and caps (FR51, FR56, FR46, NFR20)
+
+**Given** an ejected gate
+**When** the corkboard and the door render the next beat
+**Then** both are reads of the one world state — no parallel lock bookkeeping anywhere (FR52, UX-DR5)
+
+**Given** ejection prose
+**When** the TV and System one-liners are chosen
+**Then** they come from `js/content.js` state-keyed tables (same state, same string, forever) and the renderer only mounts them (FR56; State-Keyed Prose)
+
+**And** new legs in `tests/compost.test.js` prove all-or-nothing ejection (a folded eject leaves no half-lock) and the lossless law holds across seeded fuzz; `tests/dungeon.test.js` pins the `{ejectedGate, lockedUntilDay}` shape; `tests/boundary.test.js` green (NFR17, NFR19)
+
+### Story 13.4: This room, wrong — the dungeon look and the first hand-clear
+
+As a player inside the wrong version of my own gym,
+I want the familiar stage palette-flipped and fogged,
+So that the danger registers in my body before it registers on any panel.
+
+**Acceptance Criteria:**
+
+**Given** `day.dayType === 'dungeon'`
+**When** `js/render3d.js` draws a frame
+**Then** the SAME stage geometry renders with a flipped palette and heavier fog through the existing area palette/fog path — zero new geometry class, and the view payload is the only input (FR15 lineage, FR56)
+
+**Given** any window size or aspect ratio in a dungeon day
+**When** frames draw
+**Then** the dungeon sits inside the existing aspect-correct letterbox resize path — no layout bypass (NFR7)
+
+**Given** a gate cleared by hand for the first time
+**When** the clear folds at compost
+**Then** `life.LEVEL` increments exactly once for that gate (LEVEL is dungeon-earned only) and `world.gates[].posted` is set — the shadow-post arming hook Epic 14 consumes — while re-clears never re-pay LEVEL and never re-arm (FR52, FR56)
+
+**Given** the dungeon view payload
+**When** the renderer mounts copy
+**Then** every string arrives from `content.js` selectors; no prose is composed render-side (State-Keyed Prose)
+
+**And** `tests/dungeon.test.js` gains legs proving the look is a pure state→payload read and that LEVEL and `posted` are each once-per-gate across seeded re-clear sweeps; `tests/boundary.test.js` stays green with `render3d.js` outside the sim graph, and the mapping-table rows for `dayType`/`posted` land in the SAME commit (A5 doc-drift rule; NFR17)
+
+## Epic 14: Shadows & Automation
+
+The awakening: a past day is standing in the corner. Days record as input-event segments and replay bit-exactly as shadows — cast, re-cast, retire; outputs bank at nightfall, battle-shadows fight posted gates, the auto-pick card automates the last verb. Completion arrives as a state — the chyron says your name — and the curated room keeps playing. The poster shot, running live.
+
+**FRs covered:** FR57, FR58, FR59 · **NFRs:** NFR17, NFR18, NFR21
+
+### Story 14.1: The recorder in the beat kernel
+
+As a player whose yesterdays are about to stand in the corners,
+I want the game to remember exactly what I did,
+So that my past replays precisely instead of approximating.
+
+**Acceptance Criteria:**
+
+**Given** a live station segment
+**When** taps land
+**Then** `recordSegment` appends `(step, inputBit)` to the active `{seed, segment, events}` entry in `day.recordings[]` — input events only, never keyframes or result-only animation (FR57; ADR-3)
+
+**Given** a day that switched stations
+**When** segments close
+**Then** there is one segment per activity segment, each seeded via `deriveStream(seed, 'station', ordinal)`, and multi-segment days replay segment-by-segment in order (FR57, NFR17)
+
+**Given** a day written with deliberately input-chatty play
+**When** the recording is measured
+**Then** the day row stays within the ≤ 4 KB soft / 8 KB hard budget and the same-step coalescing policy is the only overflow behavior, with the budget as the NFR18 table row and a 100-day save proven ≤ 800 KB (NFR18)
+
+**Given** any recorded segment
+**When** `replaySegment(seg, t)` is compared step-for-step with what live play produced at step `t`
+**Then** the poses are identical for every `t` — replay is a read of the same station transitions, never a second simulation (FR57, NFR17)
+
+**And** new identity legs in `tests/station.test.js` plus the budget leg cover coalescing and the KB caps; recordings persist only through `persist(gameState)` in the `{v:3,state,sum}` envelope on `jumprope-life` + `.prev`, and `tests/boundary.test.js` stays green (NFR18, NFR19, NFR17)
+
+### Story 14.2: The awakening — a past day in the corner
+
+As a player returning from the first dungeon clear,
+I want a day of mine standing in the corner jumping rope,
+So that the reveal is a thing in the room, not a screen about the room.
+
+**Acceptance Criteria:**
+
+**Given** the first dungeon clear settles
+**When** the scripted awakening beat fires
+**Then** `life.milestones` flags it once, a `content.js` System-register sting lands in the prompt slot, and `castShadow(day, life, corner)` posts a day to a corner — the whole beat returns as state plus lowercase events, no cutscene path (FR57; narrative beats 10–11)
+
+**Given** `castShadow` running
+**When** `life.shadows[]` gains an entry
+**Then** it is `{corner, dayRef, frozen}` — a reference into the recorded day, never a copy, with outputs frozen at the casting day's ceilings (FR57)
+
+**Given** one or more posted shadows
+**When** `tickGame` advances a step
+**Then** every posted replay advances via `replaySegment(segment, step)` keyed by the segment's own seed, in the same fixed step, and `shadowPoses[]` arrive in the snapshot the renderer reads (FR57, NFR17, NFR21)
+
+**Given** `tests/replay-sweep.test.js` as a NEW file
+**When** seeded N-day × M-shadow sweeps run
+**Then** shadow replay equals recorded reality bit-exactly at every step, and the sweep is CI's determinism gate — no player-visible nondeterminism may enter the day/world sim (NFR17)
+
+**And** the awakening sting and corner copy are `content.js` selectors only, `tests/content.test.js` gains the same-state-same-string leg, and `tests/boundary.test.js` stays green with the playback loop in `js/game.js` (FR57, NFR17)
+
+### Story 14.3: Curation — cast, re-cast, retire
+
+As a player building the room's cast list,
+I want to choose which yesterdays stand in the corners,
+So that the endgame room is curated instead of accumulated.
+
+**Acceptance Criteria:**
+
+**Given** a corner
+**When** the player taps it and answers the corner prompt (cast from a diary day / re-cast / retire)
+**Then** `castShadow`, `recastCorner`, or `retireShadow` performs it and returns `cast` / `recast` / `retire` — corner prompts only, zero menus, zero new panel classes (FR57, UX-DR7, UX-DR5)
+
+**Given** a posted shadow whose casting day is behind the player's current `life.ceilings`
+**When** its output is computed at any later day
+**Then** it pays at the casting-day `frozen` ceilings — shadows never grow — and a re-cast swaps the reference so the corner's past changes while that shadow still never grows (FR57, FR46)
+
+**Given** a retired corner
+**When** state returns
+**Then** the reference is gone, the diary keeps the day, the corner stands empty, and no stat or ceiling moved — the lossless law applies to curation (FR57, FR50, NFR19)
+
+**Given** a recording whose checksum fails at load
+**When** its corner renders
+**Then** the corner is empty and an author-console verdict is logged — never a wrong ghost, and nothing player-facing (NFR17; author-loud/player-silent lane)
+
+**And** posted shadows stay desaturated and clearly non-player at every palette, `tests/life.test.js` gains red-green legs for frozen outputs across re-cast sequences, and `tests/boundary.test.js` stays green (FR57, NFR17, NFR7)
+
+### Story 14.4: Nightfall banking — shadows on the sheet
+
+As a player whose past works while I sleep,
+I want shadow output to arrive at nightfall as one honest line,
+So that automation shows up in the ledger instead of as a menu.
+
+**Acceptance Criteria:**
+
+**Given** posted shadows with output accrued during the day
+**When** `compost(day, life, world)` settles
+**Then** that output converts through the feed into the SHADOWS stat line via `gain`, inside the one all-or-nothing settlement that also ages the world (FR51, FR57, FR45, NFR20)
+
+**Given** shadow output priced at frozen casting-day ceilings
+**When** it is banked
+**Then** it respects the SHADOWS per-day ceiling and beats past it bank at zero, like every other feed (FR45, FR46, FR57)
+
+**Given** a day with no shadows posted
+**When** compost settles it against an identical shadowed day
+**Then** SHADOWS income is exactly zero and the rest of the settlement is byte-identical — the control leg (FR51, NFR19)
+
+**And** new legs in `tests/compost.test.js` pin exactly-once banking across double-compost attempts and the `life.test.js` monotone fuzz leg still holds; the SHADOWS line reads as diary tally before the rename and System line after, both via `content.js` selectors (FR57, NFR19)
+
+### Story 14.5: Battle-shadows at posted gates
+
+As a player who posted a fight-day at a gate,
+I want that day to keep fighting there,
+So that a gate I armed keeps working whether I walk through it or not.
+
+**Acceptance Criteria:**
+
+**Given** a gate with `world.gates[].posted` referencing a fight-day
+**When** `world.advance(world, dayNumber)` runs inside compost
+**Then** the battle-shadow replays its recorded fight segment at that gate and the outcome is the replay's resolved HP — rng only through `deriveStream`, no AI and no coin flip (FR57, FR53, NFR17)
+
+**Given** a battle-shadow whose replay resolves a win
+**When** world state returns
+**Then** the gate clears through the same clear path the hunter tick uses (`clearedBy` set, news and board read it), and a loss leaves the gate alive — outcomes honest, never a guess (FR53, FR57)
+
+**Given** a dungeon day's fight segment
+**When** it is recorded
+**Then** it carries `day.gate` so the posting can point at it — the arming hook landed in Epic 13 is consumed here and nowhere else (FR57; FR52 arming)
+
+**And** `tests/world.test.js` gains a seeded leg proving identical seeds and postings yield identical gate outcomes, replay playback stays inside the fixed-step budget, and `tests/boundary.test.js` stays green with the mapping-table rows for `posted`/battle-shadow landing in the SAME commit (A5 rule; NFR17, NFR21)
+
+### Story 14.6: Completion is a state — the chyron says your name
+
+As a player the arithmetic finally caught up with,
+I want the news to carry my name while I keep training,
+So that finishing is a fact about me and not a screen I dismiss.
+
+**Acceptance Criteria:**
+
+**Given** `rankOf(life)` derived from the ledger against the rank ladder's S row (the Epic 16 weight row, referenced not hardcoded)
+**When** the census crosses into S
+**Then** the `name` event returns exactly once and the chyron carries `life.name` — the saved day-1 name — with no ceremony and no new state enum (FR59, FR55)
+
+**Given** the name has fired
+**When** later chyron lines are selected
+**Then** the pool quotes the player's own `life.diary` lines back, state-keyed through `content.js` selectors so the same state always reads the same words (FR59)
+
+**Given** the auto-pick life-card owned and a pick-two offer live
+**When** the offer resolves
+**Then** the pick is taken automatically through the same filter-and-`applyCard` path with a diegetic trace, the manual path stays fully functional, and no card reduces a stat or ceiling (FR49, FR50, FR58)
+
+**Given** any day after the name
+**When** days, shadows, board, and compost continue
+**Then** designed endless holds unchanged — nothing ends, nothing gates, the room keeps playing (FR59)
+
+**Given** design-uncapped posted-shadow counts
+**When** frames render at 60 FPS @ 240-line
+**Then** far shadows render cheaper through pose-preserving tri-count LOD in the render layer only, with no gameplay cap and every `replaySegment` advance fitting the fixed-step sim budget (NFR21, NFR17)
+
+**And** red-green legs cover name-exactly-once, quote-back determinism, and post-name endless continuity across `tests/life.test.js`, `tests/content.test.js`, and `tests/replay-sweep.test.js`; existing test files stay byte-identical and `tests/boundary.test.js` stays green (FR59, NFR17)
+
+## Epic 15: Model Skins
+
+Authors dress the skipper: full-body `.glb` replacement posed through the 17-joint contract the 8.4 spike proved, texture caps enforced at load, the Blender template as an importable contract, console verdicts for authors and total silence for players. Independent of the saga timeline — lands alongside any epic.
+
+**FRs covered:** FR61 · **NFRs:** NFR22
+
+### Story 15.1: The puppet wired — lazy GLTFLoader and the bind
+
+As a mod author whose contract-bound `.glb` already binds in the spike,
+I want it to equip and move in the shipped game exactly like the skipper,
+So that the 8.4 proof becomes playable expression with zero engine code touched.
+
+**Acceptance Criteria:**
+
+**Given** a model skin equipped through the boot lane (`mods/models/*.glb`, arriving shell-side as data — the 8.2/8.3 URL-param mechanism, unchanged)
+**When** the renderer loads it
+**Then** `GLTFLoader` is imported lazily from the pinned specifier (the same importmap pin; zero new dependencies, `index.html` byte-zero) — a nothing-equipped boot fetches neither loader nor model and holds the load-to-first-jump budget (FR61, NFR14, NFR3)
+
+**Given** a bound model
+**When** bind completes
+**Then** the 17-name joint contract — `torso`, `head`, `cap`, `eyeL`, `eyeR`, `scarf0`–`scarf2`, `armL`, `armR`, `legL`, `legR`, `chest`, `chestL`, `chestR`, `handleL`, `handleR` — is verified at bind by the spike's bijection law: exact name-set equality, pairwise-distinct targets, `unbound` empty for a conformant model; a missing or extra name lands in `unbound` (or drops, scarf chain beyond three, `chestL/chestR` under jiggle-off — 15/17 is a legal bind), never a thrown error (FR61, NFR16)
+
+**Given** a bound skin in play
+**When** the phase-clock pipeline poses
+**Then** every posed channel of the bound model is `===` the shipped skipper's channel at the same phase — the rigid identity bind, zero tolerance, carried from spike legs to product legs; the phase clock stays the only clock and the rope grammar is untouched (FR61, FR40, NFR8)
+
+**Given** the sim graph after this change
+**When** `tests/boundary.test.js` runs
+**Then** the fence is byte-identical and green, no new file joins the sim graph, and the story's product delta is confined to the `render3d.js` lazy skin loader plus the shell boot path — ZERO delta in `game/day/life/world/station/rope/player/upgrades/areas/interpolate` (FR61)
+
+**Given** a default boot with nothing equipped
+**When** the 8.5 witness set runs
+**Then** the byte-identical pin survives on the v3 baseline: materials census unchanged, zero extra network requests, `#hud` shape census unchanged, gate <10 s green (NFR14, NFR4, the 8.5 pattern)
+
+**And** the equipped choice crosses persistence only as `life.wornSkin` inside `persist(gameState)` — no new storage key, and the nothing-persisted default of the equip lane stands (NFR19)
+
+**And** the spike's contract legs are promoted into the product suite as a NEW file (the frozen `tests/glbspike.test.js` is byte-identical; the promoted legs are its successor); new legs in `tests/equip.test.js` cover bind, fall-off, and the nothing-equipped pin (NFR5)
+
+### Story 15.2: Caps at load — verdicts for authors, silence for players
+
+As a mod author testing a textured model's limits,
+I want hard cap verdicts named in the console at load,
+So that I learn in text instead of guessing why nothing changed on screen.
+
+**Acceptance Criteria:**
+
+**Given** a mod `.glb` with embedded textures
+**When** it loads
+**Then** three cap verdicts run at load — max texture dimension, max texture bytes, max texture count — each the single row of the cap table this story establishes; textures are nearest-sampled with mipmaps off; the row VALUES are recorded in this story's text beside the 8.4 probe evidence, never as test literals (seed-honesty; NFR22, NFR10 restated not repealed)
+
+**Given** any cap failure, or a malformed model (parse failure, name-set mismatch, missing contract node)
+**When** application would begin
+**Then** it binds NOTHING: the default skipper renders, the player sees no delta, no error, no stall — total silence is the player-facing surface (FR61, NFR16, NFR22)
+
+**Given** the author lane
+**When** any model skin loads
+**Then** verdicts land on the NFR16 diagnostics lane — bound/unbound joint list plus the three cap verdicts — loud for authors, silent for players; the console path exists only at the seam, pure modules stay console-free (NFR22, NFR16)
+
+**Given** the shipped repo census
+**When** the mods/mods-census legs run
+**Then** the shipped product is proven zero-bitmap: default boot fetches no texture, the committed `mods/models/` exemplar is texture-free and inside every cap row (NFR22, NFR10)
+
+**And** `mods/models/*.glb` cross the boundary as loaded assets with verdicts, `render3d.js` stays the sole `three` consumer, and the boundary fence is byte-identical (FR61, NFR4)
+
+**And** new red-green legs in `tests/equip.test.js` cover each cap row's pass/fail pair and the malformed-binds-nothing law (NFR5)
+
+### Story 15.3: The Blender template — the contract as a file, and the legibility floor
+
+As a 3D artist,
+I want an importable template that IS the joint contract,
+So that names and origins come from the file, never from a typo.
+
+**Acceptance Criteria:**
+
+**Given** the shipped template (importable, Blender-native)
+**When** it is imported
+**Then** it is a named-empty hierarchy — the 17 contract names at the contract rest origins of the §Contract table: joint names and translations are never hand-authored (FR61, GDD §Asset Requirements)
+
+**Given** a model built in the template and exported with Blender's built-in `.glb` exporter — zero converters, Blender-native only
+**When** the export runs through the test lane
+**Then** the round trip template → `.glb` → bind proves 17/17 bijection — the template is contract-tested like code, and any drift between template and contract table reddens the round-trip leg (FR61, NFR5)
+
+**Given** an equipped model skin
+**When** it renders on EACH of the five area palettes — `alley`, `rooftops`, `blimp`, `stratosphere`, `moon-approach`
+**Then** the legibility floor holds per palette: the model never camouflages against the scene; witnesses run all five vistas, not just Alley (UX-DR3 inherited, FR61)
+
+**And** this story's docs pass lands in the SAME commit (A5 rule): GDD §Asset Requirements gains the template link, and the architecture mapping table gains its census rows for the template and the cap table — NFR10's zero-bitmap disposition for the shipped product recorded unchanged (FR61, NFR22)
+
+**And** new red-green test files ship the template round-trip and five-palette legibility legs; existing files stay byte-identical (NFR5)
+
+## Epic 16: Balance & Prove
+
+Nothing v3 claims stays unmeasured: the day-economy balance gate (day-length envelope, ceiling curves, hunter tick rate, bleed, offer cadence — the gate-bound numbers this design carries as first-pass), the replay-sweep determinism gate at scale, the success-metrics pass, and the docs cutover. Could not be skipped per project history.
+
+**FRs covered:** verification legs across FR40–61 · **NFRs:** NFR17–NFR22 verification
+
+### Story 16.1: Day-economy balance gate — the policy bot grows days
+
+As the designer,
+I want one deterministic number that says whether a life of days paces right,
+So that every tuning debate about the saga ends with a measurement.
+
+**Acceptance Criteria:**
+
+**Given** the 6.1/7.5 policy bot extended over seeded multi-day lives — activity schedule, sleep policy, and a deliberate-failure heuristic from day ~3 (supercompensation requires the bot to schedule failure, not avoid it)
+**When** the gate runs its seeded batch
+**Then** it reports the day-length envelope: day-1 median against the ≈5 min design target and steady-state median against 10–15 min (GDD §Difficulty Curve calibration gate), plus per-stat ceiling-growth curves — days between raises and plateau shape (FR43, FR46, NFR9's method inherited)
+
+**Given** the same batch
+**When** rope days resolve inside the days
+**Then** summit reach rate holds its (0.05, 0.20] band as the rope-day sub-metric — the v2 master-dial survives as an in-day read, unedited (NFR9, FR40)
+
+**Given** the gate-bound rows the design carries as first-pass — VIT day-1 pool (100 SU), hot/cool drain (2/1 SU/beat), bleed (~15%), ceiling step (125%), offer cadence (20 beats; lifetime 400), hunter tick (~1/day), `RANK_WEIGHTS`, and the Interrupt day (~15–20)
+**When** final values land
+**Then** every row carries the swept value that holds the twin dials in band, each annotated with the gate result that derived it, and the numbers exist ONLY in story text and annotations — test legs read the rows, never literals (seed-honesty; FR45, FR46, FR48, FR53, FR54, FR55)
+
+**Given** an out-of-band result
+**When** the gate fails
+**Then** the failure output is a tuning report — measured dials plus the row set that produced them — not just a red X (NFR4, the 6.1 pattern)
+
+**And** the gate is deterministic under seeded rng, the full suite stays green in under 10 s, new red-green legs land in `tests/balance.test.js` (additive; prior legs untouched), and the boundary fence holds green (NFR4, NFR5)
+
+### Story 16.2: Replay sweep at scale — shadows equal recorded reality
+
+As the project itself,
+I want shadow determinism proven at montage scale in the CI family,
+So that "shadows never lie" is a measurement, not an assertion.
+
+**Acceptance Criteria:**
+
+**Given** an N-day seeded census (100 days, sized to the NFR18 save figure) in the `tests/replay-sweep.test.js` family
+**When** the census runs
+**Then** every recorded day replays bit-exact — `replaySegment(seg, step)` poses `===` the live-day poses at every sampled step — and cast/recast/retire shadow lifecycles plus the world tick replay identically from seed + inputs (FR57, NFR17)
+
+**Given** the same census
+**When** recording bytes are censused
+**Then** the budget holds across all 100 days of `day.recordings[]`: ≤4 KB/day median, 8 KB/day hard, total ≤800 KB, with same-step coalescing proven as the only overflow policy — no keyframes anywhere (NFR18)
+
+**Given** census days with posted shadows running
+**When** playback advances
+**Then** shadows are read-state inside the fixed step — playback fits the sim budget and no second simulation runs (NFR21, FR57)
+
+**Given** the incoming baseline
+**When** this prove story lands
+**Then** `js/` and `tests/support/` are byte-identical — ZERO product code in the prove story (the 7.5/8.x pattern); any failure the census names is fixed by its owning epic's code, not patched here
+
+**And** the census is deterministic under seeded rng and the full suite including the census stays green <10 s; the boundary fence is byte-identical (NFR4, NFR5)
+
+### Story 16.3: Success metrics and the docs cutover
+
+As the next contributor (including future-me),
+I want every v3 claim measured and every planning doc describing the game that shipped,
+So that v3 closes the way v1/v2 did — gate-proven and self-describing.
+
+**Acceptance Criteria:**
+
+**Given** the GDD §Success Metrics technical list
+**When** the pass runs
+**Then** each item is verified with evidence recorded: 60 FPS @ 240-line holds on a 2020-era integrated-GPU laptop with the gym full of shadows (human check + frame-timing capture) (NFR1, NFR21); full suite green <10 s with the boundary fence holding (NFR4); red-green legs present for every v3 mechanic (NFR5); load-to-first-jump <2 s with the mid-day persistence path adding no load cost (NFR3, NFR14); the reduced-motion audit covers every v3 cosmetic surface — sore-walk, shadow rendering, the dungeon palette/fog beat, the diary page-turn, chyron and rename lines — cosmetics damped, timing and judgment byte-identical (FR23, the 5.4 pattern extended to v3 states)
+
+**Given** the GDD §Gameplay Metrics list, each tied to a pillar
+**When** playtest legs are collected
+**Then** recorded with evidence: the first-30-s smile (collected mid-v3, not at the end), the day landing as one stat sentence, failure sought not feared from day ~3, the first shadow earning the melancholy-comic reaction with corners curated deliberately, the Interrupt noticed unprompted, the hundred-day returners, and playtest day-length medians inside the 3.5–7 / 8–18 min acceptance bands around the ≈5 / 10–15 targets — every failing metric produces a logged follow-up item, never a hidden regression (the 6.4 pattern)
+
+**Given** FR40–61 and NFR17–NFR22
+**When** the verification census runs
+**Then** each names its verification leg in the existing family — `balance`, `replay-sweep`, `migrate`, `compost`, `day`/`life`/`world`/`station`/`content`, `dungeon`, the equip/mods cap census — or records a written exception in this story's text (NFR17, NFR18, NFR19, NFR20, NFR21, NFR22; FR40–61)
+
+**Given** the docs as v3-final
+**When** the cutover lands in the SAME commit (A5 rule)
+**Then** the GDD is marked v3-as-current (the §Development Epics "proposed sequence" ages out to as-built), the architecture mapping table passes its census — every v3 design term has its row per the same-change convention — epics.md records v3 stories as detailed, and the decision-log gains the v3 landed-decisions entry (A5)
+
+**And** no metric is reported without evidence, and no number appears in a test that the gate did not derive (seed-honesty) (NFR4, NFR5)

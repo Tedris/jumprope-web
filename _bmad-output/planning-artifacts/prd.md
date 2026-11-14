@@ -22,7 +22,8 @@ genre. (Adopted 2026-11-05; source: brainstorming session log.)
 
 **Direction update (2026-11-10):** the thesis is now concretized by a
 brainstorming session — the disguise is a *training montage* for a portal-
-overrun world; see "v3 Direction" below, input to Epic 7.
+overrun world; see "v3 Direction" below — candidate material; v3 planning
+opened 2026-11-12.
 
 ## Goals
 
@@ -59,19 +60,27 @@ skins-as-data seam, no-chrome equip surface (`?skin=`), JSON-manifest mods
 (contract published; feature shelved per FR38), and the zero-product-code
 prove (gate 606→701). The **v2 deploy/UAT pass ran 2026-11-12**
 (`docs/uat-v2-deploy-2026-11-12.md`): cut `master` @ `029ca8c`, sandbox lanes
-green, hardware lanes L1–L3 carried with owner (Ed). Gate: **701/701 Node
-tests @ ~8.5 s**. Next milestone: none scheduled — v3 remains ON HOLD pending
-the hardware UAT + playtesting proof above.
+green; hardware lanes L1–L3 **RUN 2026-11-12** (owner: Ed — desktop PC +
+Pixel 7 Pro, owner-reported) with one named carry: the 2020-era
+integrated-GPU class unverified (laptop check pending). Gate: **701/701 Node
+tests @ ~8.5 s**. **v3 PLANNING OPENED 2026-11-12** (Ed) by recorded
+override of the playtest gate — A5 unplayed, carried as a live risk; the
+laptop check for the 2020-era iGPU class (A1 carry) stays open too.
 
-## v3 Direction (Epic 7 input) — The Peel Takes Shape (brainstormed 2026-11-10)
+## v3 Direction — The Training Saga (brainstormed 2026-11-10; CONSUMED by GDD v3 retarget 2026-11-12)
 
-**Status (2026-11-10, Ed): ON HOLD.** The current loop's fun must be
-proven first (v2 deploy/UAT + playtesting) before Epic 7 is re-scoped
-around this material; capture stays, no planning proceeds on it.
+**Status (2026-11-12): CONSUMED — the GDD is retargeted to v3 design-intent**
+(`gdds/gdd-jumprope-web-2026-10-27/gdd.md`, decision-log Session 5); epics
+9–16 proposed there. Epic 7 shipped 2026-11-11 as the minimal Peel
+(counter-gated unlocks, no currency); the saga below is now design intent,
+with Session 5 refinements recorded at each divergence.
+The playtest gate (A5) was **overridden by Ed 2026-11-12**: v3 design
+proceeds unplayed; the fun-proof may still be collected mid-v3 and rides
+as a live risk until it is.
 
 Full session log: [`brainstorming-session-2026-11-10.md`](../brainstorming-session-2026-11-10.md).
-Locked decisions the Peel milestone must honor; candidate until epics/stories
-are cut from them:
+Locked decisions as brainstormed — divergences (shadow re-cast law,
+stations-by-threshold, dungeon-as-day-type) live in the GDD decision-log:
 
 - **Premise:** the character was training all along for a world that goes
   portal-overrun late (Solo Leveling flavor); the game is the montage before
@@ -92,13 +101,48 @@ are cut from them:
   INT gate-board intel; hidden RANK + LEVEL debut in-world before any panel.
 - **Shadows are past days:** the split/automation power converts prior days
   into deterministic replay-shadows (failure-days work best; shadows never
-  grow). Sim-core purity holds — shadows are replays, not AI.
+  grow — refined 2026-11-12: a corner may be re-cast with a newer day or
+  retired; the shadow stays frozen at its latest casting). Sim-core purity
+  holds — shadows are replays, not AI.
 - **Interface stays three objects:** gym (progress as room-wear), diary
   (tutorial voice, later retinted into the System panel), TV (infomercials →
   news → the player's name). Re-semantization over new UI: nothing new,
   everything reinterpreted.
 - **Architecture watch:** the day clock and world sim are meta-layer only —
   the rope phase stays the canonical sim clock (Non-Goals unchanged).
+
+## v3 Candidate — Model Skins: Full-Body Player Fuel (decided 2026-11-12)
+
+**Status (2026-11-12, Ed): candidate, in planning** — same override as the
+Training Saga (A5 playtest unplayed; A1 RUN-with-carry). Closes the Epic 8
+retro's A4
+keep/retire question with disposition KEEP (Open Items row below). The 8.4
+spike proved the joint-name contract; this candidate promotes the shelved
+feature, reframed from recolor-overlay to full replacement:
+
+- **Full model, not a recolor:** an external `.glb` replaces the skipper's
+  meshes entirely. Palette skins (8.1–8.3) stay as shipped — a separate,
+  shallower tier.
+- **Same physics, guaranteed:** model skins are puppets on our bones — the
+  bound model is posed by the phase-clock pipeline through the 17-name
+  joint contract (epics.md:142 stays in force); zero sim-core delta.
+  Arbitrary-skeleton retargeting is NOT in scope.
+- **PS1-era detail:** polygon budget raised for model skins — order ~2k
+  triangles ("Lara Croft detailed"); exact ceilings belong to the
+  architecture/epics pass, asserted with the spike's both-sides-derived
+  budget-leg pattern.
+- **NFR10 restated, not repealed:** the shipped product remains zero-bitmap;
+  mod-supplied models MAY embed small textures under hard caps
+  (dimensions/size/count), nearest-sampled, no mipmaps — FR38's documented
+  amendment path, paid by the 8.4 spike outcome.
+- **Trivial from Blender:** native `.glb` only (Blender's built-in exporter,
+  zero converters); the contract ships as an importable template (named
+  empty hierarchy at the contract origins) so joint names/origins are never
+  hand-authored.
+- **Silent to players, loud to authors:** player-facing failures keep total
+  silence (NFR16); authors get mod-apply console diagnostics (bound/unbound
+  names, cap verdicts), no new UI. Console lane CONFIRMED by Ed
+  2026-11-12 (ASSUMPTION retired).
 
 ## Current State — v1.0 Shipped (2026-10-22)
 
@@ -140,6 +184,7 @@ are cut from them:
 | META-01 | Between-run meta progression | **Pinned** — Epic 7 (The Peel), the milestone after epics 3–6 (2026-11-07, D-004); design direction established by the 2026-11-10 brainstorm — see "v3 Direction" above. **S1–S4 decided 2026-11-10 pre-loop:** unlocks + outcome-counter gates (no currency, no prestige), counters mapped reach/summit/skips, catalogue-branch unlocks, run-scoped band gate — detail in epics.md Epic 7. **7.4 kickoff answers 2026-11-11 (AC1, user):** S2 = outcome counters are the ONLY unlock currency — thresholds `furthestArea ≥ 2` (reach) / `summits ≥ 1` (summit) / lifetime `skips ≥ 1000` (persistence), measured at the 6.2 tuning; S3 = catalogue branch — three new cards, exactly one per counter family, tier-paired under the one-axis law (float/feather precedent); the alternate-skipper / character-select revisit clause (gdd.md:350-351) considered and DECLINED. Detail in 7-4-the-peel-unlocks-as-fiction-in-the-ps1-voice.md |
 | P2-EQUIP | Equip mechanism for skins/mods (FR39, Epic 8 Player Fuel) | **ANSWERED — 2026-11-12 (user, Story 8.2 kickoff, AC1):** URL query param — `?skin=<name>` read shell-side at boot against a shipped built-in skin table; unknown/garbage values play shipped defaults with total silence (NFR16/UX-DR2); **non-persisted** — persisting a choice needs its own STOP-AND-ASK (retro :58 fourth-key tripwire); zero new key bindings, zero extra requests (NFR14). Detail + reasons in `8-2-equip-without-a-menu-the-no-chrome-surface.md` |
 | P1-MANIFEST | Manifest schema + patchable field-set (FR36, Epic 8 Player Fuel) | **ANSWERED — 2026-11-12 (user, Story 8.3 kickoff, AC1):** COSMETIC-ONLY field-set — schema v1 is exactly `{ v: 1 (required), name (string 1..64, the mod's display name — inert), skin? (the `{name, colors:{rose,prop,limb}}` record, colors integers 0..0xFFFFFF) }`; ANY gameplay-parameter key is a schema violation (band-gate rider untriggered — Story 8.5 cites the 7.5 record); ANY violation (unknown key, wrong type, out-of-range color, oversized payload >64 KiB, parse error) drops the WHOLE manifest to shipped defaults with total silence (NFR16/UX-DR2 — no half-applied cosmetics by construction); the loader resolves the `?mods=<path>` param ONLY under `mods/` (one file, one `JSON.parse`, shell-side — the data-only law: nothing fetched is ever evaluated or imported), zero requests with no param (NFR14). Detail + reasons in `8-3-mods-are-data-the-json-manifest-surface.md` |
+| GLB-A4 | Keep-or-retire the shelved `.glb` model-skin feature (Epic 8 retro A4; FR38) | **RESOLVED — 2026-11-12 (Ed):** **KEEP** — promoted to the v3 candidate "Model Skins: Full-Body Player Fuel" (section above): full model replacement on the same physics, PS1-era detail budget, restated NFR10, trivial Blender import; in v3 planning (OPEN 2026-11-12 by recorded override). The 17-name joint contract stays in force meanwhile (epics.md:142) — rig renames remain breaking contract changes |
 
 ## Next-Milestone Questions — answered 2026-11-07 (readiness audit)
 

@@ -397,3 +397,24 @@ No unowned deferred items survive the boundary. Next-epic entry probe may procee
   miss, now folded into A2 above), A3 ⏳ (park stands, cost quantified as w3), riders ✅ (fourth
   `jumprope-*` key tripwire ARMED and UNSPENT in all five stories; band gate UNTRIGGERED by citation).
   First retro-to-retro pass with no ❌.
+
+## A1 hardware-lane stamp — RUN with carry (2026-11-12)
+
+Owner (Ed) ran the hardware lanes of `docs/uat-v2-deploy-2026-11-12.md` on
+real hardware: a **desktop PC** (GPU class unrecorded — owner to confirm,
+likely the NVIDIA workstation) and a **Pixel 7 Pro** (mobile). L1–L3
+owner-reported passes; no devtools captures attached.
+
+- **Ledger disposition for :332 / :263 / :355: RUN with carry — NOT PAID.**
+  The carry: **L1's named class — 2020-era integrated GPU — is unverified**
+  (neither machine represents it; the class that motivated the lane after
+  three slipped epics is exactly the class still unproven). A candidate
+  laptop check is pending, owner: Ed — if it boots, run L1–L3 there and
+  re-stamp PAID with class + screenshot.
+- **Gate decision (Ed, 2026-11-12):** proceed — v3 does not wait on the
+  carry. The risk (NFR1 unproven on 2020-era iGPUs specifically) is owned
+  and recorded, not dismissed.
+- **L4** stays deferred by its own clause — condition now LIVE: the A4
+  disposition (KEEP, 2026-11-12, prds/prd-jumprope-web-2026-11-10/.memlog.md)
+  filed the model-skin feature as a v3 candidate. Re-open L4 at its epics
+  pass.

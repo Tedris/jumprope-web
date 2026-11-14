@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>key screen — the gym, poster shot — jumprope web v3</title>
+<!-- SPEC MOCKUP. static, zero-request, zero-script. tokens: DESIGN.md table only.
+     scene = flat dithered polygons faking the PS1 room; chrome-free except HUD overlay. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #000000; overflow: hidden;
+    font-family: sans-serif; color: #f4f0d8; }
+  * { border-radius: 0; box-sizing: border-box; }
+
+  /* the letterbox band: game content scales inside a fixed 16:9 frame, black bars */
+  .stage { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(100vw, 177.78vh); height: min(56.25vw, 100vh);
+    background: #000000; overflow: hidden; }
+
+  .bar { position: absolute; left: 0; width: 100%; height: 6%; background: #000000; z-index: 50; }
+  .bar.t { top: 0; } .bar.b { bottom: 0; }
+
+  /* ---------- scene: flat polygons, fog = darkening toward the back seam ---------- */
+  .poly { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .ceil  { clip-path: polygon(0 0, 100% 0, 70% 8%, 18% 8%);             background: #2a3440; opacity: .10; }
+  .wallB { clip-path: polygon(18% 8%, 70% 8%, 70% 38%, 18% 38%);        background: #2a3440; opacity: .22; }
+  .wallL { clip-path: polygon(0 0, 18% 8%, 18% 38%, 0 100%);            background: #2a3440; opacity: .14; }
+  .wallR { clip-path: polygon(100% 0, 70% 8%, 70% 38%, 100% 100%);      background: #2a3440; opacity: .14; }
+  .floor { clip-path: polygon(18% 38%, 70% 38%, 100% 100%, 0 100%);     background: #2a3440; opacity: .34; }
+  .fog1  { clip-path: polygon(18% 30%, 70% 30%, 70% 38%, 18% 38%);      background: #000000; opacity: .55; }
+  .fog2  { clip-path: polygon(18% 34%, 70% 34%, 70% 38%, 18% 38%);      background: #000000; opacity: .35; }
+
+  /* dither: the ▒ pip glyph as texture — zero images, zero gradients */
+  .dith { position: absolute; overflow: hidden; white-space: nowrap;
+    font-size: 11px; line-height: 10px; letter-spacing: 3px; }
+
+  /* ---------- room objects (the corners ARE the affordances) ---------- */
+  .obj { position: absolute; }
+
+  .sprint { left: 1%;  top: 16%; width: 15%; height: 26%;
+    clip-path: polygon(0 4%, 100% 12%, 100% 88%, 0 100%); background: #2a3440; opacity: .5; }
+  .scuff  { height: 2px; background: #4d4a3e; opacity: .85; transform-origin: left center; }
+
+  .bed { left: 3%; top: 60%; width: 15%; height: 16%; background: #2a3440; opacity: .65;
+    border: 1px solid #4d4a3e; }
+  .bed .pillow { left: 8%; top: 12%; width: 30%; height: 26%; background: #b8b4a0; opacity: .5; position: absolute; }
+
+  .board { left: 21%; top: 11%; width: 13%; height: 21%; background: #ffcf6e; opacity: .14;
+    border: 1px solid #4d4a3e; }
+  .slip { position: absolute; width: 16%; height: 14%; background: #f4f0d8; opacity: .55; }
+  .slip.b2 { background: #b8b4a0; }
+
+  .tv { left: 73%; top: 38%; width: 12%; height: 17%; background: #2a3440;
+    border: 2px solid #4d4a3e; }
+  .tv .screen { position: absolute; left: 10%; top: 12%; width: 80%; height: 64%;
+    background: #000000; overflow: hidden; white-space: nowrap;
+    font-size: 11px; line-height: 10px; letter-spacing: 2px; color: #4d4a3e; }
+  .chyron { position: absolute; left: 68%; top: 58.5%; white-space: nowrap;
+    font-size: 20px; font-weight: 400; color: #f4f0d8; }
+
+  .door { left: 56%; top: 4%; width: 7.5%; height: 34%; background: #000000;
+    border: 1px solid #4d4a3e; }
+  .door .jamb { position: absolute; left: 100%; top: 0; width: 1px; height: 100%; background: #4d4a3e; }
+  .doorPrompt { position: absolute; left: 52%; top: 39.5%; white-space: nowrap;
+    font-size: 16px; color: #f4f0d8; }
+
+  .groove { left: 38%; top: 58%; width: 26%; height: 36%;
+    clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%); background: #000000; opacity: .45; }
+  .grooveLine { background: #4d4a3e; height: 2px; transform-origin: center; opacity: .8; }
+
+  .bar-bend { position: absolute; left: 66%; top: 80%; width: 96px; height: 4px;
+    background: #b8b4a0; transform: rotate(3deg); }
+  .plate { position: absolute; top: -10px; width: 12px; height: 24px; background: #9aa7b4; opacity: .8; }
+
+  .nook { left: 80%; top: 60%; width: 17%; height: 22%;
+    clip-path: polygon(0 12%, 100% 0, 100% 100%, 6% 100%); background: #2a3440; opacity: .45; }
+  .tower { position: absolute; width: 26px; }
+  .tower .pg { height: 5px; margin-top: 1px; background: #f4f0d8; opacity: .7; }
+  .tower .pg.alt { background: #4d4a3e; opacity: .9; }
+  .page { left: 83%; top: 53%; width: 118px; background: #2a3440; padding: 4px 6px; border: 1px solid #4d4a3e; }
+  .page .diary { font-family: cursive; font-size: 16px; color: #f4f0d8; white-space: nowrap; }
+
+  /* figures: blocky silhouettes; shadows desaturate toward the area fog — no outline, no nameplate */
+  .fig { position: absolute; width: 48px; height: 62px; }
+  .fig i { position: absolute; background: #f4f0d8; }
+  .fig .head { left: 18px; top: 0;  width: 12px; height: 10px; }
+  .fig .body { left: 14px; top: 12px; width: 20px; height: 18px; }
+  .fig .l1 { left: 14px; top: 32px; width: 7px; height: 20px; transform: rotate(10deg); }
+  .fig .l2 { left: 27px; top: 32px; width: 7px; height: 20px; transform: rotate(-10deg); }
+  .fig .arm { left: 6px; top: 13px; width: 36px; height: 4px; transform: rotate(-24deg); }
+  .ropeBar { position: absolute; left: -16px; top: 24px; width: 80px; height: 3px;
+    background: #f4f0d8; transform: rotate(9deg); }
+
+  /* ---------- DOM HUD overlay: six slots, one axis, top-center ---------- */
+  .hud { position: absolute; left: 50%; top: 2.5rem; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    text-align: center; pointer-events: none; }
+  .hud .alt { font-size: 32px; color: #f4f0d8; font-variant-numeric: tabular-nums; }
+  .hud .best { font-size: 16px; color: #f4f0d8; font-variant-numeric: tabular-nums; }
+  .hud .pips { font-size: 20px; letter-spacing: 2px; color: #f4f0d8; }
+  .hud .pips .ghost { color: #4d4a3e; }
+  .hud .prompt { font-size: 16px; color: #f4f0d8; }
+  .hud .mark { font-size: 20px; color: #8fd3ff; }
+  .hud .owned { font-size: 20px; color: #f4f0d8; }
+
+  /* ---------- annotation layer (spec chrome — not shipped pixels) ---------- */
+  .an { position: absolute; font-size: 11px; line-height: 1.25; color: #b8b4a0;
+    max-width: 180px; z-index: 40; }
+  .an.r { text-align: right; }
+  .ld { position: absolute; background: #4d4a3e; z-index: 39; }
+  .ld.h { height: 1px; } .ld.v { width: 1px; }
+  .anHead { font-size: 11px; color: #b8b4a0; }
+
+  .meta { position: absolute; left: 1.5%; bottom: 0.8%; font-size: 11px; color: #b8b4a0; z-index: 45; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ===================== scene ===================== -->
+  <div class="poly ceil"></div>
+  <div class="poly wallB"></div>
+  <div class="poly wallL"></div>
+  <div class="poly wallR"></div>
+  <div class="poly floor"></div>
+  <div class="poly fog1"></div>
+  <div class="poly fog2"></div>
+
+  <!-- dither bands (distance texture; ▒ = the shipped ghost-pip glyph) -->
+  <div class="dith" style="left:18%; width:52%; top:28%; color:#4d4a3e; opacity:.55;">▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒</div>
+  <div class="dith" style="left:18%; width:52%; top:31.5%; color:#4d4a3e; opacity:.35;">▒ ▒ ▒▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒  ▒▒ ▒  ▒ ▒</div>
+
+  <!-- sprint wall (left) with scuffs -->
+  <div class="obj sprint"></div>
+  <div class="obj scuff" style="left:3%;  top:24%; width:46px; transform:rotate(-6deg);"></div>
+  <div class="obj scuff" style="left:5%;  top:30%; width:62px; transform:rotate(4deg);"></div>
+  <div class="obj scuff" style="left:2%;  top:36%; width:38px; transform:rotate(-3deg);"></div>
+
+  <!-- bed corner (rear left) -->
+  <div class="obj bed"><div class="pillow"></div></div>
+
+  <!-- corkboard wall (back wall) -->
+  <div class="obj board">
+    <div class="slip"    style="left:10%; top:14%;"></div>
+    <div class="slip b2" style="left:44%; top:22%;"></div>
+    <div class="slip"    style="left:16%; top:52%;"></div>
+    <div class="slip b2" style="left:56%; top:58%;"></div>
+  </div>
+
+  <!-- impossible door — one mesh, one prompt line; the frame overshoots the wall seam -->
+  <div class="obj door"><div class="jamb"></div></div>
+  <div class="doorPrompt">open</div>
+
+  <!-- TV (right wall) + chyron line in its lower third -->
+  <div class="obj tv"><div class="screen">▒▒▒ ▒  ▒▒ ▒▒▒  ▒ ▒  ▒▒▒▒ ▒  ▒ ▒▒  ▒▒▒ ▒  ▒▒ ▒▒▒  ▒ ▒  ▒▒▒▒ ▒  ▒ ▒▒  ▒▒▒ ▒  ▒▒ ▒▒▒  ▒ ▒  ▒▒▒▒ ▒  ▒ ▒▒  ▒▒▒ ▒  ▒▒ ▒▒▒  ▒ ▒  ▒▒▒▒</div></div>
+  <div class="chyron">ana · census complete · tomorrow the day was longer</div>
+
+  <!-- rope groove (center) — the AGI wear groove, floor trapezoid + groove lines -->
+  <div class="obj groove"></div>
+  <div class="obj grooveLine" style="left:44%; top:66%; width:12%; transform:rotate(2deg);"></div>
+  <div class="obj grooveLine" style="left:42.5%; top:76%; width:15%; transform:rotate(-2deg);"></div>
+  <div class="obj grooveLine" style="left:41%; top:86%; width:18%; transform:rotate(1deg);"></div>
+
+  <!-- barbell corner (right floor) — bent one degree lower every growth day -->
+  <div class="obj bar-bend"><div class="plate" style="left:-10px;"></div><div class="plate" style="right:-10px;"></div></div>
+
+  <!-- reading nook + diary towers (right) -->
+  <div class="obj nook"></div>
+  <div class="obj tower" style="left:91%; top:57.5%;">
+    <div class="pg"></div><div class="pg alt"></div><div class="pg"></div><div class="pg alt"></div><div class="pg"></div><div class="pg"></div><div class="pg alt"></div>
+  </div>
+  <div class="obj tower" style="left:95%; top:59%;">
+    <div class="pg"></div><div class="pg alt"></div><div class="pg"></div><div class="pg"></div><div class="pg alt"></div>
+  </div>
+  <div class="obj page"><div class="diary">day 34 — good day.</div></div>
+
+  <!-- player (full saturation) -->
+  <div class="fig" style="left:47%; top:58%;"><i class="head"></i><i class="body"></i><i class="l1"></i><i class="l2"></i><i class="arm"></i><div class="ropeBar"></div></div>
+
+  <!-- three posted shadows in corners — desaturated replay figures, frozen ceilings -->
+  <div class="fig" style="left:36.5%; top:60%; opacity:.42; transform:scale(.85);"><i class="head"></i><i class="body"></i><i class="l1"></i><i class="l2"></i><i class="arm"></i></div>
+  <div class="fig" style="left:11%; top:44%; opacity:.34; transform:scale(.72);"><i class="head"></i><i class="body"></i><i class="l1"></i><i class="l2"></i></div>
+  <div class="fig" style="left:84%; top:52%; opacity:.38; transform:scale(.8);"><i class="head"></i><i class="body"></i><i class="l1"></i><i class="l2"></i><i class="arm"></i></div>
+
+  <!-- ===================== DOM HUD — six slots ===================== -->
+  <div class="hud" aria-hidden="true">
+    <div class="alt">1204</div>
+    <div class="best">best 1342</div>
+    <div class="pips">██<span class="ghost">▒▒▒</span></div>
+    <div class="prompt">re-cast corner 2? hold ▣ [###--]</div>
+    <div class="mark">summit 2100 ↑</div>
+    <div class="owned">∥∥ ☁ ▣⟳2 ⇈↑1</div>
+  </div>
+
+  <!-- ===================== annotation layer ===================== -->
+  <!-- HUD -->
+  <div class="an" style="left:60.5%; top:2.5rem;">#hud — six slots, 4px gap,<br>top inset 2.5rem, one axis</div>
+  <div class="ld h" style="left:56%; top:3.3rem; width:4.2%;"></div>
+  <div class="an r" style="left:14.5%; top:9.5%; max-width:170px;">rope pips: █ held #f4f0d8 / ▒ ghost #4d4a3e,<br>max-ever held; marker dims .35 on i-frames</div>
+  <div class="ld h" style="left:31.6%; top:10.1rem; width:17%;"></div>
+  <div class="ld v" style="left:48.5%; top:7.4rem; height:4.2rem;"></div>
+
+  <!-- room surfaces -->
+  <div class="an r" style="left:0.6%; top:12.5%;">sprint wall — scuffed (VIT wear)</div>
+  <div class="ld h" style="left:10.6%; top:13.1%; width:2.5%;"></div>
+
+  <div class="an r" style="left:12%; top:10.5%; max-width:170px;">shadow — desaturated replay,<br>no outline / glow / nameplate</div>
+  <div class="ld h" style="left:28.6%; top:11.1%; width:15.9%;"></div>
+  <div class="ld v" style="left:44.5%; top:11.1%; height:33%;"></div>
+
+  <div class="an" style="left:35.5%; top:11.5%;">corkboard wall — world map = cork + paper<br>(slip anatomy: mockup-corkboard.html)</div>
+  <div class="ld h" style="left:34.6%; top:12.1%; width:0.9%;"></div>
+
+  <div class="an" style="left:65%; top:12%;">door — one mesh, one line;<br>overshoots the wall seam (impossible)</div>
+  <div class="ld h" style="left:64%; top:12.6%; width:0.9%;"></div>
+
+  <div class="an" style="left:66.5%; top:22%;">door prompt — alive reads &quot;open&quot;;<br>refused as data: &quot;locked&quot; / &quot;not until tomorrow&quot;</div>
+  <div class="ld h" style="left:61.5%; top:22.6%; width:5%;"></div>
+
+  <div class="an" style="left:86.5%; top:33%;">TV — the world's window;<br>ladder: infomercial → weather → news</div>
+  <div class="ld v" style="left:85.5%; top:36.5%; height:5%;"></div>
+  <div class="ld h" style="left:85.2%; top:41.4%; width:0.4%;"></div>
+
+  <div class="an" style="left:50.5%; top:61.5%; max-width:210px;">chyron — one bone line, ≤64 chars, TV lower third;<br>carries RANK, LEVEL, then the saved name</div>
+  <div class="ld v" style="left:68.8%; top:59%; height:2.3%;"></div>
+
+  <div class="an r" style="left:0.6%; top:63%;">bed corner — ends the day on purpose</div>
+  <div class="ld h" style="left:11.6%; top:63.6%; width:2.4%;"></div>
+
+  <div class="an" style="left:70%; top:66%; max-width:160px;">reading nook — diary towers = the stat panel before the panel</div>
+  <div class="ld h" style="left:79.5%; top:66.6%; width:0.6%;"></div>
+
+  <div class="an" style="left:31%; top:69%;">shadow A — groove corner</div>
+  <div class="ld h" style="left:36.2%; top:69.6%; width:0.4%;"></div>
+
+  <div class="an" style="left:24%; top:77%; max-width:190px;">rope groove — AGI wear,<br>where N ropes swept</div>
+  <div class="ld h" style="left:37.4%; top:77.6%; width:5.6%;"></div>
+
+  <div class="an r" style="left:2%; top:82.5%;">diary page — cursive, first person,<br>scroll only, no panel chrome</div>
+  <div class="ld h" style="left:16%; top:83.1%; width:66.5%;"></div>
+  <div class="ld v" style="left:82.4%; top:57.5%; height:25.6%;"></div>
+
+  <div class="an" style="left:56%; top:85%;">barbell — bent (STR wear);<br>corner retired = empty, curation lives here</div>
+  <div class="ld h" style="left:65.5%; top:85.6%; width:0.6%;"></div>
+
+  <div class="an" style="left:78%; top:87%;">shadows B/C — sprint + nook corners;<br>three posted, room = life's montage, running live</div>
+
+  <div class="bar t"></div>
+  <div class="bar b"></div>
+  <div class="meta">jumprope web v3 — key screen: the gym, poster shot | 16:9 letterbox band, scales inside the clamp | tokens: DESIGN.md only · zero requests · zero scripts</div>
+</div>
+</body>
+</html>

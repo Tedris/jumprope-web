@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>key-screen — diary page, before / after the Interrupt — jumprope web v3</title>
+<style>
+  /* every value below is a DESIGN.md token:
+     ink #000000 · scrim #2a3440 · bone #f4f0d8 · bone-dim #b8b4a0
+     rope-lost #4d4a3e · role-slate #9aa7b4
+     type ladder 11/12/14/16/20/22/32 · cursive only for diary copy
+     zero border-radius · zero gradients · zero webfonts · no scripts · no images */
+  * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0; }
+  html { background: #000000; }
+  body { background: #000000; color: #f4f0d8; font: 400 16px sans-serif; overflow-x: auto; }
+  .stage { position: relative; width: 1544px; height: 780px; }
+
+  /* --- mockup annotation layer: 11px bone-dim text, 1px rope-lost leaders --- */
+  .ann  { position: absolute; font: 400 11px sans-serif; color: #b8b4a0; line-height: 1.5; }
+  .lead { position: absolute; background: #4d4a3e; }
+  .lv   { width: 1px; }
+  .lh   { height: 1px; }
+
+  /* --- the diary surface: {typography.diary} {colors.bone}, scroll only, no chrome --- */
+  .page  { position: absolute; width: 468px; }
+  .page > * { height: 32px; line-height: 32px; }
+  .d  { font: 400 16px cursive; color: #f4f0d8; white-space: nowrap; }
+  .lbl { display: inline-block; width: 252px; font: 400 16px cursive; color: #f4f0d8; }
+  .num { color: #f4f0d8; }
+  .head { font: 400 16px cursive; color: #b8b4a0; }
+  .sp   { height: 20px; }
+  .post .lbl { font-family: sans-serif; }        /* the whole rename: label rows only */
+  .notch { position: absolute; width: 16px; border-top: 2px dotted #f4f0d8; }
+  .cursor { position: absolute; display: inline-block; width: 9px; height: 18px; background: #f4f0d8; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ================= fig 1 — first page, day 1 (name yourself) ================= -->
+  <div class="page" style="left:40px; top:150px; width:320px;">
+    <div class="d">day 1</div>
+    <div class="d" style="position: relative;">i am<span class="cursor" style="left: 62px; top: 7px;"></span></div>
+    <div class="d">the rope is new. so am i.</div>
+  </div>
+
+  <!-- ================= fig 2 — diary page, day 12 (diary labels) ================= -->
+  <div class="page" style="left:500px; top:150px;">
+    <div class="d">day 8 — ran until the room went dark. longer day.</div>
+    <div class="d">day 9 — failed on the rope. legs feel stupid. more tomorrow.</div>
+    <div class="d">day 10 — summit 214. the fog was under me, briefly.</div>
+    <div class="d">day 11 — read instead of jumped. the board shows more now.</div>
+    <div class="d">day 12 — tripped on the last rope. the day carried on.</div>
+    <div class="d" style="position: relative;">tomorrow — the rope number, one notch higher.<span class="notch" style="left:340px; top:15px;"></span></div>
+    <div class="sp"></div>
+    <div class="head">what the room keeps</div>
+    <div><span class="lbl">my arms, from the barbell</span><span class="num">str 118</span></div>
+    <div><span class="lbl">my wind, from the sprint</span><span class="num">vit 74</span></div>
+    <div><span class="lbl">my hands, from the rope</span><span class="num">agi 41</span></div>
+    <div><span class="lbl">my eyes, from the pages</span><span class="num">int 29</span></div>
+  </div>
+
+  <!-- ================= fig 3 — post-Interrupt, identical page ================= -->
+  <!-- fig 2 and fig 3 are identical except the tally label rows: the rename is the only difference -->
+  <div class="page post" style="left:1030px; top:150px;">
+    <div class="d">day 8 — ran until the room went dark. longer day.</div>
+    <div class="d">day 9 — failed on the rope. legs feel stupid. more tomorrow.</div>
+    <div class="d">day 10 — summit 214. the fog was under me, briefly.</div>
+    <div class="d">day 11 — read instead of jumped. the board shows more now.</div>
+    <div class="d">day 12 — tripped on the last rope. the day carried on.</div>
+    <div class="d" style="position: relative;">tomorrow — the rope number, one notch higher.<span class="notch" style="left:340px; top:15px;"></span></div>
+    <div class="sp"></div>
+    <div class="head">what the room keeps</div>
+    <div><span class="lbl">strength — lifting</span><span class="num">str 118</span></div>
+    <div><span class="lbl">vitality — the day's length</span><span class="num">vit 74</span></div>
+    <div><span class="lbl">agility — the rope's number</span><span class="num">agi 41</span></div>
+    <div><span class="lbl">intellect — the board's rows</span><span class="num">int 29</span></div>
+  </div>
+
+  <!-- ================= annotation layer ================= -->
+
+  <!-- fig headers -->
+  <div class="ann" style="left:40px; top:66px;">fig 1 — diary, first page. name yourself: one keystroke.</div>
+  <div class="lead lv" style="left:48px; top:130px; height:18px;"></div>
+
+  <div class="ann" style="left:500px; top:66px;">fig 2 — diary page. {typography.diary} cursive (system stack, zero bytes),<br>{colors.bone} on {colors.ink}. scroll only — the page has no panel chrome.</div>
+  <div class="lead lv" style="left:508px; top:130px; height:18px;"></div>
+
+  <div class="ann" style="left:1030px; top:66px;">fig 3 — after the Interrupt. same state-keyed selectors, same page,<br>same numbers. only the tally label rows are renamed. that is the reveal.</div>
+  <div class="lead lv" style="left:1038px; top:130px; height:18px;"></div>
+  <!-- fig 1: cursor callout -->
+  <div class="ann" style="left:150px; top:184px; width:318px;">cursor sits on one character; any key names you.<br>one keystroke, then pure reading forever after.<br>the saved name re-surfaces later in the chyron (completion).</div>
+  <div class="lead lh" style="left:118px; top:198px; width:30px;"></div>
+
+  <!-- fig 2: prophecy notch callout -->
+  <div class="ann" style="left:916px; top:314px; width:110px;">the dotted notch = the super&shy;compensation prophecy: tomorrow's line, one notch higher, only if today failed. fr47: zero ui.</div>
+  <div class="lead lh" style="left:860px; top:324px; width:54px;"></div>
+
+  <!-- fig 2: tally voice callout (leader up from below the column) -->
+  <div class="ann" style="left:500px; top:558px;">tallies = the stat panel before the panel. here the voice is still the diary's — first person, melancholy-comic, the game's only tutorial voice.</div>
+  <div class="lead lv" style="left:626px; top:524px; height:32px;"></div>
+
+  <!-- fig 2 / fig 3 diff bracket — both leaders land inside tally label columns -->
+  <div class="ann" style="left:850px; top:452px; width:180px;">diff = the label rows,<br>and nothing else. a copy<br>change, not a sheet.</div>
+  <div class="lead lh" style="left:844px; top:444px; width:294px;"></div>
+  <div class="lead lv" style="left:844px; top:444px; height:26px;"></div>
+  <div class="lead lv" style="left:1138px; top:408px; height:36px;"></div>
+
+  <!-- fig 3: renamed labels callout -->
+  <div class="ann" style="left:1290px; top:436px; width:240px;">labels renamed to the stat panel's keys in system sans-serif — prose, tallies, spacing and the prophecy line are untouched.</div>
+  <div class="lead lh" style="left:1272px; top:446px; width:16px;"></div>
+
+  <!-- tokens footnote -->
+  <div class="ann" style="left:40px; top:700px; width:1480px;">tokens — ink #000000 page &middot; bone #f4f0d8 type &middot; bone-dim #b8b4a0 annotations (11px) &middot; rope-lost #4d4a3e leader lines (1px, edge only — never a text carrier).
+  diary copy: {typography.diary} = cursive system stack; everything outside the page is the 11px annotation layer. zero radius, zero gradients, zero webfonts, zero scripts, zero network. ladder: 11/12/14/16/20/22/32px — diary 16, notes 11.</div>
+
+</div>
+</body>
+</html>

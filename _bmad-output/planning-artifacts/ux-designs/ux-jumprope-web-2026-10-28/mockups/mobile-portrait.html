@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>key-screen — mobile portrait, offer freeze — jumprope web v3</title>
+<style>
+  /* every value below is a DESIGN.md token:
+     ink #000000 · scrim #2a3440 · bone #f4f0d8 · bone-dim #b8b4a0
+     role-sky/marker #8fd3ff · role-slate #9aa7b4 · role-mint #9fe8c0 · role-ember #ff8f5e
+     rope #f4f0d8 · rope-lost #4d4a3e · fills = ink @ 55% / scrim @ 85% (alphas, not new colors)
+     type ladder 11/12/14/16/20/22/32 · tabular-nums on altitude + best only
+     zero border-radius · zero gradients · zero webfonts · no scripts · no images · no animation */
+  * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0; }
+  html { background: #000000; }
+  body { background: #000000; color: #f4f0d8; font: 400 16px sans-serif; overflow-x: auto; }
+  .stage { position: relative; width: 1140px; height: 1000px; }
+
+  /* ---------- device: portrait viewport ---------- */
+  .device { position: absolute; left: 300px; top: 40px; width: 390px; height: 844px;
+            border: 1px solid #4d4a3e; }                       /* annotation frame only */
+  .canvas { position: absolute; left: 0; right: 0; top: 44px; bottom: 44px; background: #2a3440; }
+  .bar    { position: absolute; left: 0; right: 0; height: 44px; background: #000000; }
+
+  /* ---------- hud: six slots, one axis, non-interactive overlay ---------- */
+  .hud { position: absolute; left: 0; right: 0; top: 84px; display: flex;
+         flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+  .alt  { font: 400 32px sans-serif; color: #f4f0d8; font-variant-numeric: tabular-nums; }
+  .best { font: 400 16px sans-serif; color: #f4f0d8; font-variant-numeric: tabular-nums; }
+  .pips { font: 400 20px sans-serif; letter-spacing: 2px; }
+  .pips .held { color: #f4f0d8; } .pips .ghost { color: #4d4a3e; }
+  .prompt { font: 400 16px sans-serif; color: #9fe8c0; }
+  .marker { font: 400 20px sans-serif; color: #8fd3ff; }
+  .owned  { font: 400 20px sans-serif; color: #f4f0d8; }
+
+  /* ---------- card strip: the only pointer-interactive layer ---------- */
+  .strip { position: absolute; left: 0; right: 0; bottom: 12%; padding: 0 12px;
+           display: flex; gap: 10px; }
+  .card  { position: relative; flex: 1 1 0; min-width: 108px; height: 128px;
+           background: rgba(0,0,0,.55); border: 2px solid #4d4a3e; padding: 10px 12px 8px; }
+  .card.sel { background: rgba(42,52,64,.85); border: 2px solid #f4f0d8; }
+  .glyph { font: 400 22px sans-serif; }
+  .g-sky { color: #8fd3ff; } .g-mint { color: #9fe8c0; } .g-ember { color: #ff8f5e; }
+  .name  { font: 700 14px sans-serif; color: #f4f0d8; }
+  .note  { font: 400 11px sans-serif; color: #b8b4a0; }
+  .dig   { color: #9aa7b4; }
+  .meter { font: 400 11px sans-serif; color: #f4f0d8; }
+  .track { position: absolute; left: 12px; right: 12px; bottom: 8px; height: 6px; background: #4d4a3e; }
+  .fill6 { position: absolute; left: 0; top: 0; bottom: 0; background: #f4f0d8; }
+
+  /* ---------- annotation layer: 11px bone-dim, 1px rope-lost leaders ---------- */
+  .ann  { position: absolute; font: 400 11px sans-serif; color: #b8b4a0; line-height: 1.5; }
+  .lead { position: absolute; background: #4d4a3e; }
+  .lv   { width: 1px; }
+  .lh   { height: 1px; }
+  .hit  { position: absolute; width: 96px; height: 96px; border: 1px solid #4d4a3e; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ================= device: 390 × 844 portrait, offer freeze ================= -->
+  <div class="device">
+    <div class="canvas"></div>
+    <div class="bar" style="top: 0;"></div>
+    <div class="bar" style="bottom: 0;"></div>
+    <div class="hit" style="left: 4px; top: 48px;"></div>
+    <div class="hit" style="left: 280px; top: 48px;"></div>
+    <div class="hit" style="left: 4px; top: 704px;"></div>
+    <div class="hit" style="left: 280px; top: 704px;"></div>
+
+
+    <div class="hud">
+      <div class="alt">428</div>
+      <div class="best">best 612</div>
+      <div class="pips"><span class="held">███</span><span class="ghost">▒▒</span></div>
+      <div class="prompt">hold to confirm — spare rope</div>
+      <div class="marker">ceiling 214 ↑</div>
+      <div class="owned">∥×3 ▣⟳2 ⇈↑1</div>
+    </div>
+
+    <div class="strip">
+      <div class="card">
+        <div class="glyph g-sky">◇</div>
+        <div class="name">launch heels</div>
+        <div class="note"><span class="dig">[1]</span> more air on full charge</div>
+        <div class="track"><div class="fill6" style="width:0;"></div></div>
+      </div>
+      <div class="card sel">
+        <div class="glyph g-mint">▣</div>
+        <div class="name">spare rope</div>
+        <div class="note"><span class="dig">[2]</span> +1 rope (max 5)</div>
+        <div class="meter">hold [###--]</div>
+        <div class="track"><div class="fill6" style="width:60%;"></div></div>
+      </div>
+      <div class="card">
+        <div class="glyph g-ember">⚙</div>
+        <div class="name">wind-up</div>
+        <div class="note"><span class="dig">[3]</span> +2 beats, costs a rope</div>
+        <div class="track"><div class="fill6" style="width:0;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= corner hit regions (annotation-only overlay) ================= -->
+  <!-- ================= annotation layer ================= -->
+
+  <!-- device / band -->
+  <div class="ann" style="left: 20px; top: 56px; width: 258px;">letterbox bars — {colors.ink}. all surfaces sit inside the band between them.</div>
+  <div class="lead lh" style="left: 278px; top: 62px; width: 20px;"></div>
+
+  <div class="ann" style="left: 300px; top: 8px; width: 188px;">device — portrait 390×844 reference. the hud scales inside the band, never around it (nfr7).</div>
+  <div class="lead lv" style="left: 495px; top: 62px; height: 24px;"></div>
+
+  <div class="ann" style="left: 20px; top: 360px; width: 258px;">canvas region — {colors.scrim} #2a3440 fallback fill; the room renders here. during play: zero chrome. the strip exists only in the choose freeze.</div>
+  <div class="lead lh" style="left: 278px; top: 366px; width: 22px;"></div>
+
+  <!-- hud slots, right rail: altitude → best → pips → prompt → marker → owned -->
+  <div class="ann" style="left: 708px; top: 94px; width: 380px;">slot 1 — altitude: {typography.hud-primary} 32px {colors.bone}, tabular-nums. the one number (score IS altitude).</div>
+  <div class="lead lh" style="left: 690px; top: 100px; width: 16px;"></div>
+
+  <div class="ann" style="left: 708px; top: 130px; width: 380px;">slot 2 — best line: 16px bone, tabular-nums. the only other always-on number.</div>
+  <div class="lead lh" style="left: 690px; top: 136px; width: 16px;"></div>
+
+  <div class="ann" style="left: 708px; top: 162px; width: 380px;">slot 3 — rope pips: 20px, 2px tracking. █ held {colors.rope} / ▒ ghost {colors.rope-lost}; max-ever count held, so loss reads as a dark segment, not a vanished one.</div>
+  <div class="lead lh" style="left: 690px; top: 166px; width: 16px;"></div>
+
+  <div class="ann" style="left: 708px; top: 198px; width: 380px;">slot 4 — prompt: 16px, tinted by the highlighted card's role (mint here). the one channel for every one-shot string.</div>
+  <div class="lead lh" style="left: 690px; top: 202px; width: 16px;"></div>
+
+  <div class="ann" style="left: 708px; top: 234px; width: 380px;">slot 5 — ceiling marker: 20px {colors.marker}; drops to opacity .35 while an i-frame gates the break — full here.</div>
+  <div class="lead lh" style="left: 690px; top: 238px; width: 16px;"></div>
+
+  <div class="ann" style="left: 708px; top: 270px; width: 380px;">slot 6 — owned line: 20px bone; glyph repeated per copy + ×/⟳/↑ state suffixes, updated the same tick.</div>
+  <div class="lead lh" style="left: 690px; top: 246px; width: 16px;"></div>
+  <div class="lead lv" style="left: 704px; top: 246px; height: 28px;"></div>
+
+  <div class="ann" style="left: 20px; top: 96px; width: 258px;">hud = one non-interactive overlay: aria-hidden, pointer-events:none, six slots, one center axis, in this shipped order.</div>
+  <div class="lead lh" style="left: 278px; top: 102px; width: 140px;"></div>
+  <div class="lead lv" style="left: 418px; top: 102px; height: 20px;"></div>
+
+  <!-- card strip, left + right rails -->
+  <div class="ann" style="left: 20px; top: 622px; width: 260px;">card strip — {spacing.strip-inset}: bottom: 12%. gaps 10px, side padding 12px, cards 108–168px (actual 115×128). the sim freezes (status choose); keys outside the pick set are inert.</div>
+  <div class="lead lh" style="left: 280px; top: 660px; width: 31px;"></div>
+
+  <div class="ann" style="left: 20px; top: 690px; width: 260px;">min tap target 44px — actual target 115×128px per card; the only pointer-live layer in the product.</div>
+  <div class="lead lh" style="left: 280px; top: 696px; width: 30px;"></div>
+
+  <div class="ann" style="left: 708px; top: 600px; width: 380px;">selected card = {colors.bone} border + {colors.scrim} @ 85% fill. resting = 2px {colors.rope-lost} hairline + {colors.ink} @ 55% — findability rides the bone state, never the hairline.</div>
+  <div class="lead lh" style="left: 554px; top: 612px; width: 152px;"></div>
+  <div class="lead lv" style="left: 553px; top: 612px; height: 43px;"></div>
+
+  <div class="ann" style="left: 708px; top: 652px; width: 380px;">picker digit in {colors.role-slate} — 1/2/3 is an accelerator, never the only path: tap selects, hold confirms, swipe/arrows cycle.</div>
+  <div class="lead lh" style="left: 496px; top: 646px; width: 210px;"></div>
+  <div class="lead lv" style="left: 495px; top: 646px; height: 10px;"></div>
+
+  <div class="ann" style="left: 708px; top: 736px; width: 380px;">hold-confirm — 800ms hold on the selected card: 6px bar (track {colors.rope-lost}, fill {colors.rope}) at 3/5, mirrored in text as [###--]. release early = cleared; swipe clears; a bare tap-and-lift never confirms.</div>
+  <div class="lead lh" style="left: 495px; top: 790px; width: 211px;"></div>
+  <div class="lead lv" style="left: 495px; top: 784px; height: 6px;"></div>
+
+  <!-- corner targets: thumb-reach map -->
+  <div class="ann" style="left: 140px; top: 4px; width: 250px;">corner — door. locked today: refusal is wording, no state moves. reach: grip-shift. hit 96×96px.</div>
+  <div class="lead lv" style="left: 352px; top: 26px; height: 62px;"></div>
+
+  <div class="ann" style="left: 500px; top: 4px; width: 250px;">corner — corkboard. unread rows are blanked cells in {colors.rope-lost}. reach: grip-shift. hit 96×96px.</div>
+  <div class="lead lv" style="left: 638px; top: 26px; height: 62px;"></div>
+
+  <div class="ann" style="left: 140px; top: 916px; width: 250px;">corner — rope mat. tap = one beat; the day's canonical clock. reach: primary thumb arc (left). hit 96×96px.</div>
+  <div class="lead lv" style="left: 352px; top: 844px; height: 70px;"></div>
+
+  <div class="ann" style="left: 500px; top: 916px; width: 250px;">corner — bed. ends the day on purpose (fr43). reach: primary thumb arc (right). hit 96×96px.</div>
+  <div class="lead lv" style="left: 638px; top: 844px; height: 70px;"></div>
+
+  <div class="ann" style="left: 770px; top: 830px; width: 340px;">corner targets are deliberately unstyled in-product — the object in the scene is the affordance; tap routes the character, it never acts on the world. boxes here are the annotation layer only. 96×96px ≈ 2.2× the 44px floor.</div>
+
+  <!-- tokens footnote -->
+  <div class="ann" style="left: 20px; top: 962px; width: 1100px;">tokens — ink #000000 &middot; scrim #2a3440 &middot; bone #f4f0d8 &middot; bone-dim #b8b4a0 &middot; rope-lost #4d4a3e &middot; role-sky/marker #8fd3ff &middot; role-slate #9aa7b4 &middot; role-mint #9fe8c0 &middot; role-ember #ff8f5e; panel fills rgba(0,0,0,.55) / rgba(42,52,64,.85) are alphas of ink/scrim, not new colors. ladder 11/12/14/16/20/22/32px; tabular-nums on altitude + best; sans-serif only. zero radius, zero gradients, zero webfonts, zero scripts, zero network, zero animation.</div>
+
+</div>
+</body>
+</html>

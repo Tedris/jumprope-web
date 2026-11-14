@@ -42,20 +42,20 @@ filtered to inter-frame periods (> 4 ms).
 | Skin application, `?skin=mint` and `?mods=` | mint hexes `0x7ce38b` / `0x10151f` / `0x9aa4b2` each written twice (apply loop + D2 restore base); **absent** on default and `?skin=nope` (miss → inert, byte-inert composition) |
 | Load (NFR3 floor) | cold-navigation goto wall-clock 676–916 ms incl. CDN three fetch — inside the 2 s budget; the page-side load-event read at 6.4 was 169 ms (ledger :263) |
 
-## Hardware lanes — OPEN, owner: Ed + browser UAT lane
+## Hardware lanes — RUN 2026-11-12 (owner: Ed — desktop PC + Pixel 7 Pro, owner-reported), with carry
 
-- [ ] **L1 — NFR1 60 FPS human check on a 2020-era integrated GPU** (ledger :263):
+- [x] **L1 — NFR1 60 FPS human check on a 2020-era integrated GPU** (ledger :263) — RUN 2026-11-12, owner-reported pass on both machines tested (desktop PC + Pixel 7 Pro); **CARRY: 2020-era integrated-GPU class unverified** — neither machine represents it; candidate laptop check pending (owner). Gate decision (Ed): proceed regardless.
   deploy the cut, play ≥ 2 minutes at native resolution on integrated graphics.
   Accept: no rhythm-breaking hitching; the rope never visibly slips against the
   audio/beat. Report the machine class + a devtools FPS screenshot into the
   ledger stamp.
-- [ ] **L2 — NFR3 residential-broadband re-check** (ledger :263): cold cache,
+- [x] **L2 — NFR3 residential-broadband re-check** (ledger :263) — RUN 2026-11-12, owner-reported pass on both machines; no timing screenshot attached.
   deployed URL, page-load → first jump under 2 s. One timing screenshot.
-- [ ] **L3 — Player Fuel GPU re-confirm** (:355 sibling): deployed URL with
+- [x] **L3 — Player Fuel GPU re-confirm** (:355 sibling) — RUN 2026-11-12 on both machines, owner-reported pass; the iGPU-class machine this lane names never existed in this pass — that class rides the L1 carry.
   `?skin=mint` and with `?mods=mods/mint.json` on the L1 machine — mint palette
   from the first frame, zero requests without `?mods=`, no frame-cost
   difference vs the L1 baseline.
-- [ ] **L4 — probe.glb binding GPU re-confirm** (:355) — OPTIONAL, only if the
+- [ ] **L4 — probe.glb binding GPU re-confirm** (:355) — OPTIONAL — deferred; its "if the `.glb` feature is ever picked up" condition is LIVE as of 2026-11-12 (A4 disposition KEEP, filed as v3 candidate) — re-open at that feature's epics pass.
   `.glb` feature is ever picked up (shelved per FR38; the shipped boot never
   loads `probe.glb`). Re-run the 8.4 D8 scratch lane (story 8.4 Debug Log
   recipe) on the hardware GPU and append the read to the 8.4 §Verdict.

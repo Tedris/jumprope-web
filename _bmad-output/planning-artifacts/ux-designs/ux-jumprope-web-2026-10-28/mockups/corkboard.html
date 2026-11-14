@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>key screen — corkboard slip anatomy — jumprope web v3</title>
+<!-- SPEC MOCKUP. static, zero-request, zero-script. tokens: DESIGN.md table only.
+     one slip per alive gate; rows past INT are blanked cells (#4d4a3e), never hidden rows. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #000000; overflow: hidden;
+    font-family: sans-serif; color: #f4f0d8; }
+  * { border-radius: 0; box-sizing: border-box; }
+
+  .stage { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(100vw, 177.78vh); height: min(56.25vw, 100vh);
+    background: #000000; overflow: hidden; }
+  .bar { position: absolute; left: 0; width: 100%; height: 6%; background: #000000; z-index: 50; }
+  .bar.t { top: 0; } .bar.b { bottom: 0; }
+
+  /* the corkboard, seen in scene: flat trapezoid, fog-darkened edges — no gradient */
+  .cork { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    clip-path: polygon(3% 6%, 97% 6%, 100% 90%, 0 90%); background: #ffcf6e; opacity: .13; }
+  .corkEdge { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    clip-path: polygon(3% 6%, 97% 6%, 100% 90%, 0 90%); border: 2px solid #4d4a3e; }
+  .edgeShade { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .edgeShade.l { clip-path: polygon(0 0, 9% 0, 6% 100%, 0 100%); background: #000000; opacity: .45; }
+  .edgeShade.r { clip-path: polygon(100% 0, 91% 0, 94% 100%, 100% 100%); background: #000000; opacity: .45; }
+  .dith { position: absolute; overflow: hidden; white-space: nowrap;
+    font-size: 11px; line-height: 10px; letter-spacing: 3px; color: #4d4a3e; }
+
+  /* ---------- slips: ink @55% paper, rope-lost hairline, bone type ---------- */
+  .slip { position: absolute; background: rgba(0, 0, 0, .55); border: 1px solid #4d4a3e;
+    padding: 10px 12px 8px; }
+  .slip .pin { position: absolute; left: 50%; top: -3px; width: 6px; height: 6px;
+    margin-left: -3px; background: #4d4a3e; }
+  .slip .gate { font-size: 14px; font-weight: 700; color: #f4f0d8; margin-bottom: 6px;
+    white-space: nowrap; }
+  .row { display: flex; align-items: center; gap: 8px; margin-top: 4px; white-space: nowrap; }
+  .row .k { font-size: 12px; color: #b8b4a0; width: 62px; }
+  .row .v { font-size: 16px; color: #f4f0d8; }
+  .row .v.mint  { color: #9fe8c0; }   /* HP role — Spare Rope */
+  .row .v.ember { color: #ff8f5e; }   /* risk role — Wide Brim */
+  .row .v.amber { color: #ffcf6e; }   /* volume role — Heavy Rope */
+  .row .v.slate { color: #9aa7b4; }   /* foundation role */
+  .blank { display: inline-block; width: 84px; height: 15px; background: #4d4a3e; }
+  .blank.w { width: 120px; }
+  .slip.dim .gate, .slip.dim .row .v { color: #b8b4a0; }
+
+  .stamp { position: absolute; right: 8px; top: 14px; font-size: 22px; color: #ffcf6e;
+    transform: rotate(-6deg); border: 1px solid #ffcf6e; padding: 1px 6px; }
+
+  /* shadow figure at a posted gate (desaturated, no nameplate) */
+  .fig { position: absolute; width: 34px; height: 46px; opacity: .4; }
+  .fig i { position: absolute; background: #b8b4a0; }
+  .fig .head { left: 12px; top: 0; width: 9px; height: 8px; }
+  .fig .body { left: 9px; top: 9px; width: 15px; height: 14px; }
+  .fig .l1 { left: 9px; top: 24px; width: 6px; height: 16px; transform: rotate(8deg); }
+  .fig .l2 { left: 19px; top: 24px; width: 6px; height: 16px; transform: rotate(-8deg); }
+
+  /* ---------- door prompt samples (the whole day-type UI) ---------- */
+  .promptbar { position: absolute; left: 5%; top: 76.5%; width: 90%; height: 11%;
+    background: rgba(42, 52, 64, .35); border: 1px solid #4d4a3e; }
+  .promptbar .doorPrompt { position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 16px; color: #f4f0d8; white-space: nowrap; }
+  .doorMesh { position: absolute; top: 12%; height: 76%; width: 26px; background: #000000;
+    border: 1px solid #4d4a3e; }
+
+  /* ---------- annotation layer ---------- */
+  .an { position: absolute; font-size: 11px; line-height: 1.25; color: #b8b4a0;
+    max-width: 200px; z-index: 40; }
+  .an.r { text-align: right; }
+  .ld { position: absolute; background: #4d4a3e; z-index: 39; }
+  .ld.h { height: 1px; } .ld.v { width: 1px; }
+
+  .legend { position: absolute; left: 5%; bottom: 7.6%; font-size: 12px; color: #b8b4a0;
+    max-width: 60%; z-index: 41; }
+  .legend .cell { display: inline-block; width: 18px; height: 12px; background: #4d4a3e;
+    vertical-align: -2px; }
+  .meta { position: absolute; left: 1.5%; bottom: 0.8%; font-size: 11px; color: #b8b4a0; z-index: 45; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- board surface -->
+  <div class="cork"></div>
+  <div class="corkEdge"></div>
+  <div class="edgeShade l"></div>
+  <div class="edgeShade r"></div>
+  <div class="dith" style="left:4%; width:92%; top:84%; opacity:.5;">▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒  ▒ ▒▒  ▒  ▒▒ ▒  ▒ ▒▒▒  ▒  ▒▒ ▒</div>
+
+  <!-- ============ anatomy slip (legible size, INT = 4) ============ -->
+  <div class="slip" style="left:5%; top:13%; width: 268px;">
+    <div class="pin"></div>
+    <div class="gate">cannery floor</div>
+    <div class="row"><span class="k">tier</span><span class="v">D</span></div>
+    <div class="row"><span class="k">party</span><span class="v">2</span></div>
+    <div class="row"><span class="k">reward</span><span class="v mint">Spare Rope</span></div>
+    <div class="row"><span class="k">shelf life</span><span class="v">2 days</span></div>
+  </div>
+
+  <!-- anatomy callouts -->
+  <div class="an r" style="left:0.4%; top:16.5%;">gate name — 14px bold,<br>the only bold in the product</div>
+  <div class="ld h" style="left:4.8%; top:17.1%; width:0.2%;"></div>
+
+  <div class="an r" style="left:0.4%; top:27.5%;">row 1 — tier: rank letter of<br>what lives behind it</div>
+  <div class="ld h" style="left:4.8%; top:28.1%; width:0.2%;"></div>
+
+  <div class="an r" style="left:0.4%; top:35%;">row 2 — party: read of the<br>hunter economy; it ages daily</div>
+  <div class="ld h" style="left:4.8%; top:35.6%; width:0.2%;"></div>
+
+  <div class="an r" style="left:0.4%; top:43%;">row 3 — reward: card name in its<br>role hue (catalogued metadata)</div>
+  <div class="ld h" style="left:4.8%; top:43.6%; width:0.2%;"></div>
+
+  <div class="an r" style="left:0.4%; top:51%;">row 4 — shelf life: hunter-tick<br>countdown; the news mirrors it</div>
+  <div class="ld h" style="left:4.8%; top:51.6%; width:0.2%;"></div>
+
+  <!-- ============ alive slips ============ -->
+  <div class="slip" style="left:26%; top:13%; width: 250px;">
+    <div class="pin"></div>
+    <div class="gate">rail yard</div>
+    <div class="row"><span class="k">tier</span><span class="v">C</span></div>
+    <div class="row"><span class="k">party</span><span class="v">1</span></div>
+    <div class="row"><span class="k">reward</span><span class="v ember">Wide Brim</span></div>
+    <div class="row"><span class="k">shelf life</span><span class="v">today</span></div>
+  </div>
+
+  <div class="slip" style="left:26%; top:45%; width: 250px;">
+    <div class="pin"></div>
+    <div class="gate">school pool</div>
+    <div class="row"><span class="k">tier</span><span class="v">B</span></div>
+    <div class="row"><span class="k">party</span><span class="v">3</span></div>
+    <div class="row"><span class="k">reward</span><span class="blank"></span></div>
+    <div class="row"><span class="k">shelf life</span><span class="blank"></span></div>
+  </div>
+
+  <div class="slip" style="left:50%; top:13%; width: 250px;">
+    <div class="pin"></div>
+    <div class="gate">parking deck 6</div>
+    <div class="row"><span class="k">tier</span><span class="v">E</span></div>
+    <div class="row"><span class="k">party</span><span class="blank"></span></div>
+    <div class="row"><span class="k">reward</span><span class="blank w"></span></div>
+    <div class="row"><span class="k">shelf life</span><span class="blank"></span></div>
+  </div>
+
+  <!-- cleared and posted: hand-clear paid LEVEL, battle-shadow runs here -->
+  <div class="slip dim" style="left:50%; top:45%; width: 250px;">
+    <div class="pin"></div>
+    <div class="gate">textile mill</div>
+    <div class="stamp">cleared</div>
+    <div class="row"><span class="k">tier</span><span class="v">D</span></div>
+    <div class="row"><span class="k">party</span><span class="v">—</span></div>
+    <div class="row"><span class="k">reward</span><span class="v">lv 1 paid</span></div>
+    <div class="row"><span class="k">shelf life</span><span class="v">posted</span></div>
+  </div>
+  <div class="fig" style="left:65.5%; top:63%;"><i class="head"></i><i class="body"></i><i class="l1"></i><i class="l2"></i></div>
+
+  <!-- bare cork -->
+  <div class="an" style="left:77%; top:14%; max-width:190px;">bare cork — world not yet awake<br>(pre-Interrupt: empty world = bare cork)</div>
+  <div class="ld h" style="left:76.2%; top:14.6%; width:0.6%;"></div>
+
+  <!-- INT callout -->
+  <div class="an" style="left:77%; top:47%; max-width:190px;">blanked cell — rows past INT render<br>as #4d4a3e cells, shape-coded,<br>never hidden, never dimmed text</div>
+  <div class="ld h" style="left:74.5%; top:47.6%; width:2.6%;"></div>
+
+  <!-- cleared/posted callout -->
+  <div class="an" style="left:77%; top:58%; max-width:190px;">cleared &amp; posted — first hand-clear pays<br>LEVEL, arms the shadow-post;<br>battle-shadow replays the fight-day here</div>
+  <div class="ld h" style="left:74.2%; top:58.6%; width:2.9%;"></div>
+
+  <!-- shelf life urgency -->
+  <div class="an" style="left:77%; top:27%; max-width:190px;">&quot;today&quot; — last tick; the hunter economy<br>clears ~1 random gate per slept day</div>
+
+  <!-- ============ door prompt strip: the locked-gate wording ============ -->
+  <div class="promptbar">
+    <div class="doorMesh" style="left:2%;"></div>
+    <div class="doorPrompt" style="left:6.5%;">locked</div>
+    <div class="doorMesh" style="left:40%;"></div>
+    <div class="doorPrompt" style="left:44.5%;">not until tomorrow</div>
+  </div>
+  <div class="an" style="left:22%; top:70.5%;">door prompt, refused — wording changes, no state moves;<br>the slip above says why (shelf life). no error dialog exists.</div>
+  <div class="ld v" style="left:3.2%; top:71.1%; height:5.3%;"></div>
+
+  <div class="an r" style="left:56%; top:70.8%;">same-day lock after ejection —<br>stats, shadows, cards untouched</div>
+  <div class="ld v" style="left:41.5%; top:71.4%; height:5%;"></div>
+
+  <div class="legend">legend: one slip per alive gate · four rows, fixed order (tier / party / reward / shelf life) · INT (reading) = how many rows render — <span class="cell"></span> = unread cell · the board and the news are two views of one world state</div>
+
+  <div class="bar t"></div>
+  <div class="bar b"></div>
+  <div class="meta">jumprope web v3 — key screen: corkboard slip anatomy | 16:9 letterbox band | tokens: DESIGN.md only · zero requests · zero scripts</div>
+</div>
+</body>
+</html>
